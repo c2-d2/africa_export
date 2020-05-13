@@ -3,25 +3,25 @@
 ## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
 ## Date: 12 May 2020
 
-setwd("~/Desktop/nCoV exports/prevalence data")
+#setwd("~/Desktop/nCoV exports/prevalence data")
 
 library(reshape2)
-library(dplyr)
+library(tidyverse)
 
 ### EXTRACTING PROVINCE-LEVEL PREVALENCE
 
-prev_data_all_median<-read.csv("main_all_prevalence.csv")
-prev_data_hubei_median<-read.csv("main_hubei_prevalence.csv")
+prev_data_all_median<-read.csv("./data/main_all_prevalence.csv")
+prev_data_hubei_median<-read.csv("./data/main_hubei_prevalence.csv")
 prev_data_median<-rbind(prev_data_all_median,prev_data_hubei_median[,1:length(prev_data_all_median)])
 prev_data_median$Scenario<-rep("Intermediate",nrow(prev_data_median))
 
-prev_data_all_lower<-read.csv("diffuse_r_local_all_prevalence.csv")
-prev_data_hubei_lower<-read.csv("diffuse_r_local_hubei_prevalence.csv")
+prev_data_all_lower<-read.csv("./data/diffuse_r_local_all_prevalence.csv")
+prev_data_hubei_lower<-read.csv("./data/diffuse_r_local_hubei_prevalence.csv")
 prev_data_lower<-rbind(prev_data_all_lower,prev_data_hubei_lower[,1:length(prev_data_all_lower)])
 prev_data_lower$Scenario<-rep("Lower",nrow(prev_data_lower))
 
-prev_data_all_upper<-read.csv("t_switch_6_all_prevalence.csv")
-prev_data_hubei_upper<-read.csv("t_switch_6_hubei_prevalence.csv")
+prev_data_all_upper<-read.csv("./data/t_switch_6_all_prevalence.csv")
+prev_data_hubei_upper<-read.csv("./data/t_switch_6_hubei_prevalence.csv")
 prev_data_upper<-rbind(prev_data_all_upper,prev_data_hubei_upper[,1:length(prev_data_all_upper)])
 prev_data_upper$Scenario<-rep("Upper",nrow(prev_data_upper))
 
@@ -31,7 +31,7 @@ prevalence$asct_rate<-ifelse(prevalence$Scenario=='Lower',0.145,
                              ifelse(prevalence$Scenario=='Intermediate',0.0973,0.0922))
 
 # read in popn size data
-popn_size_cities_all<-read.csv("popn_estimates_cities_china.csv")
+popn_size_cities_all<-read.csv("./data/popn_estimates_cities_china.csv")
 
 popn_size_select_cities<-popn_size_cities_all%>%
   subset(asciiname%in%c("Wuhan", "Beijing", "Shanghai", "Guangzhou", "Zhengzhou", "Tianjin",
@@ -49,7 +49,7 @@ popn_size_select_cities$province<-c('Hubei','Beijing','Shanghai','Guangdong','He
                                     'Tianjin','Zhejiang','Zhejiang','Hunan','Shaanxi','Jiangsu','Guangdong','Chongqing',
                                     'Jiangxi','Sichuan','Anhui','Fujian','Guangdong')
 
-popn_size_provinces<-read.csv("provinces_popn_size_statista.csv")
+popn_size_provinces<-read.csv("./data/provinces_popn_size_statista.csv")
 # merge province & population data at the city level 
 merged_popn_data<-merge(popn_size_select_cities,popn_size_provinces,by="province")
 
