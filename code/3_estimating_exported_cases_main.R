@@ -14,6 +14,9 @@ library(formattable)
 library(doParallel)
 library(foreach)
 
+## Set number of bootstrap samples here, can set lower for debugging/testing
+n_bootstraps <- 50000
+
 ## define date sequences and selection of countries for validation & prediction steps 
 
 dates_seq<-seq(as.Date('2019-12-08'),as.Date('2020-02-29'),by="day")
@@ -264,7 +267,7 @@ for (scenario in Scenarios) {
   colnames(risk_all_cities_africa_ALL)[1]<-"risk_importation"
 
   #bootstrap for each destination country in Africa
-  risk_PI<-boot_pi(reg_risk_wuhan, risk_all_cities_africa_step1,50000, 0.95) # 50000
+  risk_PI<-boot_pi(reg_risk_wuhan, risk_all_cities_africa_step1,n_bootstraps, 0.95) # 50000
   risk_PI$destination_country<-risk_all_cities_africa_step1$destination_country
   colnames(risk_PI)<-c("num_exported","lower","upper","destination_country")
 

@@ -8,6 +8,11 @@ library(dplyr)
 
 #setwd("~/Desktop/nCoV exports/prevalence data")
 
+
+## Set number of bootstrap samples here, can set lower for debugging/testing
+n_bootstraps <- 50000
+
+
 prev_all<-read.csv("./data/main_all_prevalence.csv")
 prev_hubei<-read.csv("./data/main_hubei_prevalence.csv")
 prev_data<-rbind(prev_all,prev_hubei[,1:length(prev_all)])
@@ -145,6 +150,7 @@ boot_pi <- function(model, pdata, n, p) {
 ## read in prevalence data (looping through scenario 4 and 5)
 Scenarios<-c("Scenario 4","Scenario 5")
 num_cases_total_list<-c()
+scaling_factor_list_sensitivity<-c()
 for (scenario in Scenarios){
   prev_cities_i<-prev_cities_scen_4_5[prev_cities_scen_4_5$Scenario==scenario,]
   prevalence_wuhan<-prev_cities_i[prev_cities_i$cities=='Wuhan',colnames(prev_cities_i)!="Scenario"]
@@ -189,6 +195,7 @@ for (scenario in Scenarios){
   
   ## define scaling factor as the coefficient for risk_wuhan var
   scaling_factor<-exp(coefficients(reg_risk_wuhan)[[1]])
+  scaling_factor_list_sensitivity<-c(scaling_factor_list_sensitivity,scaling_factor)
   
   ############## Estimating risk in select African countries using subset of origin cities + Wuhan in China
   
@@ -253,7 +260,7 @@ for (scenario in Scenarios){
   colnames(risk_all_cities_africa_ALL)[1]<-"risk_importation"
   
   #bootstrap for each destination country in Africa
-  risk_PI<-boot_pi(reg_risk_wuhan, risk_all_cities_africa_step1,50000, 0.95) # 50000
+  risk_PI<-boot_pi(reg_risk_wuhan, risk_all_cities_africa_step1,n_bootstraps, 0.95) # 50000
   risk_PI$destination_country<-risk_all_cities_africa_step1$destination_country
   colnames(risk_PI)<-c("num_exported","lower","upper","destination_country")
   
