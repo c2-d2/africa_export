@@ -58,7 +58,7 @@ map_data<-worldbank_df%>%
 colnames(map_data)[1]<-"Destination Country"
 
 # read in exports table for African destination countries, under the intermediate prev scenario
-exports_table_africa<-read.csv("risk_all_cities_africa_table_Intermediate.csv")
+exports_table_africa<-read.csv("./out/risk_all_cities_africa_table_Intermediate.csv")
 colnames(exports_table_africa)[1]<-"Destination Country"
 colnames(exports_table_africa)[2]<-"Number Exported"
 
@@ -81,7 +81,7 @@ map<-ggplot(data = africa_risk) +
   theme(legend.title=element_text(color = "black", size = 10),
         legend.text = element_text(color = "black", size = 10))
 
-ggsave("map_exports_africa_countries.pdf")
+ggsave("./figures/map_exports_africa_countries.pdf")
 
 ######## Line Plot
 ## estimated number of cases exported from all cities in China to destination countries
@@ -93,7 +93,7 @@ dest_countries_africa_list<-c('Mauritius','Mauritania','South Africa','Kenya','E
                               'Uganda','Mozambique','Seychelles','Cote D\'Ivoire')
 
 # read in combined prevalence & flight data for all origin cities, under the Intermediate prev scenario
-flights_prev_combined_ALL<-read.csv("prev_flight_all_cities_FINAL_2_Intermediate.csv")
+flights_prev_combined_ALL<-read.csv("./out/prev_flight_all_cities_FINAL_2_Intermediate.csv")
 
 risk_all_cities_africa_line<-flights_prev_combined_ALL%>%
   mutate(prev_vol_product=((daily_prevalence*daily_volume)))%>%
@@ -153,7 +153,7 @@ line_plot<-ggplot(risk_all_cities_africa_line_weekly,
 line_plot$labels$colour<-"Country"
 line_plot
 #save(risk_all_cities_africa_line_weekly,file="risk_all_cities_africa_line_weekly.Rdata")
-ggsave("line_plot.pdf",width=20,height=10)
+ggsave("./figures/line_plot.pdf",width=20,height=10)
 
 # calculate the % of all cases that occurred during Jan 12 - February 2nd 
 date_range<-seq(as.Date('2020-01-12'),as.Date('2020-02-12'),by="day")
@@ -231,11 +231,11 @@ stacked_bar_plot<-ggplot(risk_all_cities_africa_chinese_cities,
 stacked_bar_plot$labels$fill<-"Origin City"
 stacked_bar_plot
 
-ggsave("stacked_bar_plot.pdf")
+ggsave("./figures/stacked_bar_plot.pdf")
 
 ## ratio plot - code courtesy of Rene Niehus
 ### for all destinations
-merged_lower <- read.csv(file="export_curves_wuh_all_lower.csv")%>%
+merged_lower <- read.csv(file="./out/export_curves_wuh_all_lower.csv")%>%
   dplyr::select("frac_wuhan","frac_all")
 colnames(merged_lower)[1]<-c("frac_wuhan_l")
 colnames(merged_lower)[2]<-c("frac_all_l")

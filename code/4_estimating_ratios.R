@@ -181,7 +181,7 @@ for (scenario in Scenarios){
   
   merged2$date.y<-as.Date(merged2$date.y)
   
-  write.csv(merged2,paste0("export_curves_wuh_all_", scenario,
+  write.csv(merged2,paste0("./out/export_curves_wuh_all_", scenario,
                                                   ".csv"),row.names=FALSE)
   # repeat the above for African destination countries
   merged2_africa<-merge(data.frame(risk_wuhan_africa_date, row.names=NULL), 
@@ -196,7 +196,7 @@ for (scenario in Scenarios){
   
   merged2_africa$date.y<-as.Date(merged2_africa$date.y)
   
-  write.csv(merged2_africa,paste0("export_curves_wuh_all_africa_", scenario,
+  write.csv(merged2_africa,paste0("./out/export_curves_wuh_all_africa_", scenario,
                                  ".csv"),row.names=FALSE)
   
   # ratio of Wuhan exports to all other cities 
