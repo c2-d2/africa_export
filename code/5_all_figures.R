@@ -125,7 +125,7 @@ risk_all_cities_africa_line_weekly$destination_country<-ifelse(risk_all_cities_a
 line_plot<-ggplot(risk_all_cities_africa_line_weekly,
                   aes(x=as.Date(weeks), y=standardized_aggregated_num_exp_dest,
                       col=reorder(destination_country,standardized_aggregated_num_exp_dest)))+
-  geom_line()+
+  geom_line(show.legend = F)+
   scale_colour_manual(values=as.vector(polychrome(26)))+
   scale_x_date(breaks = seq(as.Date("2019-12-08"), as.Date("2020-02-29"), by="1 week"))+
   theme(axis.text.x = element_text(size=15,angle = 45, hjust = 1,family="sans"),
@@ -146,14 +146,14 @@ line_plot<-ggplot(risk_all_cities_africa_line_weekly,
         legend.key.size= unit(0.8, "cm"),
         legend.margin = margin(0,0,0,0, "cm"),
         legend.key.width = unit(1,"cm"))+
-  geom_vline(xintercept=as.Date('2020-01-12'),linetype='dotted')+
-  geom_vline(xintercept=as.Date('2020-02-12'),linetype='dotted')+
+  #geom_vline(xintercept=as.Date('2020-01-12'),linetype='dotted')+
+  #geom_vline(xintercept=as.Date('2020-02-12'),linetype='dotted')+
   ylab("Predicted number of imported cases")+ guides(col=guide_legend(nrow=4))
 
 line_plot$labels$colour<-"Country"
 line_plot
 #save(risk_all_cities_africa_line_weekly,file="risk_all_cities_africa_line_weekly.Rdata")
-ggsave("./figures/line_plot.pdf",width=20,height=10)
+ggsave("./figures/line_plot.pdf",width=20*0.6,height=6*0.6)
 
 # calculate the % of all cases that occurred during Jan 12 - February 2nd 
 date_range<-seq(as.Date('2020-01-12'),as.Date('2020-02-12'),by="day")
