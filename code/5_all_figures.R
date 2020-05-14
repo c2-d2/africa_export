@@ -281,7 +281,7 @@ ggplot(data=merged3)+ #geom_line( aes(x=date.y,y=prop_wuhan,col="Wuhan") )+
                                                  "Wuhan (high)"="magenta")) + 
   export_theme
 
-ggsave("ratio_plot.pdf")
+ggsave("./figures/ratio_plot.pdf")
 
 ### for African destinations
 merged_lower_afr <- read.csv(file="export_curves_wuh_all_africa_lower.csv")%>%
@@ -330,5 +330,5 @@ ggplot(data=merged3_afr)+ #geom_line( aes(x=date.y,y=prop_wuhan,col="Wuhan") )+
                                                  "Wuhan (high)"="magenta")) + 
   export_theme
 
-ggsave("ratio_plot_africa.pdf")
+ggsave("./figures/ratio_plot_africa.pdf")
 

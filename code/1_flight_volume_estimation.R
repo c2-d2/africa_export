@@ -266,7 +266,7 @@ daily_flights <- ggplot(data=(daily_volume_final), aes(x=flight_date, y=dailyvol
                 theme(text = element_text(size=20), axis.text.x = element_text(angle = 45, hjust = 1)) +
                 guides(fill=guide_legend(ncol=2))
 
-ggsave("./Figures and Results/Output/daily_estimated_flights.png", plot = daily_flights, width = 15, height = 8, units = c("in"), dpi = 300)
+ggsave("./figures/daily_estimated_flights.png", plot = daily_flights, width = 15, height = 8, units = c("in"), dpi = 300)
 
 
 #' 
@@ -289,7 +289,7 @@ african_countries <- ggplot(data=(daily_volume_africa), aes(x=flight_date, y=dai
                 theme(text = element_text(size=20), axis.text.x = element_text(angle = 45, hjust = 1)) +
                 guides(fill=guide_legend(ncol=2))
 
-ggsave("./Figures and Results/Output/african_countries_flights.png", plot = african_countries, width = 15, height = 8, units = c("in"), dpi = 300)
+ggsave("./figures/african_countries_flights.png", plot = african_countries, width = 15, height = 8, units = c("in"), dpi = 300)
 
 
 #' 

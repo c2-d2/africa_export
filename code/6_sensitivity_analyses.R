@@ -6,10 +6,10 @@
 library(reshape2)
 library(dplyr)
 
-setwd("~/Desktop/nCoV exports/prevalence data")
+#setwd("~/Desktop/nCoV exports/prevalence data")
 
-prev_all<-read.csv("main_all_prevalence.csv")
-prev_hubei<-read.csv("main_hubei_prevalence.csv")
+prev_all<-read.csv("./data/main_all_prevalence.csv")
+prev_hubei<-read.csv("./data/main_hubei_prevalence.csv")
 prev_data<-rbind(prev_all,prev_hubei[,1:length(prev_all)])
 
 prevalence_median_2<-prev_data[prev_data$var=='Prevalence of all infected individuals',]
@@ -28,7 +28,7 @@ prevalence_median_all_provinces_final_median_2<-
 ### ESTIMATING CITY-LEVEL PREVALENCE
 
 # read in popn size data
-popn_size_cities_all<-read.csv("popn_estimates_cities_china.csv")
+popn_size_cities_all<-read.csv("./data/popn_estimates_cities_china.csv")
 
 popn_size_select_cities<-popn_size_cities_all%>%
   subset(asciiname%in%c("Wuhan", "Beijing", "Shanghai", "Guangzhou", "Zhengzhou", "Tianjin",
@@ -46,7 +46,7 @@ popn_size_select_cities$province<-c('Hubei','Beijing','Shanghai','Guangdong','He
                                     'Tianjin','Zhejiang','Zhejiang','Hunan','Shaanxi','Jiangsu','Guangdong','Chongqing',
                                     'Jiangxi','Sichuan','Anhui','Fujian','Guangdong')
 
-popn_size_provinces<-read.csv("provinces_popn_size_statista.csv")
+popn_size_provinces<-read.csv("./data/provinces_popn_size_statista.csv")
 
 
 # merge province & population data at the city level 
@@ -92,10 +92,10 @@ prev_cities_scen_4$Scenario<-rep("Scenario 4",nrow(prev_cities_scen_4))
 ## Scenario 5 - prev scenario assuming 100% ascertainment rate
 prev_cities_scen_5<-data.frame(matrix(0,nrow=nrow(provinces_prev_popn_size_median),ncol=124))
 for (i in 1:nrow(prev_cities_scen_5)) {
-    scaled_prev<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)])*
-                      fraction_2[i])/(provinces_prev_popn_size_median$population[i])
-    prev_cities_scen_5[i,]<-scaled_prev
-  }
+  scaled_prev<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)])*
+                  fraction_2[i])/(provinces_prev_popn_size_median$population[i])
+  prev_cities_scen_5[i,]<-scaled_prev
+}
 
 prev_cities_scen_5<-cbind(provinces_prev_popn_size_median$asciiname,prev_cities_scen_5)
 colnames(prev_cities_scen_5)<-c("cities",paste0("day",1:124))
@@ -189,7 +189,7 @@ for (scenario in Scenarios){
   
   ## define scaling factor as the coefficient for risk_wuhan var
   scaling_factor<-exp(coefficients(reg_risk_wuhan)[[1]])
-
+  
   ############## Estimating risk in select African countries using subset of origin cities + Wuhan in China
   
   prevalence_all_cities_1<-prev_cities_i[,-c(1,126)]
@@ -253,7 +253,7 @@ for (scenario in Scenarios){
   colnames(risk_all_cities_africa_ALL)[1]<-"risk_importation"
   
   #bootstrap for each destination country in Africa
-  risk_PI<-boot_pi(reg_risk_wuhan, risk_all_cities_africa_step1,50000, 0.95)
+  risk_PI<-boot_pi(reg_risk_wuhan, risk_all_cities_africa_step1,50000, 0.95) # 50000
   risk_PI$destination_country<-risk_all_cities_africa_step1$destination_country
   colnames(risk_PI)<-c("num_exported","lower","upper","destination_country")
   
