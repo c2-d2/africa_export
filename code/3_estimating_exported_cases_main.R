@@ -3,7 +3,7 @@
 ## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
 ## Date: 12 May 2020
 
-setwd("~/Desktop/nCoV exports")
+#setwd("~/Desktop/nCoV exports")
 
 library(dplyr)
 library(reshape2)
@@ -31,7 +31,7 @@ dest_countries_africa_list<-c('Mauritius','Mauritania','South Africa','Kenya','E
 
 
 ## read in flight data
-flights<-read.csv("flights_adjusted_200506.csv")
+flights<-read.csv("./data/flights_adjusted_200506.csv")
 
 ## process flight data -- validation step
 colnames(flights)[2]<-"iata"
@@ -89,7 +89,9 @@ colnames(flights_date_all_cities)<-c("date","origin_city","destination_country",
 dest_countries_validation_list_df<-c('US','Australia','Canada','Rep  Korea','UK',
                                      'Netherlands','Sweden',
                                      'Germany','Spain','Singapore') 
-confirmed_cases_high_capacity_countries<-read.csv("who_imports.csv")
+#confirmed_cases_high_capacity_countries<-read.csv("./data/who_imports.csv")
+load("./data/epidata.Rdata")
+confirmed_cases_high_capacity_countries<-df
 confirmed_cases_final<-confirmed_cases_high_capacity_countries[confirmed_cases_high_capacity_countries$Country
                                                                %in%dest_countries_validation_list_df,]
 confirmed_cases_FINAL<-confirmed_cases_final[match(dest_countries_validation_list_df,confirmed_cases_final$Country),]
@@ -118,6 +120,7 @@ boot_pi <- function(model, pdata, n, p) {
 ########## Loop over prevalence data scenarios
 
 Scenarios<-c("Lower","Intermediate","Upper")
+Scenarios <- "Lower"
 
 scaling_factor_list<-c()
 num_cases_total_list<-c()
@@ -126,6 +129,7 @@ for (scenario in Scenarios) {
   ## read in prevalence data 
   prev_cities_i<-prev_all_scenarios_combined[prev_all_scenarios_combined$Scenario==scenario,]
   prevalence_wuhan<-prev_cities_i[prev_cities_i$cities=='Wuhan',colnames(prev_cities_i)!="Scenario"]
+  browser()
   prevalence_wuhan_final<-as.numeric(t(prevalence_wuhan))
   prevalence_wuhan_final<-prevalence_wuhan_final[is.na(prevalence_wuhan_final)==FALSE]
   prevalence_wuhan_final_2<-cbind.data.frame(dates_prev,prevalence_wuhan_final)
@@ -142,7 +146,7 @@ for (scenario in Scenarios) {
   prev_flight_wuhan_2<-merge(prevalence_wuhan_FINAL_2,flights_date_wuhan_2,by="date")
   
   ## export as CSV for calculating ratios
-  write.csv(prev_flight_wuhan_2,paste0("prev_flight_wuhan_2_", scenario, ".csv"),row.names=FALSE)
+  write.csv(prev_flight_wuhan_2,paste0("./out/prev_flight_wuhan_2_", scenario, ".csv"),row.names=FALSE)
 
   ## calculate # of exported cases in validation countries
   risk_wuhan<-prev_flight_wuhan%>%
@@ -218,7 +222,7 @@ for (scenario in Scenarios) {
 
   colnames(prev_flight_all_cities_FINAL_2)[3]<-"daily_prevalence"
 
-  write.csv(prev_flight_all_cities_FINAL_2,paste0("prev_flight_all_cities_FINAL_2_", scenario,
+  write.csv(prev_flight_all_cities_FINAL_2,paste0("./out/prev_flight_all_cities_FINAL_2_", scenario,
                                                  ".csv"),row.names=FALSE)
   
   ## estimated number of cases exported from all cities in China to destination countries
@@ -237,7 +241,7 @@ for (scenario in Scenarios) {
     mutate(`Number Exported`=num_exp_dest)%>%
     dplyr::select(`Destination Country`,`Number Exported`)
 
-  write.csv(risk_all_cities_africa_table,paste0("risk_all_cities_africa_table_", scenario,".csv"),
+  write.csv(risk_all_cities_africa_table,paste0("./out/risk_all_cities_africa_table_", scenario,".csv"),
            row.names=FALSE)
   
   ## bootstrapping CIs 
@@ -282,7 +286,7 @@ for (scenario in Scenarios) {
   colnames(LB_UB_fitted)<-c("Destination Country","Lower Bound","Mean predicted number",
                             "Upper bound")
   
-  write.csv(LB_UB_fitted,paste0("LB_UB_fitted_all_", scenario,".csv"),
+  write.csv(LB_UB_fitted,paste0("./out/LB_UB_fitted_all_", scenario,".csv"),
            row.names=FALSE)
 
   # estimate total number of exported cases
@@ -298,6 +302,6 @@ ggplot(poisson_table,aes(x=risk_importation,y=predicted_counts))+
   geom_line(size=1)+xlab("Predicted number of imported cases")+
   ylab("Scaled number of reported cases")
 
-ggsave("regression_fit_plot.pdf",
+ggsave("./figures/regression_fit_plot.pdf",
        width = 14, height = 10, units = "cm")
 
