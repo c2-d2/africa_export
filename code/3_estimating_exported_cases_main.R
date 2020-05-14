@@ -299,9 +299,12 @@ for (scenario in Scenarios) {
 poisson_table<-merge(confirmed_cases_FINAL,risk_wuhan_final,by="Country")
 poisson_table$predicted_counts <- predicted_counts_poisson
 
+
+
 ggplot(poisson_table,aes(x=risk_importation,y=predicted_counts))+
-  geom_point(aes(y=Cases_lm),alpha=0.5)+
-  geom_line(size=1)+xlab("Predicted number of imported cases")+
+  geom_line(size=1)+
+  geom_point(aes(y=risk_wuhan_confirmed_cases$confirmed_cases_scaled),alpha=0.5)+
+  xlab("Predicted number of imported cases")+
   ylab("Scaled number of reported cases")
 
 ggsave("./figures/regression_fit_plot.pdf",
