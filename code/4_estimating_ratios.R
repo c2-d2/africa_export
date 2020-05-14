@@ -3,7 +3,7 @@
 ## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
 ## Date: 12 May 2020
 
-setwd("~/Desktop/nCoV exports")
+#setwd("~/Desktop/nCoV exports")
 
 library(dplyr)
 library(stringr)
@@ -23,11 +23,11 @@ dest_countries_africa_list<-c('Mauritania','Mauritius','South Africa','Kenya','E
                               'Uganda','Mozambique','Seychelles','Cote D\'Ivoire')
 
 ## read in combined prevalence/flight data for Wuhan
-prev_flight_wuhan_lower<-read.csv("prev_flight_wuhan_2_Lower.csv")
+prev_flight_wuhan_lower<-read.csv("./out/prev_flight_wuhan_2_Lower.csv")
 prev_flight_wuhan_lower$Scenario<-rep("Lower",nrow(prev_flight_wuhan_lower))
-prev_flight_wuhan_intermediate<-read.csv("prev_flight_wuhan_2_Intermediate.csv")
+prev_flight_wuhan_intermediate<-read.csv("./out/prev_flight_wuhan_2_Intermediate.csv")
 prev_flight_wuhan_intermediate$Scenario<-rep("Intermediate",nrow(prev_flight_wuhan_intermediate))
-prev_flight_wuhan_upper<-read.csv("prev_flight_wuhan_2_Upper.csv")
+prev_flight_wuhan_upper<-read.csv("./out/prev_flight_wuhan_2_Upper.csv")
 prev_flight_wuhan_upper$Scenario<-rep("Upper",nrow(prev_flight_wuhan_upper))
 
 prev_flight_wuhan_ALL<-rbind(prev_flight_wuhan_lower,prev_flight_wuhan_intermediate,
