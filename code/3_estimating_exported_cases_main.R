@@ -91,6 +91,7 @@ dest_countries_validation_list_df<-c('US','Australia','Canada','Rep  Korea','UK'
                                      'Germany','Spain','Singapore') 
 #confirmed_cases_high_capacity_countries<-read.csv("./data/who_imports.csv")
 load("./data/epidata.Rdata")
+df %>% mutate( Country=ifelse(Country=="Sweeden", "Sweden",Country) ) -> df
 confirmed_cases_high_capacity_countries<-df
 confirmed_cases_final<-confirmed_cases_high_capacity_countries[confirmed_cases_high_capacity_countries$Country
                                                                %in%dest_countries_validation_list_df,]
@@ -120,7 +121,6 @@ boot_pi <- function(model, pdata, n, p) {
 ########## Loop over prevalence data scenarios
 
 Scenarios<-c("Lower","Intermediate","Upper")
-Scenarios <- "Lower"
 
 scaling_factor_list<-c()
 num_cases_total_list<-c()
@@ -129,8 +129,8 @@ for (scenario in Scenarios) {
   ## read in prevalence data 
   prev_cities_i<-prev_all_scenarios_combined[prev_all_scenarios_combined$Scenario==scenario,]
   prevalence_wuhan<-prev_cities_i[prev_cities_i$cities=='Wuhan',colnames(prev_cities_i)!="Scenario"]
-  browser()
-  prevalence_wuhan_final<-as.numeric(t(prevalence_wuhan))
+  
+  prevalence_wuhan_final<-as.numeric( t(prevalence_wuhan)[t(prevalence_wuhan)!="Wuhan"] )
   prevalence_wuhan_final<-prevalence_wuhan_final[is.na(prevalence_wuhan_final)==FALSE]
   prevalence_wuhan_final_2<-cbind.data.frame(dates_prev,prevalence_wuhan_final)
   colnames(prevalence_wuhan_final_2)<-c("date","prevalence")
@@ -264,7 +264,7 @@ for (scenario in Scenarios) {
   colnames(risk_all_cities_africa_ALL)[1]<-"risk_importation"
 
   #bootstrap for each destination country in Africa
-  risk_PI<-boot_pi(reg_risk_wuhan, risk_all_cities_africa_step1,50000, 0.95)
+  risk_PI<-boot_pi(reg_risk_wuhan, risk_all_cities_africa_step1,50000, 0.95) # 50000
   risk_PI$destination_country<-risk_all_cities_africa_step1$destination_country
   colnames(risk_PI)<-c("num_exported","lower","upper","destination_country")
 
@@ -294,8 +294,7 @@ for (scenario in Scenarios) {
   num_cases_total_list<-c(num_cases_total_list,num_cases_total)
 }
 poisson_table<-merge(confirmed_cases_FINAL,risk_wuhan_final,by="Country")
-poisson_table<-cbind.data.frame(poisson_table,predicted_counts_poisson)
-colnames(poisson_table)[length(poisson_table)]<-"predicted_counts"
+poisson_table$predicted_counts <- predicted_counts_poisson
 
 ggplot(poisson_table,aes(x=risk_importation,y=predicted_counts))+
   geom_point(aes(y=Cases_lm),alpha=0.5)+
