@@ -154,6 +154,29 @@ line_plot$labels$colour<-"Country"
 line_plot
 #save(risk_all_cities_africa_line_weekly,file="risk_all_cities_africa_line_weekly.Rdata")
 ggsave("./figures/line_plot.pdf",width=20*0.6,height=6*0.6)
+library(tidyverse)
+mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+mt %>% count(scenario)
+mt %>% count(asct_rate,scenario) %>% arrange(scenario)
+
+mt %>% 
+  # filter
+  filter(is_africa_d==1) %>% 
+  filter(scenario=="Scenario 1") %>% 
+  filter(date>"2019-11-01") %>% 
+  #
+  mutate( exp_risk=fvolume_od*prevalence_o*alpha ) %>% 
+  arrange( destination_country,date ) %>% # date, destination_country
+  group_by(date, destination_country) %>% summarise(exp_risk_daily=sum(exp_risk) ) %>% ungroup() %>% 
+  mutate( year=year(date),week=week(date) ) %>%
+  group_by( destination_country, year, week ) %>% 
+  mutate(n=n() ) %>%
+  filter( n==7 ) %>% 
+  mutate( exp_risk_weekly=mean(exp_risk_daily)) %>% slice(1) %>% 
+  ggplot( aes(x=date,y=exp_risk_weekly,
+              color=(destination_country) ) ) +
+  geom_line()
+  
 
 # calculate the % of all cases that occurred during Jan 12 - February 2nd 
 date_range<-seq(as.Date('2020-01-12'),as.Date('2020-02-12'),by="day")
