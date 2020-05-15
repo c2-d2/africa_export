@@ -183,12 +183,13 @@ mt %>%
   filter(is_africa_d==1) %>% 
   filter(scenario=="Scenario 1") %>% 
   filter(date>"2019-12-08") %>% summarise( mean(is.na(fvolume_od))  ) # 36.2 % missing values
+mt <- read_csv("./data/master_table.csv",guess_max = Inf)
 mt %>% 
   # filter
   filter(is_africa_d==1) %>% 
   filter(scenario=="Scenario 1") %>% 
   filter(date>"2019-12-08") %>% filter(is.na(fvolume_od)) %>% select(origin_city, destination_country, fvolume_od, date) %>% 
-  count(origin_city,destination_country) %>% print(n=Inf)
+  count(destination_country) %>% print(n=Inf)
 
 # calculate the % of all cases that occurred during Jan 12 - February 2nd 
 date_range<-seq(as.Date('2020-01-12'),as.Date('2020-02-12'),by="day")
