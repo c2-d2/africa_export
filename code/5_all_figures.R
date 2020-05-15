@@ -156,8 +156,8 @@ line_plot
 ggsave("./figures/line_plot.pdf",width=20*0.6,height=6*0.6)
 library(tidyverse)
 mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 mt %>% count(scenario)
-mt %>% count(asct_rate,scenario) %>% arrange(scenario)
 
 mt %>% 
   # filter
