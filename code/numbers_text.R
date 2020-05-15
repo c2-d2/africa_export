@@ -41,6 +41,15 @@ mt %>%
                 # by scenario
                 group_by(scenario) %>% 
                 summarise( sum=sum(imp_number) ) # 8.8 - 110
+# for individual countries
+mt %>% 
+                filter(is_africa_d==1) %>% 
+                mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+                # by scenario
+                group_by(destination_country,scenario) %>% 
+                summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
+                group_by(destination_country) %>% mutate( mean_pred= mean(sum) ) %>% 
+                arrange( desc(mean_pred) ) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
 
 
 # date range (for majority of case arrival) ---------------------------------
