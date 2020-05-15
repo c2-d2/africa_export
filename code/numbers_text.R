@@ -24,3 +24,28 @@ mt %>%
                 # by scenario
                 group_by(scenario) %>% 
                 summarise( sum=sum(imp_number) ) # 8.8 - 110
+
+
+# date range (for majority of case arrival) ---------------------------------
+mt %>% 
+                filter(is_africa_d==1) %>% 
+                #filter(scenario=="Scenario 1") %>% 
+                mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+                #
+                group_by(date,scenario) %>% 
+                summarise( sum_daily=sum(imp_number) ) %>% ungroup() %>% 
+                arrange( scenario,desc(sum_daily) ) %>% 
+                group_by(scenario) %>% 
+                #normalise
+                mutate( sum_daily=sum_daily/sum(sum_daily) ) %>% 
+                mutate( cumsum_daily=cumsum(sum_daily) ) %>% 
+                mutate( in_interval=as.numeric(cumsum_daily<=0.90) ) -> pf
+# visual inspection
+# pf %>% 
+#                 #
+#                 ggplot( aes(x=date,y=sum_daily, col=as.factor(in_interval)) ) +
+#                 geom_point(size=0.6) +
+#                 facet_wrap(~scenario,ncol=1)
+pf                 %>% filter( in_interval==1 ) %>% 
+                summarise( int_start=min(date),
+                           int_end=max(date))
