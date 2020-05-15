@@ -187,20 +187,87 @@ pf %>% filter( year=="2020" | week=="52"  ) %>%
 
 ggsave("./figures/line_plot2.pdf",width=8*0.85,height=1.8*0.85)
 
-  
-## check mssingness
+#
+mt %>% 
+  filter(is_africa_d==1) %>% 
+  #filter(scenario=="Scenario 1") %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  #
+  group_by(date,scenario) %>% 
+  summarise( sum_daily=sum(imp_number) ) %>% ungroup() %>% 
+  arrange( scenario,desc(sum_daily) ) %>% 
+  group_by(scenario) %>% 
+  #normalise
+  mutate( sum_daily=sum_daily/sum(sum_daily) ) %>% 
+  mutate( cumsum_daily=cumsum(sum_daily) ) %>% 
+  mutate( in_interval=as.numeric(cumsum_daily<=0.90) ) -> pf1
+pf1 %>% 
+  filter( in_interval==1 ) %>% 
+  summarise( int_start=min(date),
+             int_end=max(date)) -> pf_dates
+pf_dates %>% mutate( s_n=n():1  ) -> pf2
+#
+mscale <- 20
+pf %>% filter( year=="2020" | week=="52"  ) %>% 
+  ggplot( aes(x=date,y=exp_risk_weekly ) ) +
+  #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
+  geom_line(show.legend = F, col=NA) +
+  geom_segment( data=pf2, aes(y=s_n/mscale,yend=s_n/mscale, x=int_start, xend=int_end) ) +
+  export_theme +
+  theme( axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         axis.text.y = element_blank(),
+         axis.ticks.y = element_blank())
+ggsave("./figures/line_plot2_dates.pdf",width=8*0.85,height=1.8*0.85)
+
+
+
+mt %>% 
+  filter(scenario=="Scenario 1") %>% 
+  filter(destination_country=="Spain") %>%  # any 1 country
+  filter(date>"2019-11-01") %>% 
+  group_by(date) %>% summarise( pr_mean=mean(prevalence_o) ) %>% # 123
+  # make it weekly
+  mutate( year=year(date),week=week(date) ) %>%
+  group_by( year,week ) %>% 
+  arrange(date) %>% 
+  mutate(n=n() ) %>%
+  filter( n==7 ) %>% 
+  mutate( pr_mean_week=mean(pr_mean) ) %>% 
+  slice(  1  ) %>% ungroup() %>% 
+  mutate(pr_mean_week=pr_mean_week/max(pr_mean_week)) -> pf_pr
+#
 mt %>% 
   # filter
   filter(is_africa_d==1) %>% 
   filter(scenario=="Scenario 1") %>% 
-  filter(date>"2019-12-08") %>% summarise( mean(is.na(fvolume_od))  ) # 36.2 % missing values
-mt <- read_csv("./data/master_table.csv",guess_max = Inf)
-mt %>% 
-  # filter
-  filter(is_africa_d==1) %>% 
-  filter(scenario=="Scenario 1") %>% 
-  filter(date>"2019-12-08") %>% filter(is.na(fvolume_od)) %>% select(origin_city, destination_country, fvolume_od, date) %>% 
-  count(destination_country) %>% print(n=Inf)
+  filter(date>"2019-11-01") %>% 
+  group_by(date) %>% summarise( fv_sum=sum(fvolume_od) ) %>% 
+  mutate( year=year(date),week=week(date) ) %>% 
+  #
+  group_by( year,week ) %>% 
+  arrange(date) %>% 
+  mutate(n=n() ) %>%
+  filter( n==7 ) %>% 
+  mutate( fv_sum_week=sum(fv_sum) ) %>% 
+  slice(  1  ) %>% ungroup() %>% 
+  mutate(fv_sum_week=fv_sum_week/max(fv_sum_week)) -> pf_fly
+#
+pf_fly %>% filter( year=="2020" | week=="52"  ) %>% 
+  ggplot( aes(x=date,y=fv_sum_week ) ) +
+  #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
+  geom_line(linetype="dashed") +
+  geom_line( data=filter(pf_pr,year=="2020" | week=="52" ), aes(y=pr_mean_week), 
+             linetype="dotted" ) + 
+  export_theme +
+  theme( axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         axis.text.y = element_blank(),
+         axis.text.x = element_blank(),
+         axis.ticks.y = element_blank())
+ggsave("./figures/line_plot2_vol.pdf",width=8*0.85,height=1.05*0.85)
+
+
 
 # calculate the % of all cases that occurred during Jan 12 - February 2nd 
 date_range<-seq(as.Date('2020-01-12'),as.Date('2020-02-12'),by="day")
