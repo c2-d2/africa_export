@@ -1,5 +1,5 @@
 ## Generate master table
-
+library(tidyverse)
 ## Need all destinations
 destination_countries <- c("Spain", "United States", "Algeria", "Nigeria", "United Kingdom", 
   "Ethiopia", "Australia", "Netherlands", "Ghana", "New Zealand", 
@@ -44,7 +44,8 @@ table_key <- expand_grid(date=dates,origin_city=origin_cities, destination_count
 ############################
 ## Read in all prevalences
 ############################
-prev_cities <- read_csv("out/prev_all_scenarios_combined.csv") %>% select(-X1)
+prev_cities <- read_csv("out/prev_all_scenarios_combined.csv") #%>% select(-X1)
+prev_cities <- prev_cities %>% select(-X1)
 prev_cities_4_5 <- read_csv("out/prev_scenarios_4_5_combined.csv")
 
 prev_all <- bind_rows(prev_cities, prev_cities_4_5)
@@ -94,3 +95,11 @@ all_dat <- comb4 %>%
   rename(fvolume_od=daily_volume)
 
 write_csv(all_dat, "data/master_table.csv")
+
+## Get peak time by city
+all_dat %>% select(origin_city, date, prevalence_o, scenario) %>% 
+  distinct() %>% 
+  group_by(origin_city, scenario) %>% 
+  filter(prevalence_o == max(prevalence_o)) %>% 
+  pull(date) %>%
+  range()
