@@ -15,7 +15,24 @@ mt %>%
                 summarise( sum_force_imp=sum(force_imp) ) %>% ungroup() %>% 
                 #
                 pivot_wider(names_from = is_wuhan, values_from = sum_force_imp) %>% 
-                mutate( R=`0`/`1`) # 0 - 5.3
+                mutate( R=`0`/`1`,
+                        frac_W=`1`/(`1`+`0`),
+                        frac_nW=`0`/(`1`+`0`)) %>% 
+                select(-`0`,-`1`) # R: 0.5 - 5.33, frac_nW: 0.33 - 0.842
+
+# Africa Ratio and fraction Wuhan/non-Wuhan -----------------------------------------
+mt %>% 
+                filter(is_africa_d==1) %>% 
+                mutate( force_imp=prevalence_o*fvolume_od ) %>% 
+                # by scenario
+                group_by(is_wuhan,scenario) %>% 
+                summarise( sum_force_imp=sum(force_imp) ) %>% ungroup() %>% 
+                #
+                pivot_wider(names_from = is_wuhan, values_from = sum_force_imp) %>% 
+                mutate( R=`0`/`1`,
+                        frac_W=`1`/(`1`+`0`),
+                        frac_nW=`0`/(`1`+`0`)) %>% 
+                select(-`0`,-`1`) # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
 
 # total number of predicted cases for Africa ------------------------------
 mt %>% 
