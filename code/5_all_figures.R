@@ -174,9 +174,14 @@ mt %>%
   filter( n==7 ) %>% 
   mutate( exp_risk_weekly=mean(exp_risk_daily)) %>% slice(1) %>% ungroup() -> pf
 #
+pf %>% group_by( destination_country ) %>% 
+  summarise( sum=sum(exp_risk_weekly)  ) %>% 
+  arrange(desc(sum)) %>% slice(1:5) %>% pull(destination_country) -> top_5_c
+
 pf %>% filter( year=="2020" | week=="52"  ) %>% 
+  mutate( destination_country_new=ifelse(destination_country%in%top_5_c,destination_country,"other") ) %>% 
   ggplot( aes(x=date,y=exp_risk_weekly,
-              color=(destination_country) ) ) +
+              color=(destination_country_new), group=destination_country ) ) +
   #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
   geom_line(show.legend = F) +
   export_theme +
@@ -268,6 +273,32 @@ pf_fly %>% filter( year=="2020" | week=="52"  ) %>%
 ggsave("./figures/line_plot2_vol.pdf",width=8*0.85,height=1.05*0.85)
 
 
+# proportion over time ----------------------------------------------------
+mt %>% 
+  # filter
+  filter(is_global_d==1) %>% 
+  filter(date>"2019-11-01") %>% 
+  mutate( force_imp=prevalence_o*fvolume_od ) %>% 
+  # 
+  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
+  mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
+  # by scenario and week
+  group_by(is_wuhan,scenario,year,week) %>% 
+  arrange(date) %>% 
+  mutate(n=n()) %>% 
+  filter( n==7 ) %>% 
+  mutate( force_imp_week=sum(force_imp_day) ) %>% 
+  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  #
+  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
+  mutate( prop_wuhan=`1`/(`1`+`0`) ) %>% 
+  dplyr::select(-`1`,-`0`) -> pf_probt
+pf_probt %>% print(n=Inf)
+pf_probt %>% ggplot( aes(x=date,y=prop_wuhan,group=scenario)  )+
+  geom_line( )
+
+
+
 
 # calculate the % of all cases that occurred during Jan 12 - February 2nd 
 date_range<-seq(as.Date('2020-01-12'),as.Date('2020-02-12'),by="day")
@@ -345,7 +376,7 @@ stacked_bar_plot<-ggplot(risk_all_cities_africa_chinese_cities,
 stacked_bar_plot$labels$fill<-"Origin City"
 stacked_bar_plot
 
-ggsave("./figures/stacked_bar_plot.pdf")
+ggsave("./figures/stacked_bar_plot.pdf",width=8*0.85,height=4)
 
 ## ratio plot - code courtesy of Rene Niehus
 ### for all destinations
