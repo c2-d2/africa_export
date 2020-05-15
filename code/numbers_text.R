@@ -74,7 +74,7 @@ mt %>%
 #                 facet_wrap(~scenario,ncol=1)
 pf                 %>% filter( in_interval==1 ) %>% 
                 summarise( int_start=min(date),
-                           int_end=max(date))
+                           int_end=max(date)) 
 
 # Prevalence estimates for the 5 scenarios --------------------------------
 prevalence_dat <- mt %>% 
