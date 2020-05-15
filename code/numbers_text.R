@@ -24,3 +24,47 @@ mt %>%
                 # by scenario
                 group_by(scenario) %>% 
                 summarise( sum=sum(imp_number) ) # 8.8 - 110
+
+
+# Prevalence estimates for the 5 scenarios --------------------------------
+prevalence_dat <- mt %>% 
+  select(origin_city, scenario, date, prevalence_o) %>% 
+  distinct()
+
+## Peak time overall
+prevalence_dat %>%
+  group_by(origin_city, scenario) %>%
+  filter(prevalence_o == max(prevalence_o)) %>%
+  group_by(scenario) %>%
+  summarise(min_date=min(date),
+            max_date=max(date)) 
+
+## Peak prevalence in Jiaxing
+prevalence_dat %>%
+  filter(origin_city == "Jiaxing") %>%
+  group_by(scenario) %>%
+  filter(prevalence_o == max(prevalence_o)) %>%
+  mutate(prevalence_percentage = prevalence_o * 100) %>%
+  ungroup() %>%
+  summarise(min_prev = min(prevalence_percentage),
+            max_prev = max(prevalence_percentage))
+
+## Peak prevalence in Shanghai
+prevalence_dat %>%
+  filter(origin_city == "Shanghai") %>%
+  group_by(scenario) %>%
+  filter(prevalence_o == max(prevalence_o)) %>%
+  mutate(prevalence_percentage = prevalence_o * 100) %>%
+  ungroup() %>%
+  summarise(min_prev = min(prevalence_percentage),
+            max_prev = max(prevalence_percentage))
+
+## Peak prevalence in Tianjin
+prevalence_dat %>%
+  filter(origin_city == "Tianjin") %>%
+  group_by(scenario) %>%
+  filter(prevalence_o == max(prevalence_o)) %>%
+  mutate(prevalence_percentage = prevalence_o * 100) %>%
+  ungroup() %>%
+  summarise(min_prev = min(prevalence_percentage),
+            max_prev = max(prevalence_percentage))
