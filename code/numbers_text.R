@@ -92,4 +92,3 @@ prevalence_dat %>%
   ungroup() %>%
   summarise(min_prev = min(prevalence_percentage),
             max_prev = max(prevalence_percentage))
->>>>>>> 782beab6799cc4f9e4938e0856c8facc0225b3ee
