@@ -172,10 +172,21 @@ mt %>%
   group_by( destination_country, year, week ) %>% 
   mutate(n=n() ) %>%
   filter( n==7 ) %>% 
-  mutate( exp_risk_weekly=mean(exp_risk_daily)) %>% slice(1) %>% 
+  mutate( exp_risk_weekly=mean(exp_risk_daily)) %>% slice(1) %>% ungroup() -> pf
+#
+pf %>% filter( year=="2020" | week=="52"  ) %>% 
   ggplot( aes(x=date,y=exp_risk_weekly,
               color=(destination_country) ) ) +
-  geom_line()
+  #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
+  geom_line(show.legend = F) +
+  export_theme +
+  theme( axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         axis.text.y = element_blank(),
+         axis.ticks.y = element_blank())
+
+ggsave("./figures/line_plot2.pdf",width=8*0.85,height=1.8*0.85)
+
   
 ## check mssingness
 mt %>% 
