@@ -1,7 +1,7 @@
 # compute numbers for text
 mt <- read_csv("./data/master_table.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
-
+# look at variable
 mt %>% glimpse()
 
 ## global Ratio Wuhan/non-Wuhan
