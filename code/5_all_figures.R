@@ -20,6 +20,7 @@ library(ggthemes)
 library(ggpubr)
 library(stringr)
 library(pals)
+library(lubridate)
 
 # plot theme, courtesy of James Hay
 export_theme <- theme_tufte() + 
@@ -184,6 +185,13 @@ pf %>% filter( year=="2020" | week=="52"  ) %>%
               color=(destination_country_new), group=destination_country ) ) +
   #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
   geom_line(show.legend = F) +
+  # colours from : https://davidmathlogic.com/colorblind/#%23332288-%23117733-%2344AA99-%2388CCEE-%23DDCC77-%23CC6677-%23AA4499-%23882255
+  scale_color_manual(values=c("Egypt"="#332288",
+                              "South Africa"="#117733",
+                              "Ethiopia"="#88CCEE",
+                              "Kenya"="#DDCC77",
+                              "Morocco"="#CC6677",
+                              "other"="lightgrey")) +
   export_theme +
   theme( axis.title.x = element_blank(),
          axis.title.y = element_blank(),
@@ -278,7 +286,7 @@ mt %>%
   # filter
   filter(is_global_d==1) %>% 
   filter(date>"2019-11-01") %>% 
-  mutate( force_imp=prevalence_o*fvolume_od ) %>% 
+  mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
   # 
   group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
   mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
@@ -291,11 +299,71 @@ mt %>%
   slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
   #
   pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
-  mutate( prop_wuhan=`1`/(`1`+`0`) ) %>% 
-  dplyr::select(-`1`,-`0`) -> pf_probt
-pf_probt %>% print(n=Inf)
-pf_probt %>% ggplot( aes(x=date,y=prop_wuhan,group=scenario)  )+
-  geom_line( )
+  set_names( "date", "scenario", "non_W" , "W"  ) %>% 
+  mutate( tot_imp=(W+non_W),
+          min_tot_imp=min(tot_imp[tot_imp!=0]),
+          prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
+  dplyr::select(-W,-non_W) -> pf_probt
+# from where to start
+pf_probt %>% 
+  group_by( scenario ) %>% 
+  mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
+  filter(prob_1>0.01) %>% ungroup() -> pf_probt
+pf_probt %>% group_by(date) %>% 
+  mutate( n=n() ) %>% 
+  mutate( prob_W_lower=min(prop_wuhan),
+          prob_W_upper=max(prop_wuhan)) %>% 
+  filter(n==5) -> pf_probt_rib
+#
+pf_probt_rib %>% ggplot( aes(x=date)  )+
+  geom_ribbon( aes(ymin=prob_W_lower,ymax=prob_W_upper) , fill="#473F44",alpha=0.5 ) +
+  geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
+  export_theme +
+  theme( axis.title.x = element_blank())
+ggsave("./figures/frac_time_plot.pdf",width=4*0.85,height=2)
+
+# proportion import - africa ----------------------------------------------
+mt %>% 
+  # filter
+  filter(is_africa_d==1) %>% 
+  filter(date>"2019-11-01") %>% 
+  mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
+  # 
+  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
+  mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
+  # by scenario and week
+  group_by(is_wuhan,scenario,year,week) %>% 
+  arrange(date) %>% 
+  mutate(n=n()) %>% 
+  filter( n==7 ) %>% 
+  mutate( force_imp_week=sum(force_imp_day) ) %>% 
+  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  #
+  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
+  set_names( "date", "scenario", "non_W" , "W"  ) %>% 
+  mutate( tot_imp=(W+non_W),
+          min_tot_imp=min(tot_imp[tot_imp!=0]),
+          prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
+  dplyr::select(-W,-non_W) -> pf_probt
+# from where to start
+pf_probt %>% 
+  group_by( scenario ) %>% 
+  mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
+  filter(prob_1>0.01) %>% ungroup() -> pf_probt
+pf_probt %>% group_by(date) %>% 
+  mutate( n=n() ) %>% 
+  mutate( prob_W_lower=min(prop_wuhan),
+          prob_W_upper=max(prop_wuhan)) %>% 
+  filter(n==5) -> pf_probt_rib
+#
+pf_probt_rib %>% ggplot( aes(x=date)  )+
+  geom_ribbon( aes(ymin=prob_W_lower,ymax=prob_W_upper) , fill="#473F44",alpha=0.5 ) +
+  geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
+  export_theme +
+  theme( axis.title.x = element_blank())
+ggsave("./figures/frac_time_plot_africa.pdf",width=4*0.85,height=2)
+
+
 
 
 
@@ -362,21 +430,24 @@ risk_all_cities_africa_chinese_cities$destination_country<-
   ifelse(risk_all_cities_africa_chinese_cities$destination_country=='Congo (Kinshasa)',
          "Democratic Republic of Congo",
          as.character(risk_all_cities_africa_chinese_cities$destination_country))
-
-stacked_bar_plot<-ggplot(risk_all_cities_africa_chinese_cities,
+# shorten DRC 
+risk_all_cities_africa_chinese_cities %>% ungroup() %>% 
+  mutate( destination_country=ifelse(destination_country=="Democratic Republic of Congo",
+                                     "DRC",destination_country) ) -> pf_risk_all_cities
+order_countries[order_countries=="Democratic Republic of Congo"] <- "DRC"
+stacked_bar_plot<-ggplot(pf_risk_all_cities,
                          aes(x=factor(destination_country,levels=order_countries),y=fraction,
                              fill=factor(origin_city,levels=prev_order)))+
   scale_fill_manual(values=as.vector(polychrome(26)))+
-  geom_bar(position="stack",stat="identity")+
-  ylab("Proportion of imported cases")+
-  xlab("Destination Country")+
-  export_theme +
-  theme(legend.position="bottom")
+  geom_bar(position="stack",stat="identity",show.legend = F)+
+  ylab("")+ # Proportion of imported cases
+  xlab("")+ # Destination Country
+  export_theme # + theme(legend.position=NULL)
 
 stacked_bar_plot$labels$fill<-"Origin City"
 stacked_bar_plot
 
-ggsave("./figures/stacked_bar_plot.pdf",width=8*0.85,height=4)
+ggsave("./figures/stacked_bar_plot.pdf",width=6.8*0.9,height=2.8*0.9)
 
 ## ratio plot - code courtesy of Rene Niehus
 ### for all destinations
