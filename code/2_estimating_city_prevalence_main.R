@@ -118,3 +118,4 @@ colnames(prev_all_scenarios_combined)<-c("cities",paste0("day",1:124))
 prev_all_scenarios_combined$Scenario<-c(rep("Lower",26),rep("Intermediate",26),
                                               rep("Upper",26))
 write.csv(prev_all_scenarios_combined,"./out/prev_all_scenarios_combined.csv")
+

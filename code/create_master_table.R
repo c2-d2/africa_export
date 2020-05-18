@@ -44,9 +44,9 @@ table_key <- expand_grid(date=dates,origin_city=origin_cities, destination_count
 ############################
 ## Read in all prevalences
 ############################
-prev_cities <- read_csv("out/prev_all_scenarios_combined.csv") #%>% select(-X1)
-prev_cities <- prev_cities %>% select(-X1)
-prev_cities_4_5 <- read_csv("out/prev_scenarios_4_5_combined.csv")
+prev_cities <- read_csv("./out/prev_all_scenarios_combined.csv") #%>% select(-X1)
+prev_cities <- prev_cities %>% dplyr::select(-X1)
+prev_cities_4_5 <- read_csv("./out/prev_scenarios_4_5_combined.csv")
 
 prev_all <- bind_rows(prev_cities, prev_cities_4_5)
 prev_all <- prev_all %>% pivot_longer(-c("cities","Scenario"))
