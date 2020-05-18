@@ -92,10 +92,12 @@ colnames(flights_date_all_cities)<-c("date","origin_city","destination_country",
 dest_countries_validation_list_df<-c('US','Australia','Canada','Rep  Korea','UK',
                                      'Netherlands','Sweden',
                                      'Germany','Spain','Singapore') 
-#confirmed_cases_high_capacity_countries<-read.csv("./data/who_imports.csv")
-load("./data/epidata.Rdata")
-df %>% mutate( Country=ifelse(Country=="Sweeden", "Sweden",Country) ) -> df
-confirmed_cases_high_capacity_countries<-df
+
+confirmed_cases_high_capacity_countries<-read.csv("./data/who_imports.csv")
+#load("./data/epidata.Rdata")
+#df %>% mutate( Country=ifelse(Country=="Sweeden", "Sweden",Country) ) -> df
+#confirmed_cases_high_capacity_countries<-df
+
 confirmed_cases_final<-confirmed_cases_high_capacity_countries[confirmed_cases_high_capacity_countries$Country
                                                                %in%dest_countries_validation_list_df,]
 confirmed_cases_FINAL<-confirmed_cases_final[match(dest_countries_validation_list_df,confirmed_cases_final$Country),]
