@@ -1,19 +1,36 @@
 # load confirmed cases from all over the world
 
+# run create_master_table.R first
+
 #these libraries need to be loaded
 library(utils)
 library(tidyverse)
 library(lubridate)
 data <- read.csv("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv", na.strings = "", fileEncoding = "UTF-8-BOM")
 data %>% glimpse()
-
 #
 data %>% 
                 mutate( dateRep=dmy(dateRep),
                         countriesAndTerritories=as.character(countriesAndTerritories)) %>% 
                 select(year,month,day,dateRep,continentExp,countriesAndTerritories,popData2018, 
                        cases,deaths) %>% as_tibble() -> df
-                
+
+# for case counts from Wuhan
+df %>% mutate( countriesAndTerritories=ifelse( countriesAndTerritories=="United_States_of_America","United States",countriesAndTerritories ),
+                 countriesAndTerritories=ifelse( countriesAndTerritories=="United_Kingdom","United Kingdom",countriesAndTerritories ),
+                 countriesAndTerritories=ifelse(countriesAndTerritories=="South_Korea","Korea (South)",countriesAndTerritories )) -> df_names
+
+df_names %>% count(countriesAndTerritories) %>% pull(countriesAndTerritories) ->countr_ecdc 
+
+glimpse(df_names)
+df_names %>% select(dateRep, cases,countriesAndTerritories ) %>% 
+                filter(countriesAndTerritories%in%highsurv_countries ) %>% 
+                arrange( countriesAndTerritories,dateRep ) %>% 
+                #
+                group_by(countriesAndTerritories) %>% 
+                filter( dateRep<= "2020-02-04" ) %>% summarise( sum=sum(cases) ) %>% print(n=Inf)
+
+
 #
 df %>% 
                 filter(continentExp =="Africa") %>% 
