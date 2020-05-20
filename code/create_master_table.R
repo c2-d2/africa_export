@@ -76,6 +76,15 @@ ascertainment_rates <- tibble(scenario=c("Scenario 1", "Scenario 2", "Scenario 3
 alphas <- tibble(scenario=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5"),
                  alpha=c(1.522779, 2.412217, 1.597522, 1.522779, 1.522779))
 
+
+############################
+## has detected cases
+############################
+load(file="./out/hasdetected.Rdata")
+african_countries %>% length() # 26
+dates %>% length() # 124
+df_hasdetected %>% filter( destination_country%in%african_countries ) -> df_hasdetected
+
 ############################
 ## Combine all
 ############################
@@ -93,7 +102,9 @@ all_dat <- comb4 %>%
          is_africa_d=ifelse(destination_country %in% african_countries, 1, 0),
          is_global_d=ifelse(destination_country %in% global_countries, 1, 0),
          is_highsurv_d=ifelse(destination_country %in% highsurv_countries, 1, 0)) %>%
-  rename(fvolume_od=daily_volume)
+  rename(fvolume_od=daily_volume) %>% 
+  left_join( df_hasdetected, by=c("destination_country","date") ) %>% 
+  mutate( has_detected_d=ifelse( ( is_africa_d==1 & is.na(has_detected_d) ),0,has_detected_d  ) ) 
 
 write_csv(all_dat, "data/master_table.csv")
 
