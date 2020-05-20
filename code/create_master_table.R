@@ -54,6 +54,7 @@ prev_all$name <- dates[prev_all$name]
 colnames(prev_all) <- c("origin_city","scenario","date","prevalence_o")
 scenario_key <- c("Intermediate"="Scenario 1","Lower"="Scenario 2", "Upper"="Scenario 3", "Scenario 4"="Scenario 4","Scenario 5"="Scenario 5")
 prev_all$scenario <- scenario_key[prev_all$scenario]
+prev_all <- prev_all %>% distinct()
 
 ############################
 ## Get all flight data
@@ -98,8 +99,11 @@ write_csv(all_dat, "data/master_table.csv")
 
 ## Get peak time by city
 all_dat %>% select(origin_city, date, prevalence_o, scenario) %>% 
-  distinct() %>% 
   group_by(origin_city, scenario) %>% 
   filter(prevalence_o == max(prevalence_o)) %>% 
   pull(date) %>%
   range()
+
+
+  
+  
