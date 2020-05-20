@@ -220,12 +220,12 @@ pf1 %>%
              int_end=max(date)) -> pf_dates
 pf_dates %>% mutate( s_n=n():1  ) -> pf2
 #
-mscale <- 20
+mscale <- 12
 pf %>% filter( year=="2020" | week=="52"  ) %>% 
   ggplot( aes(x=date,y=exp_risk_weekly ) ) +
   #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
   geom_line(show.legend = F, col=NA) +
-  geom_segment( data=pf2, aes(y=s_n/mscale,yend=s_n/mscale, x=int_start, xend=int_end) ) +
+  geom_segment( data=pf2, aes(y=s_n/mscale-0.3,yend=s_n/mscale-0.3, x=int_start, xend=int_end) ) +
   export_theme +
   theme( axis.title.x = element_blank(),
          axis.title.y = element_blank(),
