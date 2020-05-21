@@ -138,7 +138,8 @@ mt %>%
                                             lower=range(sum)[1],
                                             upper=range(sum)[2]) %>% 
   slice(1) %>% 
-  arrange( desc(mean_pred) ) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
+  arrange( desc(mean_pred) ) %>% 
+  select(-scenario,-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
 
 ############################
 ## date range (for majority of case arrival)
