@@ -1,22 +1,33 @@
 library(tidyverse)
+library(lubridate)
 #library(tidylog) # have it on when writing new pipes, otherwise overload with messages
 
-# compute numbers for text
+############################
+## Load the master table
+############################
 mt <- read_csv("./data/master_table.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
-# look at variables
 mt %>% glimpse()
 
 
-# alpha -------------------------------------------------------------------
-mt %>% group_by(scenario) %>% summarise(alpha_m=mean(alpha) ) %>% mutate(alpha_mean=mean(alpha_m))
+############################
+## alpha
+############################
+mt %>% group_by(scenario) %>% 
+  summarise(alpha_m=mean(alpha) ) %>% print() %>% 
+  #
+  summarise(alpha_mean=mean(alpha_m),
+            alpha_lower=min(alpha_m),
+            alpha_upper=max(alpha_m),) # 1.72; 1.52-2.41
+# from manuscript
+# each unit force of importation predicts 1.72 (range: 1.52 - 2.4) imported cases
 
-
-
-# global Ratio Wuhan/non-Wuhan --------------------------------------------
+############################
+## global Ratio Wuhan/non-Wuhan
+############################
 mt %>% 
-  filter(is_global_d==1) %>% 
-  mutate( force_imp=prevalence_o*fvolume_od ) %>% 
+  filter(is_global_d==1) %>% # removed 69%
+  mutate( force_imp=prevalence_o*fvolume_od ) %>% # 0% NA
   # by scenario
   group_by(is_wuhan,scenario) %>% 
   summarise( sum_force_imp=sum(force_imp) ) %>% ungroup() %>% 
@@ -26,9 +37,24 @@ mt %>%
   mutate( R=non_W/W,
           frac_W=W/(W+non_W),
           frac_nW=non_W/(W+non_W)) %>% 
-  select(-non_W,-W) %>% mutate(R_mean=mean(R),frac_W_mean=mean(frac_W),frac_nW_mean=mean(frac_nW) )   # R: 0.5 - 5.33, frac_nW: 0.33 - 0.842
+  select(-non_W,-W) %>% print() %>% 
+  #
+  summarise( R_mean=mean(R),
+          R_lower=range(R)[1],
+          R_upper=range(R)[2],
+          frac_W_mean=mean(frac_W),
+          frac_W_lower=range(frac_W)[1],
+          frac_W_lower=range(frac_W)[1],
+          frac_nW_mean=mean(frac_nW),
+          frac_nW_lower=min(frac_nW),
+          frac_nW_upper=max(frac_nW) ) # R: 2.05;0.33-3.56 # frac_nW: 0.569;0.249-0.781
+# from manuscript
+# for every case from Wuhan imported globally, there may have been 2.05 (range: 0.3 - 3.6) imported
+# so that those cities contributed 57% (25% - 78%) of all case imports
 
-# Africa Ratio and fraction Wuhan/non-Wuhan -----------------------------------------
+############################
+## Africa Ratio Wuhan/non-Wuhan
+############################
 mt %>% 
   filter(is_africa_d==1) %>% 
   mutate( force_imp=prevalence_o*fvolume_od ) %>% 
@@ -41,24 +67,50 @@ mt %>%
   mutate( R=non_W/W,
           frac_W=W/(W+non_W),
           frac_nW=non_W/(W+non_W)) %>% 
-  select(-non_W,-W) %>% mutate(R_mean=mean(R),frac_W_mean=mean(frac_W),frac_nW_mean=mean(frac_nW) )  # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
+  select(-non_W,-W) %>% print() %>% 
+  #
+  summarise( R_mean=mean(R),
+             R_lower=range(R)[1],
+             R_upper=range(R)[2],
+             frac_W_mean=mean(frac_W),
+             frac_W_lower=range(frac_W)[1],
+             frac_W_lower=range(frac_W)[1],
+             frac_nW_mean=mean(frac_nW) )  # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
 
-# total number of predicted cases for Africa ------------------------------
+############################
+## total number of predicted cases for Africa
+############################
 mt %>% 
   filter(is_africa_d==1) %>% 
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
   # by scenario
   group_by(scenario) %>% 
-  summarise( sum=sum(imp_number) ) %>% mutate(sum_mean=mean(sum)) # 8.8 - 110
-# prior to first detection 
+  summarise( sum=sum(imp_number) ) %>% print() %>% 
+  summarise(sum_mean=mean(sum),
+            sum_lower=min(sum),
+            sum_upper=max(sum)) # 45.2;13.6-73.7
+# from manuscript
+
+
+##
+### prior to first detection 
+##
 mt %>% 
   filter(is_africa_d==1) %>% 
   filter(has_detected_d==0) %>% 
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
   # by scenario
   group_by(scenario) %>% 
-  summarise( sum=sum(imp_number) ) %>% mutate( sum_mean=mean(sum)  ) # 8.8 - 110
-# proportion prior
+  summarise( sum=sum(imp_number) ) %>% print() %>% 
+  summarise(sum_mean=mean(sum),
+            sum_lower=min(sum),
+            sum_upper=max(sum)) # 44.8;13.6-73.0
+# from manuscript
+
+
+##
+### proportion prior
+##
 mt %>% 
   filter(is_africa_d==1) %>% 
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
@@ -68,9 +120,14 @@ mt %>%
   pivot_wider(names_from = has_detected_d,
               values_from = sum) %>% 
   set_names("scenario","prior","after") %>% 
-  mutate(prop_prior=prior/(prior+after)) %>% mutate(prop_prior=mean(prop_prior))
+  mutate(prop_prior=prior/(prior+after)) %>% mutate(prop_prior=mean(prop_prior)) %>% ungroup() %>% print() %>% 
+  summarise( mean_prop=mean(prop_prior),
+             pro_lower=min(prop_prior),
+             pro_upper=max(prop_prior) )
 
-# for individual countries
+##
+### for individual countries
+##
 mt %>% 
   filter(is_africa_d==1) %>% 
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
@@ -83,8 +140,9 @@ mt %>%
   slice(1) %>% 
   arrange( desc(mean_pred) ) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
 
-
-# date range (for majority of case arrival) ---------------------------------
+############################
+## date range (for majority of case arrival)
+############################
 mt %>% 
   filter(is_africa_d==1) %>% 
   #filter(scenario=="Scenario 1") %>% 
@@ -108,12 +166,16 @@ pf                 %>% filter( in_interval==1 ) %>%
   summarise( int_start=min(date),
              int_end=max(date)) 
 
-# Prevalence estimates for the 5 scenarios --------------------------------
+############################
+## Prevalence estimates for the 5 scenarios
+############################
 prevalence_dat <- mt %>% 
   select(origin_city, scenario, date, prevalence_o) %>% 
   distinct()
 
+############################
 ## Peak time overall
+############################
 prevalence_dat %>%
   group_by(origin_city, scenario) %>%
   filter(prevalence_o == max(prevalence_o)) %>%
@@ -121,7 +183,9 @@ prevalence_dat %>%
   summarise(min_date=min(date),
             max_date=max(date)) 
 
+############################
 ## Peak prevalence in Jiaxing
+############################
 prevalence_dat %>%
   filter(origin_city == "Jiaxing") %>%
   group_by(scenario) %>%
@@ -131,7 +195,9 @@ prevalence_dat %>%
   summarise(min_prev = min(prevalence_percentage),
             max_prev = max(prevalence_percentage))
 
+############################
 ## Peak prevalence in Shanghai
+############################
 prevalence_dat %>%
   filter(origin_city == "Shanghai") %>%
   group_by(scenario) %>%
@@ -141,7 +207,9 @@ prevalence_dat %>%
   summarise(min_prev = min(prevalence_percentage),
             max_prev = max(prevalence_percentage))
 
+############################
 ## Peak prevalence in Tianjin
+############################
 prevalence_dat %>%
   filter(origin_city == "Tianjin") %>%
   group_by(scenario) %>%
