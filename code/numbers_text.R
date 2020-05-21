@@ -47,10 +47,10 @@ mt %>%
           frac_W_lower=range(frac_W)[1],
           frac_nW_mean=mean(frac_nW),
           frac_nW_lower=min(frac_nW),
-          frac_nW_upper=max(frac_nW) ) # R: 2.05;0.33-3.56 # frac_nW: 0.569;0.249-0.781
+          frac_nW_upper=max(frac_nW) ) # R: 1.96;0.32-3.39 # frac_nW: 0.569;0.249-0.781
 # from manuscript
-# for every case from Wuhan imported globally, there may have been 2.05 (range: 0.3 - 3.6) imported
-# so that those cities contributed 57% (25% - 78%) of all case imports
+# for every case from Wuhan imported globally, there may have been 1.96 (range: 0.3 - 3.4) imported cases from other large Chinese cities
+# so that those cities contributed 57% (24% - 77%) of all case imports
 
 ############################
 ## Africa Ratio Wuhan/non-Wuhan
@@ -166,6 +166,19 @@ mt %>%
 pf                 %>% filter( in_interval==1 ) %>% 
   summarise( int_start=min(date),
              int_end=max(date)) 
+
+############################
+## understimation
+############################
+# wuhan detected / all wuhan
+1/2.8
+# all china / all wuhan
+
+
+# 1 wuhan detected / 2.8 wuhan real / 2.8*1.96 call of china real
+1- 1/(2.8+2.8*1.96) # fraction missed
+1- 1/(2.8+2.8*0.32) # fraction missed - lower
+1- 1/(2.8+2.8*3.39) # fraction missed - upper
 
 ############################
 ## Prevalence estimates for the 5 scenarios

@@ -51,6 +51,11 @@ df2             %>% group_by( destination_country ) %>%
                 select(-cases,-cases_cumsum) %>% ungroup() -> df_hasdetected
 save( df_hasdetected, file="./out/hasdetected.Rdata" )
 
+############################
+## cases in africa
+############################
+df2 %>% filter( destination_country%in%african_countries ) %>% 
+                group_by(destination_country) %>% summarise( sum=sum(cases),date=max(date) ) %>% print(n=Inf)
                
                 
 # for case counts from Wuhan
