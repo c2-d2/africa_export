@@ -15,6 +15,36 @@ data %>%
                 select(year,month,day,dateRep,continentExp,countriesAndTerritories,popData2018, 
                        cases,deaths) %>% as_tibble() -> df
 
+############################
+## all current cases
+############################
+df %>% summarise( sum(cases) )
+df %>% filter(countriesAndTerritories=="China") %>% summarise( sum(cases) )
+
+df %>% filter(continentExp=="Africa") %>% summarise( sum(cases) )
+df %>% filter(continentExp=="Africa") %>% count(countriesAndTerritories)
+
+df %>% filter(cases!=0) %>%  count(countriesAndTerritories)
+
+# create has_detected_d ---------------------------------------------------
+df %>% 
+                select( dateRep,countriesAndTerritories,cases ) %>% 
+                rename( date=dateRep, destination_country=countriesAndTerritories ) %>% 
+                complete( date, nesting(destination_country ), fill=list(cases=0) ) %>% 
+                arrange( destination_country, date ) %>% 
+                mutate(destination_country=ifelse(destination_country=="South_Africa","South Africa",destination_country),
+                       destination_country=ifelse(destination_country=="United_Republic_of_Tanzania","Tanzania",destination_country),
+                       destination_country=ifelse(destination_country=="Democratic_Republic_of_the_Congo","Congo (Kinshasa)",destination_country),
+                       destination_country=ifelse(destination_country=="Equatorial_Guinea","Equatorial Guinea",destination_country),
+                       destination_country=ifelse(destination_country=="Cote_dIvoire","Cote D'Ivoire",destination_country)) %>% 
+                group_by( destination_country ) %>% 
+                mutate( cases_cumsum=cumsum(cases) ) %>% 
+                mutate( has_detected_d = as.numeric(cases_cumsum!=0) ) %>% 
+                select(-cases,-cases_cumsum) %>% ungroup() -> df_hasdetected
+save( df_hasdetected, file="./out/hasdetected.Rdata" )
+
+               
+                
 # for case counts from Wuhan
 df %>% mutate( countriesAndTerritories=ifelse( countriesAndTerritories=="United_States_of_America","United States",countriesAndTerritories ),
                  countriesAndTerritories=ifelse( countriesAndTerritories=="United_Kingdom","United Kingdom",countriesAndTerritories ),

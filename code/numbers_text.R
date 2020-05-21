@@ -7,6 +7,12 @@ mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 # look at variables
 mt %>% glimpse()
 
+
+# alpha -------------------------------------------------------------------
+mt %>% group_by(scenario) %>% summarise(alpha_m=mean(alpha) ) %>% mutate(alpha_mean=mean(alpha_m))
+
+
+
 # global Ratio Wuhan/non-Wuhan --------------------------------------------
 mt %>% 
   filter(is_global_d==1) %>% 
@@ -20,7 +26,7 @@ mt %>%
   mutate( R=non_W/W,
           frac_W=W/(W+non_W),
           frac_nW=non_W/(W+non_W)) %>% 
-  select(-non_W,-W) # R: 0.5 - 5.33, frac_nW: 0.33 - 0.842
+  select(-non_W,-W) %>% mutate(R_mean=mean(R),frac_W_mean=mean(frac_W),frac_nW_mean=mean(frac_nW) )   # R: 0.5 - 5.33, frac_nW: 0.33 - 0.842
 
 # Africa Ratio and fraction Wuhan/non-Wuhan -----------------------------------------
 mt %>% 
@@ -35,7 +41,7 @@ mt %>%
   mutate( R=non_W/W,
           frac_W=W/(W+non_W),
           frac_nW=non_W/(W+non_W)) %>% 
-  select(-non_W,-W) # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
+  select(-non_W,-W) %>% mutate(R_mean=mean(R),frac_W_mean=mean(frac_W),frac_nW_mean=mean(frac_nW) )  # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
 
 # total number of predicted cases for Africa ------------------------------
 mt %>% 
@@ -43,7 +49,27 @@ mt %>%
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
   # by scenario
   group_by(scenario) %>% 
-  summarise( sum=sum(imp_number) ) # 8.8 - 110
+  summarise( sum=sum(imp_number) ) %>% mutate(sum_mean=mean(sum)) # 8.8 - 110
+# prior to first detection 
+mt %>% 
+  filter(is_africa_d==1) %>% 
+  filter(has_detected_d==0) %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  # by scenario
+  group_by(scenario) %>% 
+  summarise( sum=sum(imp_number) ) %>% mutate( sum_mean=mean(sum)  ) # 8.8 - 110
+# proportion prior
+mt %>% 
+  filter(is_africa_d==1) %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  # by scenario
+  group_by(scenario,has_detected_d) %>% 
+  summarise( sum=sum(imp_number) ) %>% 
+  pivot_wider(names_from = has_detected_d,
+              values_from = sum) %>% 
+  set_names("scenario","prior","after") %>% 
+  mutate(prop_prior=prior/(prior+after)) %>% mutate(prop_prior=mean(prop_prior))
+
 # for individual countries
 mt %>% 
   filter(is_africa_d==1) %>% 
@@ -51,7 +77,10 @@ mt %>%
   # by scenario
   group_by(destination_country,scenario) %>% 
   summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
-  group_by(destination_country) %>% mutate( mean_pred= mean(sum) ) %>% 
+  group_by(destination_country) %>% mutate( mean_pred= mean(sum),
+                                            lower=range(sum)[1],
+                                            upper=range(sum)[2]) %>% 
+  slice(1) %>% 
   arrange( desc(mean_pred) ) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
 
 
