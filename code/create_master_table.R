@@ -22,7 +22,7 @@ african_countries<-c('Mauritius','Mauritania','South Africa','Kenya','Egypt','Et
                               'Gabon','Madagascar','Equatorial Guinea','Tunisia',
                               'Uganda','Mozambique','Seychelles',"Cote D'Ivoire")
 
-global_countries <- c("New Zealand", "Russia", "Japan", "United Arab Emirates", "Malaysia", 
+global_countries_old <- c("New Zealand", "Russia", "Japan", "United Arab Emirates", "Malaysia", 
                       "Philippines", "Indonesia", "Thailand", "Viet Nam", "Brazil", 
                       "Argentina", "Hong Kong (SAR)", "Taiwan", "Cambodia", "Chile", 
                       "Macao (SAR)") 
@@ -33,6 +33,11 @@ global_countries <- c("New Zealand","Australia", # only 2 destinations for Ocean
                       "United States","Canada", # only 2 in North America
                       "Brazil","Argentina","Chile", # top 3 in South America
                       "Egypt","Ethiopia","South Africa") # top 3 in Africa
+global_countries %>% as_tibble()
+
+countries_we_exclude <- c("United Arab Emirates","Malaysia","Philippines",
+                          "Indonesia","Viet Nam","Hong Kong (SAR)",
+                          "Taiwan","Cambodia","Macao (SAR)")
 
 
 ## Need all origins - each Chinese city
