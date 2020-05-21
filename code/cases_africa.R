@@ -28,16 +28,24 @@ df %>% filter(cases!=0) %>%  count(countriesAndTerritories)
 
 # create has_detected_d ---------------------------------------------------
 df %>% 
-                select( dateRep,countriesAndTerritories,cases ) %>% 
+                select( dateRep,countriesAndTerritories,continentExp,cases ) %>% 
                 rename( date=dateRep, destination_country=countriesAndTerritories ) %>% 
-                complete( date, nesting(destination_country ), fill=list(cases=0) ) %>% 
+                complete( date, nesting(destination_country,continentExp ), fill=list(cases=0) ) %>% 
                 arrange( destination_country, date ) %>% 
                 mutate(destination_country=ifelse(destination_country=="South_Africa","South Africa",destination_country),
                        destination_country=ifelse(destination_country=="United_Republic_of_Tanzania","Tanzania",destination_country),
                        destination_country=ifelse(destination_country=="Democratic_Republic_of_the_Congo","Congo (Kinshasa)",destination_country),
                        destination_country=ifelse(destination_country=="Equatorial_Guinea","Equatorial Guinea",destination_country),
-                       destination_country=ifelse(destination_country=="Cote_dIvoire","Cote D'Ivoire",destination_country)) %>% 
-                group_by( destination_country ) %>% 
+                       destination_country=ifelse(destination_country=="Cote_dIvoire","Cote D'Ivoire",destination_country),
+                       #
+                       destination_country=ifelse(destination_country=="South_Korea","Korea (South)",destination_country),
+                       destination_country=ifelse(destination_country=="New_Zealand","New Zealand",destination_country),
+                       destination_country=ifelse(destination_country=="United_Arab_Emirates","United Arab Emirates",destination_country),
+                       destination_country=ifelse(destination_country=="United_Kingdom","United Kingdom",destination_country),
+                       destination_country=ifelse(destination_country=="United_States_of_America","United States",destination_country),
+                       destination_country=ifelse(destination_country=="Vietnam","Viet Nam",destination_country)) -> df2
+
+df2             %>% group_by( destination_country ) %>% 
                 mutate( cases_cumsum=cumsum(cases) ) %>% 
                 mutate( has_detected_d = as.numeric(cases_cumsum!=0) ) %>% 
                 select(-cases,-cases_cumsum) %>% ungroup() -> df_hasdetected
