@@ -221,7 +221,7 @@ pf1 %>%
 pf_dates %>% mutate( s_n=n():1  ) -> pf2
 #
 mscale <- 12
-pf %>% filter( year=="2020" | week=="52"  ) %>% 
+(p <- pf %>% filter( year=="2020" | week=="52"  ) %>% 
   ggplot( aes(x=date,y=exp_risk_weekly ) ) +
   #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
   geom_line(show.legend = F, col=NA) +
@@ -230,9 +230,40 @@ pf %>% filter( year=="2020" | week=="52"  ) %>%
   theme( axis.title.x = element_blank(),
          axis.title.y = element_blank(),
          axis.text.y = element_blank(),
-         axis.ticks.y = element_blank())
+         axis.ticks.y = element_blank()))
 ggsave("./figures/line_plot2_dates.pdf",width=8*0.85,height=1.8*0.85)
+range_x <- ggplot_build(p)$layout$panel_scales_x[[1]]$range$range
+rnage_y <- ggplot_build(p)$layout$panel_scales_y[[1]]$range$range
+ggplot_build(p)$layout$coord$limits
 
+############################
+## rug plot with confirmed cases
+############################
+df2 %>% filter( cases!=0 ) %>% 
+  filter( date>="2019-12-23",
+          date<="2020-02-26") %>% 
+  filter(destination_country%in%african_countries) -> obs_cases
+
+mscale <- 17
+pf %>% filter( year=="2020" | week=="52"  ) %>% 
+  ggplot( ) +
+  #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
+  geom_line(aes(x=date,y=exp_risk_weekly ),show.legend = F, col=NA) +
+  geom_segment( data=pf2, aes(y=s_n/mscale-0.3,yend=s_n/mscale-0.3, x=int_start, xend=int_end) ) +
+  geom_rug(data=obs_cases,aes(x=date,col=destination_country),length =unit(0.2, "npc"),show.legend = F) +
+  #scale_x_continuous(limits =range_x ) + scale_y_continuous(limits =rnage_y ) +
+  scale_color_manual(values=c("Egypt"="#332288",
+                              "South Africa"="#117733",
+                              "Ethiopia"="#88CCEE",
+                              "Kenya"="#DDCC77",
+                              "Morocco"="#CC6677",
+                              "Algeria"="lightgrey")) +
+  export_theme +
+  theme( axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         axis.text.y = element_blank(),
+         axis.ticks.y = element_blank())
+ggsave("./figures/line_plot2_dates_abc.pdf",width=8*0.85,height=1.8*0.85)
 
 
 mt %>% 
