@@ -80,7 +80,7 @@ for (i in 1:nrow(prev_cities_scen_4)) {
   if(provinces_prev_popn_size_median$asciiname[i]=='Wuhan'){
     # divide province-level prev by fraction of city's population in overall province's population
     scaled_prev<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)]))/
-      (provinces_prev_popn_size_median$population[i]*0.65)
+      (provinces_prev_popn_size_median$population[i])
     scaled_prev_1b<-scaled_prev
     prev_cities_scen_4[i,]<-scaled_prev_1b
   }
@@ -97,9 +97,18 @@ prev_cities_scen_4$Scenario<-rep("Scenario 4",nrow(prev_cities_scen_4))
 ## Scenario 5 - prev scenario assuming 100% ascertainment rate
 prev_cities_scen_5<-data.frame(matrix(0,nrow=nrow(provinces_prev_popn_size_median),ncol=124))
 for (i in 1:nrow(prev_cities_scen_5)) {
-  scaled_prev<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)])*
-                  fraction_2[i])/(provinces_prev_popn_size_median$population[i])
-  prev_cities_scen_5[i,]<-scaled_prev
+  if(provinces_prev_popn_size_median$asciiname[i]=='Wuhan'){
+    # divide province-level prev by fraction of city's population in overall province's population
+    scaled_prev<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)]))/
+      (provinces_prev_popn_size_median$population[i])
+    scaled_prev_1b<-scaled_prev
+    prev_cities_scen_5[i,]<-scaled_prev_1b
+  }
+  else{
+    scaled_prev_2<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)])*
+                      fraction_2[i])/(provinces_prev_popn_size_median$population[i]*0.65)
+    prev_cities_scen_5[i,]<-scaled_prev_2/provinces_prev_popn_size_median$population[i]
+  }
 }
 
 prev_cities_scen_5<-cbind(provinces_prev_popn_size_median$asciiname,prev_cities_scen_5)
