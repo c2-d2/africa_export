@@ -80,7 +80,7 @@ for (i in 1:nrow(prev_cities_scen_4)) {
   if(provinces_prev_popn_size_median$asciiname[i]=='Wuhan'){
     # divide province-level prev by fraction of city's population in overall province's population
     scaled_prev<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)]))/
-      (provinces_prev_popn_size_median$population[i])
+      (provinces_prev_popn_size_median$population[i]*0.65)
     scaled_prev_1b<-scaled_prev
     prev_cities_scen_4[i,]<-scaled_prev_1b
   }
