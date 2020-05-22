@@ -76,6 +76,80 @@ mt %>%
              frac_W_lower=range(frac_W)[1],
              frac_nW_mean=mean(frac_nW) )  # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
 
+
+############################
+## Weekly proportion -global
+############################
+mt %>% 
+  # filter
+  filter(is_global_d==1) %>% 
+  filter(date>"2019-11-01") %>% 
+  mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
+  # 
+  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
+  mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
+  # by scenario and week
+  group_by(is_wuhan,scenario,year,week) %>% 
+  arrange(date) %>% 
+  mutate(n=n()) %>% 
+  filter( n==7 ) %>% 
+  mutate( force_imp_week=sum(force_imp_day) ) %>% 
+  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  #
+  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
+  set_names( "date", "scenario", "non_W" , "W"  ) %>% 
+  mutate( tot_imp=(W+non_W),
+          min_tot_imp=min(tot_imp[tot_imp!=0]),
+          prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
+  dplyr::select(-W,-non_W) -> pf_probt
+# from where to start
+pf_probt %>% 
+  group_by( scenario ) %>% 
+  mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
+  filter(prob_1>0.01) %>% ungroup() -> pf_probt
+pf_probt %>% group_by(date) %>% 
+  mutate( n=n() ) %>% 
+  mutate( prob_W_lower=min(prop_wuhan),
+          prob_W_upper=max(prop_wuhan)) %>% 
+  filter(scenario=="Scenario 4") %>% print(n=Inf)
+
+############################
+## Weekly proportion -africa
+############################
+mt %>% 
+  # filter
+  filter(is_africa_d==1) %>% 
+  filter(date>"2019-11-01") %>% 
+  mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
+  # 
+  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
+  mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
+  # by scenario and week
+  group_by(is_wuhan,scenario,year,week) %>% 
+  arrange(date) %>% 
+  mutate(n=n()) %>% 
+  filter( n==7 ) %>% 
+  mutate( force_imp_week=sum(force_imp_day) ) %>% 
+  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  #
+  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
+  set_names( "date", "scenario", "non_W" , "W"  ) %>% 
+  mutate( tot_imp=(W+non_W),
+          min_tot_imp=min(tot_imp[tot_imp!=0]),
+          prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
+  dplyr::select(-W,-non_W) -> pf_probt
+# from where to start
+pf_probt %>% 
+  group_by( scenario ) %>% 
+  mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
+  filter(prob_1>0.01) %>% ungroup() -> pf_probt
+pf_probt %>% group_by(date) %>% 
+  mutate( n=n() ) %>% 
+  mutate( prob_W_lower=min(prop_wuhan),
+          prob_W_upper=max(prop_wuhan)) %>% 
+  filter(scenario=="Scenario 4") %>% print(n=Inf)
+
+
 ############################
 ## total number of predicted cases for Africa
 ############################
@@ -89,6 +163,8 @@ mt %>%
             sum_lower=min(sum),
             sum_upper=max(sum)) # 45.2;13.6-73.7
 # from manuscript
+
+
 
 
 ##

@@ -34,6 +34,8 @@
 (all_exp <- exp_w[order(exp_w)] + exp_c[order(exp_c)]  )
 
 # alpha uncertainty: 1.46
+# 
+
 # prevalence uncertainty: 2.1
 p_high <- c( 1.53, 9.46,0.216,1.23)
 p_low <- c( 0.963, 3.06,0.136,0.573)
