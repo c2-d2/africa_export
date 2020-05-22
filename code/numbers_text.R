@@ -15,9 +15,8 @@ mt %>% glimpse()
 mt %>% group_by(scenario) %>% 
   summarise(alpha_m=mean(alpha) ) %>% print() %>% 
   #
-  summarise(alpha_mean=mean(alpha_m),
-            alpha_lower=min(alpha_m),
-            alpha_upper=max(alpha_m),) # 1.72; 1.52-2.41
+  mutate(alpha_lower=min(alpha_m),
+            alpha_upper=max(alpha_m)) %>% filter(scenario=="Scenario 4") # 1.52; 1.52-2.41
 # from manuscript
 # each unit force of importation predicts 1.72 (range: 1.52 - 2.4) imported cases
 
@@ -49,6 +48,9 @@ mt %>%
           frac_nW_upper=max(frac_nW) ) # R: 1.96;0.32-3.39 # frac_nW: 0.569;0.249-0.781
 # from manuscript
 # for every case from Wuhan imported globally, there may have been 1.96 (range: 0.3 - 3.4) imported cases from other large Chinese cities
+
+# every one case globally imported from Wuhan, 1.96 cases (0.3 - 3.4) may have been imported from outside Wuhan
+
 # so that those cities contributed 57% (24% - 77%) of all case imports
 
 ############################
@@ -72,10 +74,13 @@ mt %>%
              R_lower=range(R)[1],
              R_upper=range(R)[2],
              frac_W_mean=mean(frac_W),
-             frac_W_lower=range(frac_W)[1],
-             frac_W_lower=range(frac_W)[1],
-             frac_nW_mean=mean(frac_nW) )  # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
+             frac_nW_mean=mean(frac_nW),
+             frac_nW_lower=range(frac_nW)[1],
+             frac_nW_upper=range(frac_nW)[2],
+              )  # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
+# from Chinese cities outside of Wuhan (68%; 36% - 86%)
 
+# For countries in Africa this ratio was 3.4 (0.6 - 6.1)
 
 ############################
 ## Weekly proportion -global
@@ -112,6 +117,11 @@ pf_probt %>% group_by(date) %>%
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
   filter(scenario=="Scenario 4") %>% print(n=Inf)
+# from manuscript
+
+# majority of imported cases originated in Wuhan (90%; 63% - 95% in the week of 24 December 2019)
+# this proportion declined continuously until the end of January (62%; 20%-73% in the week of 22nd January 2020)
+
 
 ############################
 ## Weekly proportion -africa
@@ -148,7 +158,9 @@ pf_probt %>% group_by(date) %>%
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
   filter(scenario=="Scenario 4") %>% print(n=Inf)
+# from manuscript
 
+# Wuhan contributed modestly to all imported cases throughout the time period, with its highest contribution estimated to be 57% (24% - 79%) in the early pandemic (the week of 8th January), subsequently declining to 0% in mid February (the week of 19th February)
 
 ############################
 ## total number of predicted cases for Africa
@@ -163,9 +175,11 @@ mt %>%
             sum_lower=min(sum),
             sum_upper=max(sum)) # 45.2;13.6-73.7
 # from manuscript
+# mean number of 45.2 (14 - 74) COVID-19 cases were imported to 26 destinations in Africa
 
+# our model estimates 45 (14 - 74) imported COVID-19 cases
 
-
+# until the end of February (29 February 2020) 45.2 (range: 13.6 - 73.7) COVID-19 cases from all of China could have been imported
 
 ##
 ### prior to first detection 
@@ -199,6 +213,11 @@ mt %>%
   summarise( mean_prop=mean(prop_prior),
              pro_lower=min(prop_prior),
              pro_upper=max(prop_prior) )
+# 99.2% (99.0% - 99.6%) of predicted imports would have occurred prior to any case detection
+
+# majority of predicted cases (99.2%; 99.0% - 99.6%) would have occurred prior to any confirmed cases
+
+# majority predicted on days prior to the first case detections in each location (99% for all scenarios)
 
 ##
 ### for individual countries
@@ -215,6 +234,16 @@ mt %>%
   slice(1) %>% 
   arrange( desc(mean_pred) ) %>% 
   select(-scenario,-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
+# from manuscript
+#highest imported case count in South Africa (11; 4 - 19) and fewest cases in Equatorial Guinea (0.1; 0 - 0.13)
+
+# highest numbers of imports are expected for South Africa (11; 3.9 - 18.5) and Egypt (9.5; 1.8 - 15.3), followed by Kenya (4.2; 1.5 - 6.9) and Zambia (3.3; 1.4 - 5.4)
+
+# lowest expected case counts in Mauritania (0.1; 0-0.14) and Equatorial Guinea (0.1; 0 - 0.13) 
+
+# highest numbers are expected for South Africa (11; 3.9 - 18.5) and Egypt (9.5; 1.8 - 15.3), followed by Kenya (4.2; 1.5 - 6.9) and Ethiopia (3.0; 0.5 - 4.8).
+
+#  the lowest numbers for Mauritania (0.1; 0 - 0.2) and for Equatorial Guinea (0.1; 0 - 0.1)
 
 ############################
 ## date range (for majority of case arrival)
@@ -241,6 +270,12 @@ mt %>%
 pf                 %>% filter( in_interval==1 ) %>% 
   summarise( int_start=min(date),
              int_end=max(date)) 
+# from manuscript
+# between 17th January (±1 day) and 12th February (±2 days)
+
+# 90% of all imported cases were estimated to be imported between 17th January 2020 (±1 day) and 12nd February 2020 (±2 days)
+
+# the majority of case imporations in Africa (90%) occurred between 17th January (±1 day) until 12th February (±2 days)
 
 ############################
 ## understimation
@@ -254,6 +289,8 @@ pf                 %>% filter( in_interval==1 ) %>%
 1- 1/(2.8+2.8*1.96) # fraction missed
 1- 1/(2.8+2.8*0.32) # fraction missed - lower
 1- 1/(2.8+2.8*3.39) # fraction missed - upper
+
+# 88% (73% - 92%) of all cases imported globally may have been undetected
 
 ############################
 ## Prevalence estimates for the 5 scenarios
