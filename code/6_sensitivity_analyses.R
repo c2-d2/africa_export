@@ -73,19 +73,18 @@ provinces_prev_popn_size_median<-merge(frac_popn_city,prevalence_median_all_prov
 fraction_2<-ifelse(provinces_prev_popn_size_median$province=='Guangdong',
                    1/3,ifelse(provinces_prev_popn_size_median$province=='Zhejiang',1/2,1))
 
-## Scenario 4 - under-ascertainment already incorporated in prev
+## Scenario 4 - prev scenario assuming 13.3% reporting rate and city-level prev proportionality assumption
 prev_cities_scen_4<-data.frame(matrix(0,nrow=nrow(provinces_prev_popn_size_median),ncol=124))
 for (i in 1:nrow(prev_cities_scen_4)) {
   if(provinces_prev_popn_size_median$asciiname[i]=='Wuhan'){
     # divide province-level prev by fraction of city's population in overall province's population
     scaled_prev<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)]))/
       (provinces_prev_popn_size_median$population[i])
-    scaled_prev_1b<-scaled_prev
-    prev_cities_scen_4[i,]<-scaled_prev_1b
+    prev_cities_scen_4[i,]<-scaled_prev
   }
   else{
     scaled_prev_2<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)])*
-                      fraction_2[i])/(provinces_prev_popn_size_median$population[i])
+                      fraction_2[i])/(provinces_prev_popn_size_median$population[i]*0.133)
     prev_cities_scen_4[i,]<-scaled_prev_2/provinces_prev_popn_size_median$population[i]
   }
 }
@@ -93,20 +92,19 @@ prev_cities_scen_4<-cbind(provinces_prev_popn_size_median$asciiname,prev_cities_
 colnames(prev_cities_scen_4)<-c("cities",paste0("day",1:124))
 prev_cities_scen_4$Scenario<-rep("Scenario 4",nrow(prev_cities_scen_4))
 
-## Scenario 5 - prev scenario assuming 13.3% reporting rate
+## Scenario 5 - under-ascertainment already incorporated in prev 
 prev_cities_scen_5<-data.frame(matrix(0,nrow=nrow(provinces_prev_popn_size_median),ncol=124))
 for (i in 1:nrow(prev_cities_scen_5)) {
   if(provinces_prev_popn_size_median$asciiname[i]=='Wuhan'){
     # divide province-level prev by fraction of city's population in overall province's population
     scaled_prev<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)]))/
       (provinces_prev_popn_size_median$population[i])
-    scaled_prev_1b<-scaled_prev
-    prev_cities_scen_5[i,]<-scaled_prev_1b
+    prev_cities_scen_5[i,]<-scaled_prev
   }
   else{
     scaled_prev_2<-(as.numeric(provinces_prev_popn_size_median[i,7:length(provinces_prev_popn_size_median)])*
-                      fraction_2[i])/(provinces_prev_popn_size_median$population[i]*0.133)
-    prev_cities_scen_5[i,]<-scaled_prev_2/provinces_prev_popn_size_median$population[i]
+                      fraction_2[i])/(provinces_prev_popn_size_median$population[i])
+    prev_cities_scen_5[i,]<-scaled_prev_2
   }
 }
 
