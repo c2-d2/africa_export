@@ -27,8 +27,8 @@ prev_data_upper$Scenario<-rep("Upper",nrow(prev_data_upper))
 
 prev_all<-rbind(prev_data_lower,prev_data_median,prev_data_upper)
 prevalence<-prev_all[prev_all$var=='Prevalence of all infected individuals',]
-prevalence$asct_rate<-ifelse(prevalence$Scenario=='Lower',0.145,
-                             ifelse(prevalence$Scenario=='Intermediate',0.0973,0.0922))
+prevalence$asct_rate<-ifelse(prevalence$Scenario=='Lower',0.208,
+                             ifelse(prevalence$Scenario=='Intermediate',0.133,0.129))
 
 # read in popn size data
 popn_size_cities_all<-read.csv("./data/popn_estimates_cities_china.csv")
