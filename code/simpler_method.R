@@ -4,7 +4,7 @@
 ## Date: 28 May 2020
 
 # read in confirmed case data from James' covback repository
-confirmed_cases<-read.csv("midas_data_final.csv")
+confirmed_cases<-read.csv("midas_data_final.csv") # TODO: all data should come from data older
 
 # subset to only provinces used in our analysis
 provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
