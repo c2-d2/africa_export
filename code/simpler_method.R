@@ -3,8 +3,10 @@
 ## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
 ## Date: 28 May 2020
 
+library(tidyverse)
+
 # read in confirmed case data from James' covback repository
-confirmed_cases<-read.csv("midas_data_final.csv") # TODO: all data should come from data older
+confirmed_cases<-read.csv("./data/midas_data_final.csv") # TODO: all data should come from data older
 
 # subset to only provinces used in our analysis
 provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
