@@ -30,7 +30,7 @@ incubation_period=-5
 ## applying ascertainment rates from Li et al.
 ascertainment_date_seq_1<-seq(as.Date('2019-11-01'),as.Date('2020-01-23'),by="day")
 ascertainment_date_seq_2<-seq(as.Date('2020-01-24'),as.Date('2020-02-03'),by="day")
-ascertainment_date_seq_2<-seq(as.Date('2020-02-04'),as.Date('2020-03-02'),by="day")
+ascertainment_date_seq_3<-seq(as.Date('2020-02-04'),as.Date('2020-03-02'),by="day") # previously this assigned to ascertainment_date_seq_2
 
 ascertainment_rate_1=0.14
 ascertainment_rate_2=0.65
