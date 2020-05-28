@@ -4,6 +4,7 @@
 ## Date: 28 May 2020
 
 library(tidyverse)
+library(mgcv)
 
 # read in confirmed case data from James' covback repository
 confirmed_cases<-read.csv("./data/midas_data_final.csv") # TODO: all data should come from data older
