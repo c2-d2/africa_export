@@ -5,10 +5,11 @@
 
 library(tidyverse)
 library(gam)
+library(data.table)
 #library(mgcv) seems to be the wrong package for gam
 
 # read in confirmed case data from James' covback repository
-confirmed_cases<-read.csv("./data/midas_data_final.csv") # TODO: all data should come from data older
+confirmed_cases<-read.csv("./data/midas_data_final.csv") # TODO: all data should come from data folder
 
 # subset to only provinces used in our analysis
 provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
@@ -36,9 +37,13 @@ ascertainment_date_seq_1<-seq(as.Date('2019-11-01'),as.Date('2020-01-23'),by="da
 ascertainment_date_seq_2<-seq(as.Date('2020-01-24'),as.Date('2020-02-03'),by="day")
 ascertainment_date_seq_3<-seq(as.Date('2020-02-04'),as.Date('2020-03-02'),by="day") # previously this assigned to ascertainment_date_seq_2
 
-ascertainment_rate_1=0.14
-ascertainment_rate_2=0.65
-ascertainment_rate_3=0.69
+#ascertainment_rate_1=0.14
+#ascertainment_rate_2=0.65
+#ascertainment_rate_3=0.69
+
+ascertainment_rate_1=1
+ascertainment_rate_2=1
+ascertainment_rate_3=1
 
 # estimate symptom onset and infection incidence by province
 all_incidence_province<-confirmed_cases_date%>%
@@ -71,8 +76,9 @@ all_incidence_province_2020_subset_long=melt(all_incidence_province_2020_subset,
                                              id.vars=c("dates","province_raw"), variable.name="number_individuals")
 
 lineplot<-ggplot(all_incidence_province_2020_subset_long,
-                 aes(x=dates,y=value,col=number_individuals))+
-  geom_line()+scale_x_date(breaks="2 weeks")+
+                 aes(x=dates,y=value))+
+  geom_point(data=confirmed_cases_date,aes(x=dates,y=n),size=0.25) +
+  geom_line(aes(col=number_individuals))+scale_x_date(breaks="2 weeks")+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   scale_color_discrete(labels = c("confirmed_cases","symptom_onset_incidence","infection_incidence"))+
   labs(colour="Legend")+ylab("Number of individuals")
