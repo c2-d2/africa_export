@@ -1,4 +1,6 @@
-devtools::load_all("~/Documents/Github/covback")
+source("~/Documents/GitHub/africa_export/code/functions/prevalence_calculation.R")
+Rcpp::sourceCpp("~/Documents/GitHub/africa_export/code/functions/prevalence_calculation_cpp.cpp")
+
 library(tidyverse)
 library(patchwork)
 
