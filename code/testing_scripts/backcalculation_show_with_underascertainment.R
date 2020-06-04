@@ -3,6 +3,8 @@
 ## Author: James Hay (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
 ## Date: 04 June 2020
 
+set.seed(1234)
+
 library(tidyverse)
 library(patchwork)
 library(ggthemes)
@@ -25,9 +27,9 @@ ascertainment_date_seq_1<-seq(as.Date('2019-10-01'),as.Date('2020-01-23'),by="da
 ascertainment_date_seq_2<-seq(as.Date('2020-01-24'),as.Date('2020-02-03'),by="day")
 ascertainment_date_seq_3<-seq(as.Date('2020-02-04'),as.Date('2020-03-03'),by="day") # previously this assigned to ascertainment_date_seq_2
 
-ascertainment_rate_1=1
-ascertainment_rate_2=1
-ascertainment_rate_3=1
+ascertainment_rate_1=0.14
+ascertainment_rate_2=0.65
+ascertainment_rate_3=0.69
 
 ascertainment_rates <- tibble(date=c(ascertainment_date_seq_1,ascertainment_date_seq_2,ascertainment_date_seq_3),
                               ascertainment_rate = c(rep(ascertainment_rate_1, length(ascertainment_date_seq_1)),
@@ -46,7 +48,7 @@ delay_sd <- 3
 incu_mean <- exp(incu_par1 + (incu_par2)^2/2)
 
 ## Very toy incidence - something that looks like a poisson distribution scaled
-incidence <- rpois(n_times,dpois(1:n_times,n_times/3) * 1000)
+incidence <- rpois(n_times,dpois(1:n_times,n_times/3) * 10000)
 incidence_dat <- tibble(date=times, incidence=incidence)
 
 
@@ -142,7 +144,7 @@ backward_delays_inf2 <- incidence_dat_long %>% group_by(confirm_date) %>%
 p1 <- ggplot(all_dat) + 
   geom_line(aes(x=date,y=n,col=var)) +
   #geom_line(data=incidence_dat,aes(x=date,y=incidence),linetype="dashed",col="red") +
-  scale_y_continuous(limits=c(0,150)) +
+  scale_y_continuous(limits=c(0,50)) +
   scale_color_colorblind() +
   scale_x_date(limits=range(times)) +
   ylab("Case counts") +
@@ -349,7 +351,7 @@ repeats <- 100
 tmp_all_onsets <- NULL
 tmp_all_infections <- NULL
 tmp_all_onsets_naive <- NULL
-tmp_wrong_all_infections <- NULL
+tmp_all_infections_naive <- NULL
 
 ## Precompute the sampling probabilities for each day
 all_probs <- NULL
@@ -378,9 +380,11 @@ for(i in 1:repeats) {
       #delay=rdgamma(n(), shape=gamma_shape_backward,scale=gamma_scale_backward),
       onset_date = date - delay,
       onset_date_naive = date - delay_naive,
-      incu_period = sample(seq(0,tmax-1,by=1),size=n(), prob=probs_incu,replace=TRUE),
+      #incu_period = sample(seq(0,tmax-1,by=1),size=n(), prob=probs_incu,replace=TRUE),
+      incu_period = floor(incu_mean),
       #incu_period = ceiling(rlnorm(n(), incu_par1, incu_par2)),
-      infection_date = onset_date - incu_period
+      infection_date = onset_date - incu_period,
+      infection_date_naive = onset_date_naive - incu_period
       )
   tmp_onsets <- tmp %>%
     group_by(onset_date) %>%
@@ -398,13 +402,21 @@ for(i in 1:repeats) {
     tally() %>%
     left_join(ascertainment_rates %>% rename(infection_date=date),by="infection_date") %>%
     rename(infections=n) %>%
-    #mutate(infections=infections + rnbinom(n(), infections, ascertainment_rate)) %>%
+    mutate(infections=infections + rnbinom(n(), infections, ascertainment_rate)) %>%
+    mutate(i = i)
+  
+  tmp_infections_naive <- tmp %>%
+    group_by(infection_date_naive) %>%
+    tally() %>%
+    left_join(ascertainment_rates %>% rename(infection_date_naive=date),by="infection_date_naive") %>%
+    rename(infections=n) %>%
+    mutate(infections=infections + rnbinom(n(), infections, ascertainment_rate)) %>%
     mutate(i = i)
   
   tmp_all_onsets <- bind_rows(tmp_all_onsets, tmp_onsets)
   tmp_all_onsets_naive <- bind_rows(tmp_all_onsets_naive, tmp_onsets_naive)
   tmp_all_infections <- bind_rows(tmp_all_infections, tmp_infections)
-
+  tmp_all_infections_naive <- bind_rows(tmp_all_infections_naive, tmp_infections_naive)
 }
 
 combined_augmented <- tmp_all_onsets %>% 
@@ -462,9 +474,21 @@ combined_augmented_inf <- tmp_all_infections %>%
             mean=mean(infections),
             mid_quant2=quantile(infections, c(0.75)),
             upper_quant = quantile(infections, c(0.975))) %>%
-  mutate(ver="Right (sample from backward dist)")
+  mutate(ver="Augment from daily delay distributions")
 
-all_augmented_infections <- bind_rows(combined_augmented_inf)
+combined_augmented_inf_naive <- tmp_all_infections_naive %>% 
+  group_by(infection_date_naive) %>%
+  rename(infection_date=infection_date_naive) %>%
+  summarise(lower_quant=quantile(infections, c(0.025)),
+            mid_quant1=quantile(infections, c(0.25)),
+            median=median(infections),
+            mean=mean(infections),
+            mid_quant2=quantile(infections, c(0.75)),
+            upper_quant = quantile(infections, c(0.975))) %>%
+  mutate(ver="Augment from overall delay distributions")
+
+
+all_augmented_infections <- bind_rows(combined_augmented_inf,combined_augmented_inf_naive)
 
 
 n_infections <- sum(incidence_dat_mod$n)
@@ -475,6 +499,7 @@ all_augmented_infections <- all_augmented_infections %>% left_join(n_infections_
 main_p4 <- ggplot(data=all_augmented_infections) +
   geom_line(data=onset_dat_mod,aes(x=date,y=n),size=1.5,col="#56B4E9") +
   #geom_line(data=incidence_dat,aes(x=date,y=incidence),linetype="dashed",col="red") +
+  geom_line(data=incidence_dat,aes(x=date,y=incidence),size=2,col="#E69F00") +
   geom_ribbon(aes(x=infection_date,ymin=lower_quant,ymax=upper_quant,fill=ver),alpha=0.25) +
   geom_ribbon(aes(x=infection_date,ymin=mid_quant1,ymax=mid_quant2,fill=ver),alpha=0.5) +
   geom_line(aes(x=infection_date, y=median,col=ver)) +

@@ -1,0 +1,321 @@
+## TITLE: estimating_province_prevalence
+## Description: Estimating province-level prevalence
+## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
+## Date: 28 May 2020
+
+library(tidyverse)
+library(gam)
+library(data.table)
+#library(mgcv) seems to be the wrong package for gam
+
+# read in confirmed case data from James' covback repository
+confirmed_cases<-read.csv("./data/midas_data_final.csv") # TODO: all data should come from data folder
+
+## Read in confirmation delay parameters
+confirm_delay_pars <- read_csv("data/confirm_delay_dists_backward.csv") %>%
+  rename(dates=date_confirmation)
+spline_pars <- read_csv("data/spline_dat.csv")
+
+# subset to only provinces used in our analysis
+provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
+  'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
+  'Jiangxi','Sichuan','Anhui','Fujian')
+confirmed_cases_final<-confirmed_cases[confirmed_cases$province_raw%in%provinces,]
+
+# match date indices to actual dates
+dates=seq(as.Date('2019-11-01'),as.Date('2020-03-02'),by="day")
+date=seq(0,122)
+dates_and_date=cbind.data.frame(dates,date)
+confirmed_cases_date=merge(dates_and_date,confirmed_cases_final,by="date")
+
+# define two delay date sequences 
+delay_date_seq_1<-seq(as.Date('2019-11-01'),as.Date('2020-01-27'),by="day")
+delay_date_seq_2<-seq(as.Date('2020-01-28'),as.Date('2020-03-02'),by="day")
+
+# define delay and incubation period params
+delay_1=-9
+delay_2=-5
+incu_par1 <- 1.621
+incu_par2 <- 0.418
+incubation_period=-5
+
+## applying ascertainment rates from Li et al.
+ascertainment_date_seq_1<-seq(as.Date('2019-10-01'),as.Date('2020-01-23'),by="day")
+ascertainment_date_seq_2<-seq(as.Date('2020-01-24'),as.Date('2020-02-03'),by="day")
+ascertainment_date_seq_3<-seq(as.Date('2020-02-04'),as.Date('2020-03-02'),by="day") # previously this assigned to ascertainment_date_seq_2
+
+ascertainment_rate_1=0.14
+ascertainment_rate_2=0.65
+ascertainment_rate_3=0.69
+
+ascertainment_rates <- tibble(date_infection=c(ascertainment_date_seq_1,ascertainment_date_seq_2,ascertainment_date_seq_3),
+                              ascertainment_rate = c(rep(ascertainment_rate_1, length(ascertainment_date_seq_1)),
+                                                     rep(ascertainment_rate_2, length(ascertainment_date_seq_2)),
+                                                     rep(ascertainment_rate_2, length(ascertainment_date_seq_3))))
+
+#ascertainment_rate_1=1
+#ascertainment_rate_2=1
+#ascertainment_rate_3=1
+
+# estimate symptom onset and infection incidence by province
+confirmed_cases_smoothed <-confirmed_cases_date%>%
+  group_by(province_raw)%>%
+  mutate(n_smoothed=predict(gam(n~s(dates,spar=0.7),
+                                family=poisson(link="log")),type="response",
+                            newdata=dates)) %>%
+  mutate(var = "confirmed") %>% 
+  select(-n) %>%
+  rename(n = n_smoothed) %>%
+  select(dates, province_raw, province, n, var)
+
+onsets_smoothed <- confirmed_cases_smoothed %>%
+  left_join(confirm_delay_pars %>% select(dates, gamma_mean_backward)) %>%
+  drop_na() %>%
+  mutate(date_onset = dates - floor(gamma_mean_backward),"days") %>%
+  group_by(province, province_raw, date_onset) %>%
+  summarise(n = sum(n)) %>%
+  rename(dates = date_onset) %>%
+  mutate(var = "onsets") %>%
+  select(dates, province_raw, province, n, var)
+
+infections_smoothed <- onsets_smoothed %>%
+  mutate(date_infection = dates - floor(incubation_period)) %>%
+  group_by(province, province_raw, date_infection) %>%
+  summarise(n = sum(n)) %>%
+  left_join(ascertainment_rates) %>%
+  mutate(n = n /ascertainment_rate) %>%
+  rename(dates = date_infection) %>%
+  mutate(var = "infections") %>%
+  select(dates, province_raw, province, n, var)
+
+all_incidence_province <- bind_rows(confirmed_cases_smoothed, onsets_smoothed, infections_smoothed)
+
+# subset to 2020
+dates_2=seq(as.Date('2020-01-01'),as.Date('2020-03-02'),by="day")
+all_incidence_province_2020<-all_incidence_province%>%
+  subset(dates%in%dates_2)
+
+lineplot<-ggplot(all_incidence_province,
+                 aes(x=dates,y=n))+
+  geom_point(data=confirmed_cases_date,aes(x=dates,y=n),size=0.25) +
+  geom_line(aes(col=var))+scale_x_date(breaks="2 weeks")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_color_discrete(labels = c("confirmed_cases","symptom_onset_incidence","infection_incidence"))+
+  labs(colour="Legend")+ylab("Number of individuals")
+
+lineplot+facet_wrap(.~province_raw,scales="free")
+ggsave("simple_version_1.pdf",width=20,height=20)
+
+################################
+## Bootstrap version
+################################
+confirm_dat_mod_tmp <- confirmed_cases_smoothed %>% 
+  left_join(confirm_delay_pars)
+
+repeats <- 100
+tmp_all_onsets <- NULL
+tmp_all_infections <- NULL
+for(i in 1:repeats) {
+  if(i %% 100 == 0) print(i)
+  tmp <- confirm_dat_mod_tmp %>%
+    mutate(
+      delay=rdgamma(n(), shape=gamma_shape_backward,scale=gamma_scale_backward),
+      onset_date = dates - delay,
+      incu_period = floor(rlnorm(n(), incu_par1, incu_par2)),
+      infection_date = lubridate::round_date(onset_date - incu_period)
+    )
+  tmp_onsets <- tmp %>%
+    group_by(onset_date, province_raw) %>%
+    summarise(onsets=sum(n)) %>%
+    mutate(i = i)
+  
+  tmp_infections <- tmp %>%
+    group_by(infection_date,province_raw) %>%
+    summarise(infections=sum(n)) %>%
+    left_join(ascertainment_rates %>% rename(infection_date=date_infection),by="infection_date") %>%
+    mutate(infections = infections /ascertainment_rate) %>%
+    mutate(i = i)
+  
+  tmp_all_onsets <- bind_rows(tmp_all_onsets, tmp_onsets)
+  tmp_all_infections <- bind_rows(tmp_all_infections, tmp_infections)
+}
+
+combined_augmented <- tmp_all_onsets %>% 
+  group_by(onset_date, province_raw) %>%
+  summarise(lower_quant=quantile(onsets, c(0.025)),
+            mid_quant1=quantile(onsets, c(0.25)),
+            median=median(onsets),
+            mean=mean(onsets),
+            mid_quant2=quantile(onsets, c(0.75)),
+            upper_quant = quantile(onsets, c(0.975))) %>%
+  mutate(ver="Right (sample from backward dist)")
+combined_augmented_inf <- tmp_all_infections %>% 
+  group_by(infection_date, province_raw) %>%
+  summarise(lower_quant=quantile(infections, c(0.025)),
+            mid_quant1=quantile(infections, c(0.25)),
+            median=median(infections),
+            mean=mean(infections),
+            mid_quant2=quantile(infections, c(0.75)),
+            upper_quant = quantile(infections, c(0.975))) %>%
+  mutate(ver="Right (sample from backward dist)")
+
+
+onset_plot <- ggplot(data=combined_augmented) +
+  geom_bar(data=confirm_dat_mod_tmp, aes(x=dates,y=n),stat="identity") +
+  geom_line(data=all_incidence_province %>% filter(var == "onsets"), aes(x=dates,y=n),linetype='dashed') +
+  geom_ribbon(aes(x=onset_date,ymin=lower_quant,ymax=upper_quant),alpha=0.25,fill="blue") +
+  geom_ribbon(aes(x=onset_date,ymin=mid_quant1,ymax=mid_quant2),alpha=0.5,fill="blue") +
+  #geom_line(data=tmp_all_onsets[tmp_all_onsets$i %in% 1:5,], aes(x=onset_date,y=onsets,group=i,col=as.factor(i)),alpha=0.1) +
+  geom_line(aes(x=onset_date, y=median),col="blue") +
+  facet_wrap(~province_raw, scales="free_y") +
+  #geom_line(aes(x=onset_date, y=median*scale_factor,col=ver),linetype="dotted",size=2) +
+  theme_bw() +
+  scale_x_date(breaks="7 days", limits=c(as.Date("2020-01-01", origin="2019-11-01"), as.Date("2020-03-05", origin="2019-11-01"))) +
+  ggtitle("Symptom onsets - comparison of shifting strategies. Dashed line shows subtracting mean") +
+  theme(legend.position="bottom",
+        axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("Number of symptom onsets") +
+  xlab("Date")
+infection_plot <- ggplot(data=combined_augmented_inf) +
+  geom_bar(data=confirm_dat_mod_tmp, aes(x=dates,y=n),stat="identity") +
+  geom_line(data=all_incidence_province %>% filter(var == "infections"), aes(x=dates,y=n),linetype='dashed') +
+  geom_ribbon(aes(x=infection_date,ymin=lower_quant,ymax=upper_quant),alpha=0.25,fill="blue") +
+  geom_ribbon(aes(x=infection_date,ymin=mid_quant1,ymax=mid_quant2),alpha=0.5,fill="blue") +
+  #geom_line(data=tmp_all_onsets[tmp_all_onsets$i %in% 1:5,], aes(x=onset_date,y=onsets,group=i,col=as.factor(i)),alpha=0.1) +
+  geom_line(aes(x=infection_date, y=median),col="blue") +
+  facet_wrap(~province_raw, scales="free_y") +
+  #geom_line(aes(x=onset_date, y=median*scale_factor,col=ver),linetype="dotted",size=2) +
+  theme_bw() +
+  scale_x_date(breaks="7 days", limits=c(as.Date("2020-01-01", origin="2019-11-01"), as.Date("2020-03-05", origin="2019-11-01"))) +
+  ggtitle("Symptom onsets - comparison of shifting strategies. Dashed line shows subtracting mean") +
+  theme(legend.position="bottom",
+        axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("Number of symptom onsets") +
+  xlab("Date")
+
+## using region-specific ascertainment rates from Maier & Brockmann 
+
+# pre-processing digitized ascertainment rate input data
+ascertainment_digitized=read.csv("ascertainment_rates_meier_digitized.csv")
+
+# estimate ascertainment rate by dividing confirmed by # unidentified infected + confirmed
+# round inflection point to facilitate identifying the date at which this inflection occurs
+ascertainment_rates_all<-ascertainment_digitized%>%
+  group_by(Province,TimePeriod)%>%
+  mutate(asc_rate=NumberCases[2]/sum(NumberCases[1]+NumberCases[2]))%>%
+  mutate(rounded_inflection_point=round(InflectionPoint))
+
+ascertainment_rates_all$Province=ifelse(ascertainment_rates_all$Province=="Shanxi","Shaanxi",as.vector(ascertainment_rates_all$Province))
+
+# collect all inflection points by province
+inflection_points<-ascertainment_rates_all%>%
+  group_by(Province)%>%
+  summarise(inflection_point_all=unique(rounded_inflection_point))
+
+provinces_rep<-c('Beijing','Beijing','Shanghai','Shanghai','Guangdong','Guangdong','Henan','Henan',
+                 'Tianjin','Tianjin','Zhejiang','Zhejiang','Hunan','Hunan','Shaanxi','Shaanxi',
+                 'Jiangsu','Jiangsu','Chongqing','Chongqing','Jiangxi','Jiangxi','Sichuan','Sichuan',
+                 'Anhui','Anhui','Fujian','Fujian')
+
+# combine province names & ascertainment rates
+ascertainment_rates_all_combined=cbind.data.frame(provinces_rep,
+                                                  unique(ascertainment_rates_all$asc_rate))
+colnames(ascertainment_rates_all_combined)<-c("Province","asc_rate")
+# combine province names & ascertainment rates with inflection points for each province
+ascertainment_rates_all_final=merge(ascertainment_rates_all_combined,inflection_points,
+                                    by="Province")
+colnames(ascertainment_rates_all_final)<-c("province","asc_rate","inflection_point")
+
+# find the corresponding date for each inflection point (note that 1 indicates 1 day since Jan 21st etc., following the convention used in Maier and Brockmann)
+inflection_point_seq<-seq(1,9)
+inflection_date_seq<-seq(as.Date('2020-01-22'),as.Date('2020-01-30'),by="day")
+inflection_dates=cbind.data.frame(inflection_point_seq,inflection_date_seq)
+colnames(inflection_dates)[1]<-"inflection_point"
+
+# combine ascertainment rate data with above data on the dates of inflection points
+ascertainment_rates_all_FINAL=merge(ascertainment_rates_all_final,
+                                    inflection_dates,by="inflection_point")
+colnames(ascertainment_rates_all_FINAL)[2]<-"province_raw"
+
+# estimate symptom onset and infection incidence by province
+all_incidence_province_2<-confirmed_cases_date_2%>%
+  group_by(province_raw)%>%
+  mutate(n_smoothed=predict(gam(n~s(dates,spar=0.7),
+                                family=poisson(link="log")),type="response",
+                            newdata=dates))%>%
+  mutate(n_onset=ifelse(dates%in%delay_date_seq_1,shift(n_smoothed,n=delay_1),
+                        shift(n_smoothed,n=delay_2)))%>%
+  mutate(n_onset_inflated=ifelse(dates%in%seq(as.Date('2019-11-01'),
+                                              ascertainment_rates_all_FINAL[as.vector(ascertainment_rates_all_FINAL$province_raw)==province_raw,"inflection_date_seq"][1],by="day"),
+                                 n_onset/ascertainment_rates_all_FINAL[as.vector(ascertainment_rates_all_FINAL$province_raw)==province_raw, 
+                                                                       "asc_rate"][1],
+                                 n_onset/ascertainment_rates_all_FINAL[as.vector(ascertainment_rates_all_FINAL$province_raw)==province_raw, 
+                                                                       "asc_rate"][2]))%>%
+  mutate(n_infected=shift(n_onset_inflated,n=incubation_period))
+
+# subset to 2020
+all_incidence_province_2020_2<-all_incidence_province_2%>%
+  subset(dates%in%dates_2)
+
+# --subset to only relevant columns -- #
+all_incidence_province_2020_2_subset<-all_incidence_province_2020_2[which(
+  colnames(all_incidence_province_2020_2)%in%columns)]
+
+write.csv(all_incidence_province_2020_2_subset,"all_incidence_2020_M&B.csv")
+# lineplot of confirmed cases, symptom onset and infection incidence in 2020
+all_incidence_province_2020_2_subset_long=melt(all_incidence_province_2020_2_subset,
+                                               id.vars=c("dates","province_raw"), variable.name="number_individuals")
+
+lineplot2<-ggplot(all_incidence_province_2020_2_subset_long,
+                  aes(x=dates,y=value,col=number_individuals))+
+  geom_line()+scale_x_date(breaks="2 weeks")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_color_discrete(labels = c("confirmed_cases","symptom_onset_incidence","infection_incidence"))+
+  labs(colour="Legend")+ylab("Number of individuals")
+
+lineplot2+facet_wrap(.~province_raw,scales="free")
+ggsave("simple_version_3.pdf",width=20,height=20)
+
+
+############ PREVIOUS: using all excluding Hubei ascertainment rates from Maier & Brockmann 
+ascertainment_date_seq_1b<-seq(as.Date('2019-11-01'),as.Date('2020-01-26'),by="day")
+
+ascertainment_rate_exc_hubei_1=10^2/(10^2.5+10^2)
+ascertainment_rate_exc_hubei_2=10^4/(10^4+10^2)
+
+# estimate symptom onset and infection incidence by province
+all_incidence_province_3<-confirmed_cases_date%>%
+  group_by(province_raw)%>%
+  mutate(n_smoothed=predict(gam(n~s(dates,spar=0.7),
+                                family=poisson(link="log")),type="response",
+                            newdata=dates))%>%
+  mutate(n_onset=ifelse(dates%in%delay_date_seq_1,shift(n_smoothed,n=delay_1),
+                        shift(n_smoothed,n=delay_2)))%>% 
+  mutate(n_onset_inflated=ifelse(province_raw=="Hubei",n_onset,
+                                 ifelse(dates%in%ascertainment_date_seq_1b,
+                                        n_onset/ascertainment_rate_exc_hubei_1,
+                                        n_onset/ascertainment_rate_exc_hubei_2)))%>%
+  mutate(n_infected=shift(n_onset_inflated,n=incubation_period))
+
+# subset to 2020
+all_incidence_province_2020_3<-all_incidence_province_3%>%
+  subset(dates%in%dates_2)
+
+# --subset to only relevant columns -- #
+all_incidence_province_2020_3_subset<-all_incidence_province_2020_3[which(
+  colnames(all_incidence_province_2020_3)%in%columns)]
+
+# lineplot of confirmed cases, symptom onset and infection incidence in 2020
+all_incidence_province_2020_3_subset_long=melt(all_incidence_province_2020_3_subset,
+                                               id.vars=c("dates","province_raw"), variable.name="number_individuals")
+
+lineplot3<-ggplot(all_incidence_province_2020_3_subset_long,
+                  aes(x=dates,y=value,col=number_individuals))+
+  geom_line()+scale_x_date(breaks="2 weeks")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_color_discrete(labels = c("confirmed_cases","symptom_onset_incidence","infection_incidence"))+
+  labs(colour="Legend")+ylab("Number of individuals")
+
+lineplot3+facet_wrap(.~province_raw,scales="free")
+ggsave("simple_version_2.pdf",width=20,height=20)
+
