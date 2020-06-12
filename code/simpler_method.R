@@ -59,7 +59,7 @@ lineplot<-ggplot(all_incidence_province_2020_subset_long,
   labs(colour="Legend")+ylab("Number of individuals")
 
 lineplot+facet_wrap(.~province_raw,scales="free")
-ggsave("simple_version_1.pdf",width=20,height=20)
+ggsave("./figures/simple_version_1.pdf",width=20,height=20)
 
 ###PREVIOUS STUFF (incorporating a priori ascertainment rates,using region-specific ascertainment rates from Maier & Brockmann) 
 
