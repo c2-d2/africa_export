@@ -24,12 +24,13 @@ dates_and_date=cbind.data.frame(dates,date)
 confirmed_cases_date=merge(dates_and_date,confirmed_cases_final,by="date")
 
 # define two delay date sequences 
-delay_date_seq_1<-seq(as.Date('2019-11-01'),as.Date('2020-01-27'),by="day")
-delay_date_seq_2<-seq(as.Date('2020-01-28'),as.Date('2020-03-02'),by="day")
+#delay_date_seq_1<-seq(as.Date('2019-11-01'),as.Date('2020-01-27'),by="day")
+#delay_date_seq_2<-seq(as.Date('2020-01-28'),as.Date('2020-03-02'),by="day")
 
 # define delay and incubation period params
-delay_1=-9
-delay_2=-5
+delay=-7
+#delay_1=-9
+#delay_2=-5
 incubation_period=-5
 
 ## applying ascertainment rates from Li et al.
@@ -51,8 +52,7 @@ all_incidence_province<-confirmed_cases_date%>%
   mutate(n_smoothed=predict(gam(n~s(dates,spar=0.7),
                                 family=poisson(link="log")),type="response",
                             newdata=dates))%>%
-  mutate(n_onset=ifelse(dates%in%delay_date_seq_1,shift(n_smoothed,n=delay_1),
-                        shift(n_smoothed,n=delay_2)))%>% 
+  mutate(n_onset=shift(n_smoothed,n=delay))%>% 
   mutate(n_onset_inflated=ifelse(dates%in%ascertainment_date_seq_1,
                                  n_onset/ascertainment_rate_1,
                                  ifelse(dates%in%ascertainment_date_seq_2,
