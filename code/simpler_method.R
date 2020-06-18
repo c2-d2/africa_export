@@ -33,8 +33,8 @@ confirmed_cases_date <- left_join( confirmed_cases_final,dates_and_date, by="dat
 
 # remove outliers in Wuhan
 which(confirmed_cases_date$province_raw=="Hubei" & confirmed_cases_date$n>4000 ) -> which_replace
-confirmed_cases_date$n[ (which_replace[1]+1):(which_replace[2]-1) ] %>% mean() -> inside_mean
-confirmed_cases_date$n[ which_replace ] <- inside_mean
+confirmed_cases_date$n[ c((which_replace[1]-1),(which_replace[2]+1)) ] -> put_instead
+confirmed_cases_date$n[ which_replace ] <- put_instead
 
 # backculation: shift by mean reporting delays & incubation period
 all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
