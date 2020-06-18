@@ -33,8 +33,6 @@ global_countries <- c("New Zealand","Australia", # only 2 destinations for Ocean
                       "United States","Canada", # only 2 in North America
                       "Brazil","Argentina","Chile", # top 3 in South America
                       "Egypt","Ethiopia","South Africa") # top 3 in Africa
-global_countries %>% as_tibble()
-
 countries_we_exclude <- c("United Arab Emirates","Malaysia","Philippines",
                           "Indonesia","Viet Nam","Hong Kong (SAR)",
                           "Taiwan","Cambodia","Macao (SAR)")
@@ -45,8 +43,8 @@ origin_cities <- c("Hefei", "Beijing", "Chongqing", "Fuzhou", "Guangzhou", "Dong
                     "Shenzhen", "Zhengzhou", "Wuhan", "Changsha", "Nanjing", "Nanchang", 
                     "Xi'an", "Shanghai", "Chengdu", "Tianjin", "Hangzhou", "Jiaxing")
 
-## All scenarios 1-5
-scenarios <- c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5")
+## All scenarios 1-5 , Scenario 6 = Model 0
+scenarios <- c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6")
 
 ## All dates 2019-12-08 to 2020-02-29
 dates <- seq(as.Date("2019-11-01"),as.Date("2020-03-03"),by="1 day")
@@ -67,6 +65,9 @@ colnames(prev_all) <- c("origin_city","scenario","date","prevalence_o")
 scenario_key <- c("Intermediate"="Scenario 1","Lower"="Scenario 2", "Upper"="Scenario 3", "Scenario 4"="Scenario 4","Scenario 5"="Scenario 5")
 prev_all$scenario <- scenario_key[prev_all$scenario]
 prev_all <- prev_all %>% distinct()
+# add Scenario 6
+load( file = "./out/city_prev_mod0.Rdata" )
+city_prev_mod0
 
 ############################
 ## Get all flight data

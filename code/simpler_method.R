@@ -16,7 +16,7 @@ confirmed_cases_final<-confirmed_cases[confirmed_cases$province_raw%in%provinces
 
 # match date indices to actual dates
 dates=seq(as.Date('2019-11-01'),as.Date('2020-03-03'),by="day") # 123 unique dates
-date=seq(0,122)
+date=seq(0,123)
 dates_and_date=cbind.data.frame(dates,date)
 confirmed_cases_date=merge(dates_and_date,confirmed_cases_final,by="date") #
 
@@ -48,25 +48,38 @@ prov_cum_inc_percap <-  prov_cum_incidence_pop %>% mutate(cum_inc_percap=cum_inc
 prov_cum_incidence_wnw <- prov_cum_inc_percap %>% mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
   relocate(province_raw,is_hubei,cum_inc_percap)
 
-# add seroprevalence
-tibble( province_raw=c("Guangdong","Hubei"),
-        serop=c(0.012,0.038)) -> sero_data
-prov_cum_sero_filtered <- sero_data %>% left_join(prov_cum_incidence_wnw) 
-
-# compute seroprevalence per cumulative incidence
-calibration_value_all <- prov_cum_sero_filtered %>% mutate(  s_per_c=serop/cum_inc_percap ) 
-calibration_value <- calibration_value_all %>% select(is_hubei,s_per_c )
-calibration_value$s_per_c[2]/calibration_value$s_per_c[1]
+# add calibration value
+calibration_value <- tibble(  is_hubei=c(0,1),
+                              calv=c(1,1) )
+  
+# 1:1
+# 
 
 # calibrate incidence in Hubei and outside
 prov_inc_calibrated <- all_incidence_province %>% mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
   left_join( calibration_value, by="is_hubei" ) %>% 
-  mutate( n_infected_cal=n_infected/s_per_c )
+  mutate( n_infected_cal=n_infected/c_per_s )
 
 # compute travel relevant prevalence
 prov_inc_prev_cali <- comp_travel_rel_prev(prov_inc_calibrated)
 
-prov_inc_prev_cali$dates %>% range()
+# get cities we are interested in with province names and population fractions
+prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
+
+# add calibrated prevalence to cities according to fraction
+city_travel_prev_adj <- adjust_prov_prev_by_city( prov_inc_prev_cali , prov_city_adjust)
+
+# rename columns for master table
+city_prev_mod0 <- city_travel_prev_adj %>% 
+  rename( origin_city=city,
+          prevalence_o=travel_prev_adj) %>% 
+  mutate(scenario="Scenario 6") %>% 
+  select(origin_city,scenario,date,prevalence_o)
+
+# fill in missing dates for master table
+save( city_prev_mod0, file = "./out/city_prev_mod0.Rdata" )
+
+
 
 
 

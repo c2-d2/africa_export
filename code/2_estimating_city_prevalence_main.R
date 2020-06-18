@@ -59,6 +59,10 @@ frac_popn_city<-merged_popn_data%>%
   mutate(fraction=population/popn_size_province)
 
 frac_popn_city$fraction<-ifelse(frac_popn_city$asciiname=="Wuhan",1,frac_popn_city$fraction)
+frac_popn_city %>% 
+  select(province,asciiname,fraction) %>% 
+  rename( city=asciiname, f_pop_city_prov=fraction ) -> frac_popn_city2
+save( frac_popn_city2, file="./out/frac_popn_city.Rdata" )
 
 provinces_order<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
                    'Tianjin','Zhejiang','Zhejiang','Hunan','Shaanxi','Jiangsu','Guangdong','Chongqing',

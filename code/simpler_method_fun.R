@@ -61,3 +61,24 @@ comp_travel_rel_prev <- function(prov_inc_calibrated) {
                                 select( dates,province_raw,n_infected_cal,travel_prev ) -> df
                 return(df)
 }
+
+get_prov_city_adjust <- function(file) {
+                load( file )
+                df <- prov_city_adjust <- frac_popn_city2 %>% 
+                                mutate( f_guangdong3_zhejiang2=1,
+                                        f_guangdong3_zhejiang2=ifelse(province=="Guangdong",1/3,f_guangdong3_zhejiang2),
+                                        f_guangdong3_zhejiang2=ifelse(province=="Zhejiang",1/2,f_guangdong3_zhejiang2)) 
+                return(df)
+}
+
+adjust_prov_prev_by_city <- function(prov_inc_prev_cali , prov_city_adjust){
+                date_v <- prov_inc_prev_cali$dates %>% unique()
+                table_key <- prov_city_adjust %>% select(province,city) %>% 
+                                expand_grid(date=date_v)
+                
+                table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
+                                left_join( prov_inc_prev_cali, by=c("province"="province_raw","date"="dates")  ) %>% 
+                                mutate( travel_prev_adj=travel_prev*f_pop_city_prov ) %>% 
+                                relocate( province,city,date,travel_prev_adj ) -> df
+                return(df)
+}
