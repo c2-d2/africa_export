@@ -284,14 +284,12 @@ generate_empirical_distributions_backward <- function(threshold,
   model_probs_empirical_backward$fit <- "Empirical"
   all_model_probs_backward_empirical <- model_probs_empirical_backward
   
-  
   dates <- as.Date(min_date:(min(model_probs_empirical_backward$date_confirmation)-1),origin="1970-01-01")
-  
-  empirical_probs_use_min <- model_probs_empirical_backward %>% filter(date_confirmation == min(date_confirmation)) %>% select(-date_confirmation)
+  empirical_probs_use_min <- model_probs_empirical_backward %>% filter(date_confirmation == min(date_confirmation)) %>% select(-date_confirmation) 
   empirical_before <- empirical_probs_use_min %>% 
     left_join(tibble(date_confirmation=rep(dates,each=nrow(empirical_probs_use_min)),
                      confirmation_delay=rep(empirical_probs_use_min$confirmation_delay,length(dates))),
-              by="confirmation_delay")
+              by="confirmation_delay")#  %>% mutate(max_delay=date_confirmation-min(plot_dat$onset_date))
   model_probs_empirical_backward <- model_probs_empirical_backward %>% bind_rows(empirical_before) %>% arrange(date_confirmation, confirmation_delay)
   model_probs_empirical_backward
   
