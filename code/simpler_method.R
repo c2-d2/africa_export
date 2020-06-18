@@ -1,19 +1,21 @@
 ## TITLE: estimating_province_prevalence
 ## Description: Estimating province-level prevalence
 ## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
-## Date: 28 May 2020
+## Date: 17 June 2020
 
+# load all necessary libraries
 library(tidyverse)
-library(gam) # library(mgcv) <- used mgcv
+library(gam)
 library(data.table)
+library(Bolstad2)
 
 # read in confirmed case data from James' covback repository
-confirmed_cases<-read.csv("./data/midas_data_final.csv") # TODO: all data should come from data folder
+confirmed_cases<-read.csv("./data/midas_data_final.csv")
 
 # subset to only provinces used in our analysis
 provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
-  'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
-  'Jiangxi','Sichuan','Anhui','Fujian')
+             'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
+             'Jiangxi','Sichuan','Anhui','Fujian')
 confirmed_cases_final<-confirmed_cases[confirmed_cases$province_raw%in%provinces,]
 
 # match date indices to actual dates
@@ -26,13 +28,9 @@ confirmed_cases_date=merge(dates_and_date,confirmed_cases_final,by="date")
 delay=-7
 incubation_period=-5
 
-# estimate symptom onset and infection incidence by province
 all_incidence_province<-confirmed_cases_date%>%
   group_by(province_raw)%>%
-  mutate(n_smoothed=predict(gam(n~s(dates,spar=0.7),
-                                family=poisson(link="log")),type="response",
-                            newdata=dates))%>%
-  mutate(n_onset=shift(n_smoothed,n=delay))%>% 
+  mutate(n_onset=shift(n,n=delay))%>% 
   mutate(n_infected=shift(n_onset,n=incubation_period))
 
 # subset to 2020
@@ -42,16 +40,19 @@ all_incidence_province_2020<-all_incidence_province%>%
 
 ###Figures
 # --subset to only relevant columns -- #
-columns<-c("dates","province_raw","n_smoothed","n_onset","n_infected")
-all_incidence_province_2020_subset<-all_incidence_province_2020[which(
-  colnames(all_incidence_province_2020)%in%columns)]
+columns<-c("date","dates","province_raw","n_onset","n_infected")
 
-# lineplot of confirmed cases, symptom onset and infection incidence in 2020
-all_incidence_province_2020_subset_long=melt(all_incidence_province_2020_subset,
-                                             id.vars=c("dates","province_raw"), variable.name="number_individuals")
+# all dates subset
+all_incidence_province_subset<-all_incidence_province[which(
+  colnames(all_incidence_province)%in%columns)]
 
-lineplot<-ggplot(all_incidence_province_2020_subset_long,
-                 aes(x=dates,y=value))+
+# lineplot of confirmed cases, symptom onset and infection incidence (all dates)
+all_incidence_province_subset_long=melt(all_incidence_province_subset,
+                                        id.vars=c("date","dates","province_raw"), 
+                                        variable.name="number_individuals")
+
+lineplot<-ggplot(all_incidence_province_subset_long,
+                      aes(x=dates,y=value))+
   geom_point(data=confirmed_cases_date,aes(x=dates,y=n),size=0.25) +
   geom_line(aes(col=number_individuals))+scale_x_date(breaks="2 weeks")+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
@@ -59,7 +60,35 @@ lineplot<-ggplot(all_incidence_province_2020_subset_long,
   labs(colour="Legend")+ylab("Number of individuals")
 
 lineplot+facet_wrap(.~province_raw,scales="free")
-ggsave("./figures/simple_version_1.pdf",width=20,height=20)
+
+# using healthcare worker seroprev, Wuhan
+seroprev_h_w=0.038
+
+# using a weighted average of healthcare worker seroprev, outside of Wuhan (Guangzhou)
+seroprev_h_nw=0.012
+
+pop_size<-read.csv("./data/provinces_popn_size_statista.csv")
+
+# combine backcalculated incidence & seroprevalence data
+colnames(all_incidence_province_subset_long)[3]<-"province"
+all_incidence_province_subset_long_final=merge(all_incidence_province_subset_long,
+                                               pop_size,by="province")
+all_incidence_province_subset_long_final$seroprev=ifelse(all_incidence_province_subset_long_final$province=="Hubei",
+                                                         seroprev_h_w,
+                                                         seroprev_h_nw)
+
+# seroprev calibration: scale incidence data using estimated ascertainment rate
+## first calculate the area under the infection incidence curve 
+## then standardize the AUC by population size to compare to seroprev measures
+## estimate ascertainment rates by dividing the standardize incidence measures from above by seroprevalence
+## scale infection incidence by these estimated ascertainment rates to yield true inf curves
+all_incidence_calibrated<-all_incidence_province_subset_long_final%>%
+  group_by(province)%>%
+  mutate(auc=sintegral(x=date,fx=value)$int)%>%
+  mutate(inc_standardized=auc/popn_size_province)%>%
+  mutate(asc_rate=inc_standardized/seroprev)%>%
+  mutate(inc_new=value/asc_rate)
+
 
 ###PREVIOUS STUFF (incorporating a priori ascertainment rates,using region-specific ascertainment rates from Maier & Brockmann) 
 
