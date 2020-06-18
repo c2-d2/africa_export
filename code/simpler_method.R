@@ -60,9 +60,12 @@ lineplot+facet_wrap(.~province_raw,scales="free")
 # using healthcare worker seroprev, Wuhan
 seroprev_h_w=0.038
 
-# using a weighted average of healthcare worker seroprev, outside of Wuhan (Guangzhou)
+# using healthcare worker seroprev, outside of Wuhan (Guangzhou)
 seroprev_h_nw=0.012
 
+# Note: HAVE TO INCLUDE SEROPREV ESTIMATES FOR CITIES REPRESENTING THE 13 REMAINING PROVINCES
+
+# read in cities' popn data 
 pop_size<-read.csv("./data/popn_estimates_cities_china.csv")
 
 # subset to only infection onset rows
