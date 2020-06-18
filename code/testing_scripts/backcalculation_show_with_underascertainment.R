@@ -436,7 +436,8 @@ for(i in 1:1000){
     mutate(i=i)
   all_tmp <- bind_rows(tmp, all_tmp)
 }
-greb <- all_tmp %>% group_by(confirm_delay) %>% summarise(total_n=sum(n),median=median(n),lower_quant=quantile(n, c(0.025)),upper_quant=quantile(n, c(0.975)))
+greb <- all_tmp %>% group_by(confirm_delay) %>% 
+  summarise(total_n=sum(n),median=median(n),lower_quant=quantile(n, c(0.025)),upper_quant=quantile(n, c(0.975)))
 omg1 <- greb %>% ggplot() + 
   geom_ribbon(aes(x=confirm_delay,ymin=lower_quant,ymax=upper_quant),fill="red",alpha=0.25) +
   scale_x_continuous(limits=c(0,15)) +
