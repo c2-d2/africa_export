@@ -67,26 +67,24 @@ seroprev_h_w=0.038
 # using a weighted average of healthcare worker seroprev, outside of Wuhan (Guangzhou)
 seroprev_h_nw=0.012
 
-pop_size<-read.csv("./data/provinces_popn_size_statista.csv")
+pop_size<-read.csv("popn_estimates_cities_china.csv")
 
 # combine backcalculated incidence & seroprevalence data
-colnames(all_incidence_province_subset_long)[3]<-"province"
-all_incidence_province_subset_long_final=merge(all_incidence_province_subset_long,
-                                               pop_size,by="province")
-all_incidence_province_subset_long_final$seroprev=ifelse(all_incidence_province_subset_long_final$province=="Hubei",
-                                                         seroprev_h_w,
-                                                         seroprev_h_nw)
+all_incidence_province_subset_long$seroprev=ifelse(all_incidence_province_subset_long$province_raw=="Hubei",
+                                                   seroprev_h_w,
+                                                   seroprev_h_nw)
 
 # seroprev calibration: scale incidence data using estimated ascertainment rate
-## first calculate the area under the infection incidence curve 
-## then standardize the AUC by population size to compare to seroprev measures
-## estimate ascertainment rates by dividing the standardize incidence measures from above by seroprevalence
+## first calculate true # infected from Xu et al. seroprevalence estimates by scaling by Wuhan or Guangzhou population size
+## then calculate the area under the infection incidence curve (grouping by province)
+## estimate ascertainment rates by dividing the AUC by true # infected 
 ## scale infection incidence by these estimated ascertainment rates to yield true inf curves
-all_incidence_calibrated<-all_incidence_province_subset_long_final%>%
-  group_by(province)%>%
+all_incidence_calibrated<-all_incidence_province_subset_long%>%
+  mutate(seroprev_scaled=ifelse(province_raw=="Hubei",seroprev*pop_size$population[pop_size$asciiname=='Wuhan'],
+                                seroprev*pop_size$population[pop_size$asciiname=='Guangzhou']))%>%
+  group_by(province_raw)%>%
   mutate(auc=sintegral(x=date,fx=value)$int)%>%
-  mutate(inc_standardized=auc/popn_size_province)%>%
-  mutate(asc_rate=inc_standardized/seroprev)%>%
+  mutate(asc_rate=auc/seroprev_scaled)%>%
   mutate(inc_new=value/asc_rate)
 
 
