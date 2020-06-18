@@ -67,7 +67,7 @@ seroprev_h_w=0.038
 # using a weighted average of healthcare worker seroprev, outside of Wuhan (Guangzhou)
 seroprev_h_nw=0.012
 
-pop_size<-read.csv("popn_estimates_cities_china.csv")
+pop_size<-read.csv("./data/popn_estimates_cities_china.csv")
 
 # combine backcalculated incidence & seroprevalence data
 all_incidence_province_subset_long$seroprev=ifelse(all_incidence_province_subset_long$province_raw=="Hubei",
