@@ -6,7 +6,12 @@ library(gam)
 library(data.table)
 library(Bolstad2)
 library(lubridate)
+
+# settings
 select <- dplyr::select
+tibble.print_max <- 5
+tibble.print_min <- 5
+
 
 
 shift_2_delays <- function(confirmed_cases_date,incubation_period,delay) {
@@ -44,19 +49,18 @@ plot_conf_onset <- function(all_incidence_province,confirmed_cases_date) {
                 return(p)
 }
 
-comp_cum_incidence <- function(all_incidence_province) {
+comp_cum_incidence <- function(all_incidence_province, filen) {
                 all_incidence_province %>% 
                                 filter(!is.na(n_infected)) %>% 
                                 group_by( province_raw ) %>% 
                                 summarise(  cum_inc=sum(n_infected) ) -> df
+                popn_size_provinces<-read.csv(filen) %>% as_tibble()
+                left_join( df,popn_size_provinces, by=c("province_raw"="province") ) -> df
+                df %>% mutate(cum_inc_percap=cum_inc/popn_size_province  ) ->df
                 return(df)
 }
 
-add_prov_pop <- function(prov_cum_incidence,file_prov_pop) {
-                popn_size_provinces<-read.csv(file_prov_pop) %>% as_tibble()
-                left_join( prov_cum_incidence,popn_size_provinces, by=c("province_raw"="province") ) -> df
-                return(df)
-}
+
 
 comp_travel_rel_prev <- function(city_n_inf_caladj_den) {
                 # compute travel relevant prevalence
@@ -93,4 +97,41 @@ adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust){
                                 mutate( n_infected_caladj=n_infected_cal*f_guangdong3_zhejiang2 ) %>% 
                                 select( province,city,date,n_infected_caladj ) -> df
                 return(df)
+}
+
+############
+generate_alphas <- function( all_dat,file_obs_cnt ) {
+                # get the observed counts
+                cases_high_cap_loc <-read.csv(file_obs_cnt)
+                cases_high_cap_loc$cases_scaled <- ifelse(cases_high_cap_loc$Country!='Singapore',
+                                                          round(cases_high_cap_loc$Cases_lm*2.5),
+                                                          cases_high_cap_loc$Cases_lm) 
+                cases_high_cap_loc <- cases_high_cap_loc %>% select(Country, cases_scaled) %>% 
+                                mutate(Country=ifelse(Country=="Rep  Korea","Korea (South)",Country),
+                                       Country=ifelse(Country=="UK","United Kingdom",Country),
+                                       Country=ifelse(Country=="US","United States",Country))
+                # then go through scenarios and add
+                scenario_v <- all_dat$scenario %>% unique()
+                list_save <- list()
+                for (i in 1:length(scenario_v)) {
+                                scenario_i <- scenario_v[i]
+                                #
+                                # 6 scenarios
+                                # for each scenario select Wuhan and pre lockdown
+                                all_dat %>% filter(scenario==scenario_i) %>% 
+                                                filter( is_wuhan==1,is_prelockdown_date==1,is_highsurv_d==1 ) %>% 
+                                                mutate(force_imp=fvolume_od*prevalence_o) %>% 
+                                                #
+                                                group_by(destination_country) %>% summarise( force_imp_sum=sum(force_imp) ) %>% 
+                                                #
+                                                left_join( cases_high_cap_loc, by=c("destination_country"="Country") ) -> df_lin_fit
+                                
+                                fit_wuhan <-glm(cases_scaled~offset(log(force_imp_sum)),
+                                                data=df_lin_fit,
+                                                family=poisson(link="log")) 
+                                alpha_i <- coefficients(fit_wuhan) %>% exp()
+                                tibble( scenario=scenario_i , alpha=alpha_i  ) -> list_save[[i]]
+                }
+                list_save %>% bind_rows() -> df_alphas
+                return(df_alphas)
 }

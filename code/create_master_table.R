@@ -1,5 +1,6 @@
 ## Generate master table
-library(tidyverse)
+source("./code/simpler_method_fun.R")
+
 ## Need all destinations
 destination_countries <- c("Spain", "United States", "Algeria", "Nigeria", "United Kingdom", 
   "Ethiopia", "Australia", "Netherlands", "Ghana", "New Zealand", 
@@ -44,7 +45,7 @@ origin_cities <- c("Hefei", "Beijing", "Chongqing", "Fuzhou", "Guangzhou", "Dong
                     "Xi'an", "Shanghai", "Chengdu", "Tianjin", "Hangzhou", "Jiaxing")
 
 ## All scenarios 1-5 , Scenario 6 = Model 0
-scenarios <- c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6")
+scenarios <- c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6","Scenario 7", "Scenario 8")
 
 ## All dates 2019-12-08 to 2020-02-29
 dates <- seq(as.Date("2019-11-01"),as.Date("2020-03-03"),by="1 day")
@@ -64,10 +65,17 @@ prev_all$name <- dates[prev_all$name]
 colnames(prev_all) <- c("origin_city","scenario","date","prevalence_o")
 scenario_key <- c("Intermediate"="Scenario 1","Lower"="Scenario 2", "Upper"="Scenario 3", "Scenario 4"="Scenario 4","Scenario 5"="Scenario 5")
 prev_all$scenario <- scenario_key[prev_all$scenario]
-prev_all <- prev_all %>% distinct()
+prev_all <- prev_all %>% distinct() # 11,160
+# each scenario (5) has 2232 rows
+# each date (124) exists 90 times 
+
 # add Scenario 6
-load( file = "./out/city_prev_mod0.Rdata" )
-city_prev_mod0
+load( file = "./out/city_prev_mod06.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod07.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod08.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
 
 ############################
 ## Get all flight data
@@ -80,14 +88,14 @@ flights_all_cities <- flights_all_cities %>% ungroup() %>% mutate(origin_city = 
 ############################
 ## Ascertainment rates
 ############################
-ascertainment_rates <- tibble(scenario=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5"),
-                              asct_rate=c(0.0973, 0.145, 0.0922, 0.0973, 1))
+ascertainment_rates <- tibble(scenario=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5", "Scenario 6","Scenario 7","Scenario 8"),
+                              asct_rate=c(0.0973, 0.145, 0.0922, 0.0973, 1, 1,1,1))
 
 ############################
 ## Alpha factors
 ############################
-alphas <- tibble(scenario=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5"),
-                 alpha=c(1.522779, 2.412217, 1.597522, 1.522779, 1.522779))
+# alphas <- tibble(scenario=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5"),
+#                  alpha=c(1.522779, 2.412217, 1.597522, 1.522779, 1.522779))
 
 
 ############################
@@ -106,7 +114,8 @@ setdiff(unique(flights_all_cities$origin_city),unique(prev_all$origin_city))
 comb1 <- full_join(prev_all, table_key)
 comb2 <- full_join(comb1, flights_all_cities)
 comb3 <- full_join(comb2, ascertainment_rates)
-comb4 <- full_join(comb3, alphas)
+#comb4 <- full_join(comb3, alphas)
+comb4 <-  comb3
 
 all_dat <- comb4 %>% 
   mutate(asct_rate = ifelse(origin_city == "Wuhan", 1, asct_rate),
@@ -117,7 +126,12 @@ all_dat <- comb4 %>%
          is_highsurv_d=ifelse(destination_country %in% highsurv_countries, 1, 0)) %>%
   rename(fvolume_od=daily_volume) %>% 
   left_join( df_hasdetected, by=c("destination_country","date") ) %>% 
-  mutate( has_detected_d=ifelse( ( is_africa_d==1 & is.na(has_detected_d) ),0,has_detected_d  ) ) 
+  mutate( has_detected_d=ifelse( ( is_africa_d==1 & is.na(has_detected_d) ),0,has_detected_d  ) ) %>% 
+  mutate( fvolume_od=replace_na(fvolume_od,replace=0) )
+
+# generate alphas by fitting each scenario
+df_alphas <- generate_alphas( all_dat, file_obs_cnt="./data/who_imports.csv" )
+all_dat %>% left_join( df_alphas, by="scenario" ) -> all_dat
 
 write_csv(all_dat, "data/master_table.csv")
 
@@ -127,7 +141,10 @@ all_dat %>% select(origin_city, date, prevalence_o, scenario) %>%
   filter(prevalence_o == max(prevalence_o)) %>% 
   pull(date) %>%
   range()
+# 
+ 
 
 
-  
+
+
   

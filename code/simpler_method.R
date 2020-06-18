@@ -4,7 +4,18 @@
 ## Date: 17 June 2020
 source("./code/simpler_method_fun.R")
 
-asc_nonhubei_v_hubei <- 1
+asc_nonhubei_v_hubei <- 1 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
+name_scenario <- "Scenario 6"
+save_name <- "./out/city_prev_mod06.Rdata"
+#
+asc_nonhubei_v_hubei <- 5
+name_scenario <- "Scenario 7"
+save_name <- "./out/city_prev_mod07.Rdata"
+#
+asc_nonhubei_v_hubei <- 10
+name_scenario <- "Scenario 8"
+save_name <- "./out/city_prev_mod08.Rdata"
+
 
 ############################
 ## read in confirmed case data from James' covback repository
@@ -31,17 +42,8 @@ all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=
 # plot the results
 p <- plot_conf_onset(all_incidence_province,confirmed_cases_date)
 
-# compute cumulative incidence
-prov_cum_incidence <- comp_cum_incidence( all_incidence_province ) # 15 rows
-
-# add province population and compute cum incidence per capita
-prov_cum_incidence_pop <- add_prov_pop(prov_cum_incidence,
-                                       file_prov_pop="./data/provinces_popn_size_statista.csv")
-prov_cum_inc_percap <-  prov_cum_incidence_pop %>% mutate(cum_inc_percap=cum_inc/popn_size_province  )
-
-# who is Hubei and who is not
-prov_cum_incidence_wnw <- prov_cum_inc_percap %>% mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
-  relocate(province_raw,is_hubei,cum_inc_percap)
+# compute cumulative incidence and add population size
+prov_cum_incidence <- comp_cum_incidence( all_incidence_province, "./data/provinces_popn_size_statista.csv" ) # 15 rows
 
 # add calibration value
 calibration_value <- tibble(  is_hubei=c(0,1),
@@ -67,24 +69,25 @@ prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den)
 city_prev_mod0 <- prov_inc_prev_cali %>% 
   rename( origin_city=city,
           prevalence_o=travel_prev) %>% 
-  mutate(scenario="Scenario 6") %>% 
+  mutate(scenario=name_scenario) %>% 
   select(origin_city,scenario,date,prevalence_o)
-city_prev_mod0 %>% count(origin_city) # 18 cities
-city_prev_mod0 %>% count(date) # 215 dates
-# 1 scenario
-
 
 # fill in missing dates for master table
 seq(from=ymd("2019-11-01"),to=ymd("2020-03-03"), by=1  ) -> dates_mt # 124 dates
 expand_grid(origin_city=unique(city_prev_mod0$origin_city),
-            scenario="Scenario 6",
+            scenario=name_scenario,
             date=dates_mt) %>% left_join( city_prev_mod0, by=c("origin_city","scenario","date") ) %>% 
   mutate(prevalence_o=replace_na(prevalence_o,replace = 0)) -> city_prev_mod0
 
-save( city_prev_mod0, file = "./out/city_prev_mod0.Rdata" )
+# save
+save( city_prev_mod0, file = save_name )
 
 
 
+# plot
+city_prev_mod0 %>% ggplot(aes(x=date,y=prevalence_o)) +
+  geom_line(  ) +
+  facet_wrap(~origin_city,scales="free")
 
 
 
