@@ -4,6 +4,8 @@
 ## Date: 17 June 2020
 source("./code/simpler_method_fun.R")
 
+asc_nonhubei_v_hubei <- 1
+
 ############################
 ## read in confirmed case data from James' covback repository
 ############################
@@ -13,25 +15,18 @@ provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
              'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
              'Jiangxi','Sichuan','Anhui','Fujian') # 15
 confirmed_cases_final<-confirmed_cases[confirmed_cases$province_raw%in%provinces,] # 124 unique dates
-
 # match date indices to actual dates
-dates=seq(as.Date('2019-11-01'),as.Date('2020-03-03'),by="day") # 123 unique dates
-date=seq(0,123)
-dates_and_date=cbind.data.frame(dates,date)
-confirmed_cases_date=merge(dates_and_date,confirmed_cases_final,by="date") #
+dates_and_date= tibble(dates=seq(as.Date('2020-06-18')-227,as.Date('2020-06-18'),by="day")) %>% 
+  mutate(date=(1:n()-1) )# 123 unique dates
+confirmed_cases_date <- left_join( confirmed_cases_final,dates_and_date, by="date" )
 
-# define delay and incubation period params
-delay=-7
-incubation_period=-5
+# remove outliers in Wuhan
+which(confirmed_cases_date$province_raw=="Hubei" & confirmed_cases_date$n>4000 ) -> which_replace
+confirmed_cases_date$n[ (which_replace[1]+1):(which_replace[2]-1) ] %>% mean() -> inside_mean
+confirmed_cases_date$n[ which_replace ] <- inside_mean
 
 # backculation: shift by mean reporting delays & incubation period
-all_incidence_province<-confirmed_cases_date%>%
-  arrange( province_raw,dates ) %>%  # helps to check the df visually
-  group_by(province_raw)%>%
-  mutate(n_onset=shift(n,n=delay))%>% 
-  mutate(n_infected=shift(n_onset,n=incubation_period)) %>% 
-  ungroup() %>% 
-  relocate( dates, province_raw,n_infected,n_onset )
+all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
 
 # plot the results
 p <- plot_conf_onset(all_incidence_province,confirmed_cases_date)
@@ -50,33 +45,42 @@ prov_cum_incidence_wnw <- prov_cum_inc_percap %>% mutate(is_hubei=as.numeric(pro
 
 # add calibration value
 calibration_value <- tibble(  is_hubei=c(0,1),
-                              calv=c(1,1) )
+                              calv=c(asc_nonhubei_v_hubei,1) )
   
-# 1:1
-# 
-
 # calibrate incidence in Hubei and outside
 prov_inc_calibrated <- all_incidence_province %>% mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
   left_join( calibration_value, by="is_hubei" ) %>% 
-  mutate( n_infected_cal=n_infected/c_per_s )
+  mutate( n_infected_cal=n_infected/calv ) %>% 
+  select( dates,province_raw,n_infected_cal )
+
+# distribute the cases into cities and add denominator
+prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
+city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , prov_city_adjust)
+load(file="./out/df_city_pop.Rdata")
+city_n_inf_caladj_den <- city_n_inf_caladj %>% left_join(df_city_pop,by=c("city"="asciiname")) %>% 
+  mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
 
 # compute travel relevant prevalence
-prov_inc_prev_cali <- comp_travel_rel_prev(prov_inc_calibrated)
-
-# get cities we are interested in with province names and population fractions
-prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
-
-# add calibrated prevalence to cities according to fraction
-city_travel_prev_adj <- adjust_prov_prev_by_city( prov_inc_prev_cali , prov_city_adjust)
+prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den)
 
 # rename columns for master table
-city_prev_mod0 <- city_travel_prev_adj %>% 
+city_prev_mod0 <- prov_inc_prev_cali %>% 
   rename( origin_city=city,
-          prevalence_o=travel_prev_adj) %>% 
+          prevalence_o=travel_prev) %>% 
   mutate(scenario="Scenario 6") %>% 
   select(origin_city,scenario,date,prevalence_o)
+city_prev_mod0 %>% count(origin_city) # 18 cities
+city_prev_mod0 %>% count(date) # 215 dates
+# 1 scenario
+
 
 # fill in missing dates for master table
+seq(from=ymd("2019-11-01"),to=ymd("2020-03-03"), by=1  ) -> dates_mt # 124 dates
+expand_grid(origin_city=unique(city_prev_mod0$origin_city),
+            scenario="Scenario 6",
+            date=dates_mt) %>% left_join( city_prev_mod0, by=c("origin_city","scenario","date") ) %>% 
+  mutate(prevalence_o=replace_na(prevalence_o,replace = 0)) -> city_prev_mod0
+
 save( city_prev_mod0, file = "./out/city_prev_mod0.Rdata" )
 
 

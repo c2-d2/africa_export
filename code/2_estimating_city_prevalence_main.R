@@ -48,6 +48,8 @@ popn_size_select_cities<-popn_size_select_cities[match(order,popn_size_select_ci
 popn_size_select_cities$province<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
                                     'Tianjin','Zhejiang','Zhejiang','Hunan','Shaanxi','Jiangsu','Guangdong','Chongqing',
                                     'Jiangxi','Sichuan','Anhui','Fujian','Guangdong')
+popn_size_select_cities %>% select( asciiname,population ) -> df_city_pop
+save(df_city_pop,file="./out/df_city_pop.Rdata")
 
 popn_size_provinces<-read.csv("./data/provinces_popn_size_statista.csv")
 # merge province & population data at the city level 

@@ -8,6 +8,18 @@ library(Bolstad2)
 library(lubridate)
 select <- dplyr::select
 
+
+shift_2_delays <- function(confirmed_cases_date,incubation_period,delay) {
+                confirmed_cases_date%>%
+                                arrange( province_raw,dates ) %>%  # helps to check the df visually
+                                group_by(province_raw)%>%
+                                mutate(n_onset=shift(n,n=delay))%>% 
+                                mutate(n_infected=shift(n_onset,n=incubation_period)) %>% 
+                                ungroup() %>% 
+                                relocate( dates, province_raw,n_infected,n_onset ) ->df
+                return(df)
+}
+
 plot_conf_onset <- function(all_incidence_province,confirmed_cases_date) {
                 # --subset to only relevant columns -- #
                 columns<-c("date","dates","province_raw","n_onset","n_infected")
@@ -46,19 +58,19 @@ add_prov_pop <- function(prov_cum_incidence,file_prov_pop) {
                 return(df)
 }
 
-comp_travel_rel_prev <- function(prov_inc_calibrated) {
+comp_travel_rel_prev <- function(city_n_inf_caladj_den) {
                 # compute travel relevant prevalence
-                prov_inc_calibrated %>% filter( !is.na(n_infected_cal) ) %>% 
-                                group_by( province_raw ) %>% 
-                                select( dates,province_raw,n_infected_cal ) %>% 
+                city_n_inf_caladj_den %>% filter( !is.na(n_infected_caladj) ) %>% 
+                                group_by( city ) %>% 
+                                select( province,city,date,n_infected_caladj ) %>% 
                                 mutate( 
-                                                shift1=n_infected_cal,
-                                                shift2=replace_na(lag(n_infected_cal,1) , replace = 0),
-                                                shift3=lag(n_infected_cal,2) %>% replace_na(replace=0),
-                                                shift4=lag(n_infected_cal,3) %>% replace_na(replace=0),
-                                                shift5=lag(n_infected_cal,4) %>% replace_na(replace=0))  %>% 
+                                                shift1=n_infected_caladj,
+                                                shift2=replace_na(lag(n_infected_caladj,1) , replace = 0),
+                                                shift3=lag(n_infected_caladj,2) %>% replace_na(replace=0),
+                                                shift4=lag(n_infected_caladj,3) %>% replace_na(replace=0),
+                                                shift5=lag(n_infected_caladj,4) %>% replace_na(replace=0))  %>% 
                                 mutate( travel_prev=shift1+shift2+shift3+shift4+shift5 ) %>%  # here could weigh according to incub distri
-                                select( dates,province_raw,n_infected_cal,travel_prev ) -> df
+                                select( province,city,date,travel_prev ) %>% ungroup() -> df
                 return(df)
 }
 
@@ -71,14 +83,14 @@ get_prov_city_adjust <- function(file) {
                 return(df)
 }
 
-adjust_prov_prev_by_city <- function(prov_inc_prev_cali , prov_city_adjust){
-                date_v <- prov_inc_prev_cali$dates %>% unique()
+adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust){
+                date_v <- prov_inc_calibrated$dates %>% unique()
                 table_key <- prov_city_adjust %>% select(province,city) %>% 
                                 expand_grid(date=date_v)
                 
                 table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
-                                left_join( prov_inc_prev_cali, by=c("province"="province_raw","date"="dates")  ) %>% 
-                                mutate( travel_prev_adj=travel_prev*f_pop_city_prov ) %>% 
-                                relocate( province,city,date,travel_prev_adj ) -> df
+                                left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
+                                mutate( n_infected_caladj=n_infected_cal*f_guangdong3_zhejiang2 ) %>% 
+                                select( province,city,date,n_infected_caladj ) -> df
                 return(df)
 }
