@@ -28,15 +28,11 @@ confirmed_cases_date=merge(dates_and_date,confirmed_cases_final,by="date")
 delay=-7
 incubation_period=-5
 
+# backculation: shift by mean reporting delays & incubation period
 all_incidence_province<-confirmed_cases_date%>%
   group_by(province_raw)%>%
   mutate(n_onset=shift(n,n=delay))%>% 
   mutate(n_infected=shift(n_onset,n=incubation_period))
-
-# subset to 2020
-dates_2=seq(as.Date('2020-01-01'),as.Date('2020-03-02'),by="day")
-all_incidence_province_2020<-all_incidence_province%>%
-  subset(dates%in%dates_2)
 
 ###Figures
 # --subset to only relevant columns -- #
@@ -69,23 +65,33 @@ seroprev_h_nw=0.012
 
 pop_size<-read.csv("./data/popn_estimates_cities_china.csv")
 
-# combine backcalculated incidence & seroprevalence data
-all_incidence_province_subset_long$seroprev=ifelse(all_incidence_province_subset_long$province_raw=="Hubei",
+# subset to only infection onset rows
+columns2<-c("date","dates","province_raw","n_infected")
+all_incidence_province_subset2<-all_incidence_province[which(
+  colnames(all_incidence_province)%in%columns2)]
+all_incidence_province_subset_long2=melt(all_incidence_province_subset2,
+                                        id.vars=c("date","dates","province_raw"), 
+                                        variable.name="number_individuals")
+
+# combine infection onset & seroprevalence data
+all_incidence_province_subset_long2$seroprev=ifelse(all_incidence_province_subset_long2$province_raw=="Hubei",
                                                    seroprev_h_w,
                                                    seroprev_h_nw)
 
+
 # seroprev calibration: scale incidence data using estimated ascertainment rate
-## first calculate true # infected from Xu et al. seroprevalence estimates by scaling by Wuhan or Guangzhou population size
-## then calculate the area under the infection incidence curve (grouping by province)
-## estimate ascertainment rates by dividing the AUC by true # infected 
+## first calculate the area under the infection incidence curve 
+## then standardize the AUC by population size to compare to seroprev measures
+## estimate ascertainment rates by dividing the standardize incidence measures from above by seroprevalence
 ## scale infection incidence by these estimated ascertainment rates to yield true inf curves
-all_incidence_calibrated<-all_incidence_province_subset_long%>%
+all_incidence_calibrated<-all_incidence_province_subset_long2%>%
   mutate(seroprev_scaled=ifelse(province_raw=="Hubei",seroprev*pop_size$population[pop_size$asciiname=='Wuhan'],
                                 seroprev*pop_size$population[pop_size$asciiname=='Guangzhou']))%>%
   group_by(province_raw)%>%
   mutate(auc=sintegral(x=date,fx=value)$int)%>%
   mutate(asc_rate=auc/seroprev_scaled)%>%
   mutate(inc_new=value/asc_rate)
+
 
 
 ###PREVIOUS STUFF (incorporating a priori ascertainment rates,using region-specific ascertainment rates from Maier & Brockmann) 
