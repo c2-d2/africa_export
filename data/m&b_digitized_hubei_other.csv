@@ -1,0 +1,9 @@
+Date,DateNum,ConfirmedCases,Category,DateRange,Region
+1/28/20,8.433474332,14979.3309,Unidentified,Before02-22-20,Hubei
+1/28/20,8.08450298,4153.528168,Reported,Before02-22-20,Hubei
+2/22/20,32.79225149,6671.313209,Unidentified,After02-22-20,Hubei
+2/22/20,33.27821573,49598.1542,Reported,After02-22-20,Hubei
+1/28/20,7.915847589,4378.476724,Unidentified,Before02-22-20,OutHubei
+1/28/20,8.223681459,2575.70371,Reported,Before02-22-20,OutHubei
+2/22/20,33.17725753,118.7016832,Unidentified,After02-22-20,OutHubei
+2/22/20,33.31103679,12741.46974,Reported,After02-22-20,OutHubei
