@@ -86,7 +86,6 @@ expand_grid(origin_city=unique(city_prev_mod0$origin_city),
 save( city_prev_mod0, file = save_name )
 
 
-
 # plot
 city_prev_mod0 %>% ggplot(aes(x=date,y=prevalence_o)) +
   geom_line(  ) +
@@ -116,6 +115,15 @@ not_hubei_asct=weighted.mean(c(mnb_asct$asct_rates[5],mnb_asct$asct_rates[7]),
 
 hubei_not_hubei_asct_ratio=not_hubei_asct/hubei_asct
 
+# ratio of days
+city_prev_mod0 %>% select(date) %>% distinct() %>% summarise( mean(date<ymd("2020-02-22")) )
+# catio of detected cases (in the area of China we are interested in)
+city_prev_mod0 %>% select(date) %>% distinct() %>% pull(date) -> date_v
+confirmed_cases_date %>% filter(dates%in%date_v) %>% 
+  mutate( before=(dates<ymd("2020-02-22"))  ) %>% 
+  count( before, wt=n,name = "tot_cases"  ) %>% 
+  mutate(sum_tot_cases=sum(tot_cases)) %>% 
+  mutate(f_case=tot_cases/sum_tot_cases)
 
 
 # # using healthcare worker seroprev, Wuhan
