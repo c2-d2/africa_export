@@ -5,18 +5,39 @@
 source("./code/simpler_method_fun.R")
 library(stats)
 
-asc_nonhubei_v_hubei <- 0.1 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
+asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
+name_scenario <- "Scenario 1" # Maier and Brockmann
+prev_days <- 5
+save_name <- "./out/city_prev_mod01.Rdata"
+#
+asc_nonhubei_v_hubei <- 2 # Verity et al
+name_scenario <- "Scenario 2"
+prev_days <- 5
+save_name <- "./out/city_prev_mod02.Rdata"
+#
+asc_nonhubei_v_hubei <- 2 # Verity et al
+name_scenario <- "Scenario 3"
+prev_days <- 2
+save_name <- "./out/city_prev_mod03.Rdata"
+#
+asc_nonhubei_v_hubei <- 2 # Verity et al
+name_scenario <- "Scenario 4"
+prev_days <- 7
+save_name <- "./out/city_prev_mod04.Rdata"
+#
+asc_nonhubei_v_hubei <- 0.2 # Verity et al / 10
+name_scenario <- "Scenario 5"
+prev_days <- 5
+save_name <- "./out/city_prev_mod05.Rdata"
+#
+asc_nonhubei_v_hubei <- 20 # Verity et al * 20 
 name_scenario <- "Scenario 6"
+prev_days <- 5
 save_name <- "./out/city_prev_mod06.Rdata"
 #
-asc_nonhubei_v_hubei <- 1
+asc_nonhubei_v_hubei <- 2 # Verity et al
 name_scenario <- "Scenario 7"
 save_name <- "./out/city_prev_mod07.Rdata"
-#
-asc_nonhubei_v_hubei <- 10
-name_scenario <- "Scenario 8"
-save_name <- "./out/city_prev_mod08.Rdata"
-
 
 ############################
 ## read in confirmed case data from James' covback repository
@@ -66,7 +87,11 @@ city_n_inf_caladj_den <- city_n_inf_caladj %>% left_join(df_city_pop,by=c("city"
   mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
 
 # compute travel relevant prevalence
-prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den)
+# for scenarios 1-6:
+prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den, rel_dur = 5) # change rel_dur to # days prevalent for scenario
+
+# for scenario 7:
+prov_inc_prev_cali <- comp_travel_rel_prev_nonwuh_gap(city_n_inf_caladj_den) 
 
 # rename columns for master table
 city_prev_mod0 <- prov_inc_prev_cali %>% 
@@ -124,6 +149,11 @@ confirmed_cases_date %>% filter(dates%in%date_v) %>%
   count( before, wt=n,name = "tot_cases"  ) %>% 
   mutate(sum_tot_cases=sum(tot_cases)) %>% 
   mutate(f_case=tot_cases/sum_tot_cases)
+
+
+## Estimating ascertainment rates from Verity et al. 
+verity <- read.csv("./data/digitize_verity.csv")
+asc_ratio_verity <- crossprod(verity$outside_wuhan,verity$outside_pop_prop)/crossprod(verity$wuhan,verity$wuhan_pop_prop)
 
 
 # # using healthcare worker seroprev, Wuhan

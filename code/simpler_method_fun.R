@@ -62,9 +62,64 @@ comp_cum_incidence <- function(all_incidence_province, filen) {
 
 
 
-comp_travel_rel_prev <- function(city_n_inf_caladj_den) {
+comp_travel_rel_prev <- function(city_n_inf_caladj_den, rel_dur) {
                 # compute travel relevant prevalence
-                city_n_inf_caladj_den %>% filter( !is.na(n_infected_caladj) ) %>% 
+                if(rel_dur == 2){
+                                city_n_inf_caladj_den %>% filter( !is.na(n_infected_caladj) ) %>% 
+                                                group_by( city ) %>% 
+                                                select( province,city,date,n_infected_caladj ) %>% 
+                                                mutate( 
+                                                                shift1=n_infected_caladj,
+                                                                shift2=replace_na(lag(n_infected_caladj,1) , replace = 0))  %>% 
+                                                mutate( travel_prev=shift1+shift2) %>%  # here could weigh according to incub distri
+                                                select( province,city,date,travel_prev ) %>% ungroup() -> df
+                } else if (rel_dur == 5) {
+                                city_n_inf_caladj_den %>% filter( !is.na(n_infected_caladj) ) %>% 
+                                                group_by( city ) %>% 
+                                                select( province,city,date,n_infected_caladj ) %>% 
+                                                mutate( 
+                                                                shift1=n_infected_caladj,
+                                                                shift2=replace_na(lag(n_infected_caladj,1) , replace = 0),
+                                                                shift3=lag(n_infected_caladj,2) %>% replace_na(replace=0),
+                                                                shift4=lag(n_infected_caladj,3) %>% replace_na(replace=0),
+                                                                shift5=lag(n_infected_caladj,4) %>% replace_na(replace=0))  %>% 
+                                                mutate( travel_prev=shift1+shift2+shift3+shift4+shift5 ) %>%  # here could weigh according to incub distri
+                                                select( province,city,date,travel_prev ) %>% ungroup() -> df
+                } else if (rel_dur == 7) {
+                                city_n_inf_caladj_den %>% filter( !is.na(n_infected_caladj) ) %>% 
+                                                group_by( city ) %>% 
+                                                select( province,city,date,n_infected_caladj ) %>% 
+                                                mutate( 
+                                                                shift1=n_infected_caladj,
+                                                                shift2=replace_na(lag(n_infected_caladj,1) , replace = 0),
+                                                                shift3=lag(n_infected_caladj,2) %>% replace_na(replace=0),
+                                                                shift4=lag(n_infected_caladj,3) %>% replace_na(replace=0),
+                                                                shift5=lag(n_infected_caladj,4) %>% replace_na(replace=0),
+                                                                shift6=lag(n_infected_caladj,5) %>% replace_na(replace=0),
+                                                                shift7=lag(n_infected_caladj,6) %>% replace_na(replace=0))  %>% 
+                                                mutate( travel_prev=shift1+shift2+shift3+shift4+shift5+shift6+shift7 ) %>%  # here could weigh according to incub distri
+                                                select( province,city,date,travel_prev ) %>% ungroup() -> df
+                }
+                return(df)
+}
+
+
+comp_travel_rel_prev_nonwuh_gap <- function(city_n_inf_caladj_den){
+                # 2 day prevalent for non-Wuhan (after 3 days)
+                non_wuh <- city_n_inf_caladj_den %>% filter( !is.na(n_infected_caladj) & city != "Wuhan") %>% 
+                                group_by( city ) %>% 
+                                select( province,city,date,n_infected_caladj ) %>% 
+                                mutate( 
+                                                shift1=n_infected_caladj,
+                                                shift2=replace_na(lag(n_infected_caladj,1) , replace = 0),
+                                                shift3=lag(n_infected_caladj,2) %>% replace_na(replace=0),
+                                                shift4=lag(n_infected_caladj,3) %>% replace_na(replace=0),
+                                                shift5=lag(n_infected_caladj,4) %>% replace_na(replace=0))  %>% 
+                                mutate( travel_prev=shift4+shift5 ) %>%  # here could weigh according to incub distri
+                                select( province,city,date,travel_prev ) %>% ungroup()
+                
+                # 5 day prevalent for Wuhan
+                wuh <- city_n_inf_caladj_den %>% filter( !is.na(n_infected_caladj) & city == "Wuhan") %>% 
                                 group_by( city ) %>% 
                                 select( province,city,date,n_infected_caladj ) %>% 
                                 mutate( 
@@ -74,7 +129,10 @@ comp_travel_rel_prev <- function(city_n_inf_caladj_den) {
                                                 shift4=lag(n_infected_caladj,3) %>% replace_na(replace=0),
                                                 shift5=lag(n_infected_caladj,4) %>% replace_na(replace=0))  %>% 
                                 mutate( travel_prev=shift1+shift2+shift3+shift4+shift5 ) %>%  # here could weigh according to incub distri
-                                select( province,city,date,travel_prev ) %>% ungroup() -> df
+                                select( province,city,date,travel_prev ) %>% ungroup()
+                
+                df <- rbind(non_wuh, wuh)
+                
                 return(df)
 }
 
