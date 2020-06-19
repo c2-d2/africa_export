@@ -27,8 +27,10 @@ provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
              'Jiangxi','Sichuan','Anhui','Fujian') # 15
 confirmed_cases_final<-confirmed_cases[confirmed_cases$province_raw%in%provinces,] # 124 unique dates
 # match date indices to actual dates
-dates_and_date= tibble(dates=seq(as.Date('2020-06-18')-227,as.Date('2020-06-18'),by="day")) %>% 
-  mutate(date=(1:n()-1) )# 123 unique dates
+dates_and_date=tibble(dates=seq(as.Date('2020-03-02')-122,as.Date('2020-03-02'),by="day")) %>% 
+  mutate(date=(1:n()-1))
+#dates_and_date= tibble(dates=seq(as.Date('2020-06-18')-227,as.Date('2020-06-18'),by="day")) %>% 
+  #mutate(date=(1:n()-1) )# 123 unique dates
 confirmed_cases_date <- left_join( confirmed_cases_final,dates_and_date, by="date" )
 
 # remove outliers in Wuhan
