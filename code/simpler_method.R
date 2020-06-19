@@ -5,11 +5,11 @@
 source("./code/simpler_method_fun.R")
 library(stats)
 
-asc_nonhubei_v_hubei <- 1 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
+asc_nonhubei_v_hubei <- 0.1 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
 name_scenario <- "Scenario 6"
 save_name <- "./out/city_prev_mod06.Rdata"
 #
-asc_nonhubei_v_hubei <- 5
+asc_nonhubei_v_hubei <- 1
 name_scenario <- "Scenario 7"
 save_name <- "./out/city_prev_mod07.Rdata"
 #

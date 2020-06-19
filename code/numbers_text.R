@@ -181,6 +181,27 @@ mt %>%
 
 # until the end of February (29 February 2020) 45.2 (range: 13.6 - 73.7) COVID-19 cases from all of China could have been imported
 
+# only from Wuhan
+mt %>% 
+  filter(is_africa_d==1,is_wuhan==1) %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  # by scenario
+  group_by(scenario) %>% 
+  summarise( sum=sum(imp_number) ) %>% print() %>% 
+  summarise(sum_mean=mean(sum),
+            sum_lower=min(sum),
+            sum_upper=max(sum))
+# only from non-Wuhan
+mt %>% 
+  filter(is_africa_d==1,is_wuhan==0) %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  # by scenario
+  group_by(scenario) %>% 
+  summarise( sum=sum(imp_number) ) %>% print() %>% 
+  summarise(sum_mean=mean(sum),
+            sum_lower=min(sum),
+            sum_upper=max(sum))
+
 ##
 ### prior to first detection 
 ##
