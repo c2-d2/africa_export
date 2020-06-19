@@ -3,6 +3,7 @@
 ## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
 ## Date: 17 June 2020
 source("./code/simpler_method_fun.R")
+library(stats)
 
 asc_nonhubei_v_hubei <- 1 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
 name_scenario <- "Scenario 6"
@@ -91,9 +92,29 @@ city_prev_mod0 %>% ggplot(aes(x=date,y=prevalence_o)) +
   geom_line(  ) +
   facet_wrap(~origin_city,scales="free")
 
+## Estimating ascertainment rates from M&B
 
+# estimating the period-specific ascertainment rate
+mnb<-read.csv("./data/m&b_digitized_hubei_other.csv")
 
+mnb_asct<-mnb%>%
+  group_by(Date,Region)%>%
+  mutate(asct_rates=1-(ConfirmedCases[1]/(ConfirmedCases[1]+ConfirmedCases[2]))) 
 
+mnb_asct_b4=mnb_asct[c(1,2,5,6),]
+mnb_asct_a4=mnb_asct[c(3,4,7,8),]
+
+mnb_asct_b4_ratio=mnb_asct$asct_rates[5]/mnb_asct$asct_rates[1]
+mnb_asct_a4_ratio=mnb_asct$asct_rates[7]/mnb_asct$asct_rates[3]
+
+## estimating the ascertainment rate over the entire period
+
+hubei_asct=weighted.mean(c(mnb_asct$asct_rates[1],mnb_asct$asct_rates[3]),
+              c(34/41,7/41))
+not_hubei_asct=weighted.mean(c(mnb_asct$asct_rates[5],mnb_asct$asct_rates[7]),
+              c(34/41,7/41))
+
+hubei_not_hubei_asct_ratio=not_hubei_asct/hubei_asct
 
 
 
