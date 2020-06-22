@@ -3,30 +3,30 @@ source("./code/simpler_method_fun.R")
 
 ## Need all destinations
 destination_countries <- c("Spain", "United States", "Algeria", "Nigeria", "United Kingdom", 
-  "Ethiopia", "Australia", "Netherlands", "Ghana", "New Zealand", 
-  "Cote D'Ivoire", "Russia", "Japan", "United Arab Emirates", "Malaysia", 
-  "Philippines", "Indonesia", "Sweden", "Germany", "Thailand", 
-  "Viet Nam", "Egypt", "Brazil", "Tanzania", "Senegal", "South Africa", 
-  "Guinea", "Argentina", "Korea (South)", "Morocco", "Hong Kong (SAR)", 
-  "Zimbabwe", "Congo (Kinshasa)", "Sudan", "Taiwan", "Angola", 
-  "Zambia", "Mauritius", "Cambodia", "Gabon", "Mauritania", "Madagascar", 
-  "Singapore", "Canada", "Chile", "Seychelles", "Equatorial Guinea", 
-  "Tunisia", "Kenya", "Macao (SAR)", "Uganda", "Mozambique")
+                           "Ethiopia", "Australia", "Netherlands", "Ghana", "New Zealand", 
+                           "Cote D'Ivoire", "Russia", "Japan", "United Arab Emirates", "Malaysia", 
+                           "Philippines", "Indonesia", "Sweden", "Germany", "Thailand", 
+                           "Viet Nam", "Egypt", "Brazil", "Tanzania", "Senegal", "South Africa", 
+                           "Guinea", "Argentina", "Korea (South)", "Morocco", "Hong Kong (SAR)", 
+                           "Zimbabwe", "Congo (Kinshasa)", "Sudan", "Taiwan", "Angola", 
+                           "Zambia", "Mauritius", "Cambodia", "Gabon", "Mauritania", "Madagascar", 
+                           "Singapore", "Canada", "Chile", "Seychelles", "Equatorial Guinea", 
+                           "Tunisia", "Kenya", "Macao (SAR)", "Uganda", "Mozambique")
 
 highsurv_countries <-c('United States','Australia','Canada','Korea (South)',
-                                  'United Kingdom',
-                                  'Netherlands','Sweden',
-                                  'Germany','Spain','Singapore')
+                       'United Kingdom',
+                       'Netherlands','Sweden',
+                       'Germany','Spain','Singapore')
 african_countries<-c('Mauritius','Mauritania','South Africa','Kenya','Egypt','Ethiopia','Morocco',
-                              'Algeria','Nigeria','Ghana','Tanzania','Senegal','Guinea',
-                              'Zimbabwe','Congo (Kinshasa)','Sudan','Angola','Zambia',
-                              'Gabon','Madagascar','Equatorial Guinea','Tunisia',
-                              'Uganda','Mozambique','Seychelles',"Cote D'Ivoire")
+                     'Algeria','Nigeria','Ghana','Tanzania','Senegal','Guinea',
+                     'Zimbabwe','Congo (Kinshasa)','Sudan','Angola','Zambia',
+                     'Gabon','Madagascar','Equatorial Guinea','Tunisia',
+                     'Uganda','Mozambique','Seychelles',"Cote D'Ivoire")
 
 global_countries_old <- c("New Zealand", "Russia", "Japan", "United Arab Emirates", "Malaysia", 
-                      "Philippines", "Indonesia", "Thailand", "Viet Nam", "Brazil", 
-                      "Argentina", "Hong Kong (SAR)", "Taiwan", "Cambodia", "Chile", 
-                      "Macao (SAR)") 
+                          "Philippines", "Indonesia", "Thailand", "Viet Nam", "Brazil", 
+                          "Argentina", "Hong Kong (SAR)", "Taiwan", "Cambodia", "Chile", 
+                          "Macao (SAR)") 
 # new global countries
 global_countries <- c("New Zealand","Australia", # only 2 destinations for Oceania
                       "United Kingdom","Germany","Russia", # top 3 dest in Europe (not Spain,Holland,Sweden)
@@ -41,8 +41,8 @@ countries_we_exclude <- c("United Arab Emirates","Malaysia","Philippines",
 
 ## Need all origins - each Chinese city
 origin_cities <- c("Hefei", "Beijing", "Chongqing", "Fuzhou", "Guangzhou", "Dongguan", 
-                    "Shenzhen", "Zhengzhou", "Wuhan", "Changsha", "Nanjing", "Nanchang", 
-                    "Xi'an", "Shanghai", "Chengdu", "Tianjin", "Hangzhou", "Jiaxing")
+                   "Shenzhen", "Zhengzhou", "Wuhan", "Changsha", "Nanjing", "Nanchang", 
+                   "Xi'an", "Shanghai", "Chengdu", "Tianjin", "Hangzhou", "Jiaxing")
 
 ## All scenarios 1-5 , Scenario 6 = Model 0
 scenarios <- c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6","Scenario 7", "Scenario 8")
@@ -55,28 +55,28 @@ table_key <- expand_grid(date=dates,origin_city=origin_cities, destination_count
 ############################
 ## Read in all prevalences
 ############################
-prev_cities <- read_csv("./out/prev_all_scenarios_combined.csv") #%>% select(-X1)
-prev_cities <- prev_cities %>% dplyr::select(-X1)
-prev_cities_4_5 <- read_csv("./out/prev_scenarios_4_5_combined.csv")
+prev_all <- NULL
 
-prev_all <- bind_rows(prev_cities, prev_cities_4_5)
-prev_all <- prev_all %>% pivot_longer(-c("cities","Scenario"))
-prev_all$name <- dates[prev_all$name]
-colnames(prev_all) <- c("origin_city","scenario","date","prevalence_o")
-scenario_key <- c("Intermediate"="Scenario 1","Lower"="Scenario 2", "Upper"="Scenario 3", "Scenario 4"="Scenario 4","Scenario 5"="Scenario 5")
-prev_all$scenario <- scenario_key[prev_all$scenario]
-prev_all <- prev_all %>% distinct() # 11,160
-# each scenario (5) has 2232 rows
-# each date (124) exists 90 times 
-
-# add Scenario 6
+# add Scenario 1-7
+#load( file = "./out/city_prev_mod0.Rdata" )
+#bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod01.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod02.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod03.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod04.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod05.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
 load( file = "./out/city_prev_mod06.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
 load( file = "./out/city_prev_mod07.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
 load( file = "./out/city_prev_mod08.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-
+ggplot(prev_all) + geom_line(aes(x=date,y=prevalence_o,col=scenario)) + facet_wrap(~origin_city,scales="free_y")
 ############################
 ## Get all flight data
 ############################
@@ -84,12 +84,6 @@ flights_all_cities <- read_csv("data/all_flight_pairs.csv")
 flights_all_cities <- flights_all_cities %>% group_by(date, origin_city, destination_country) %>%
   summarise(daily_volume=sum(daily_volume))
 flights_all_cities <- flights_all_cities %>% ungroup() %>% mutate(origin_city = ifelse(origin_city == "Xi An","Xi'an",origin_city))
-
-############################
-## Ascertainment rates
-############################
-ascertainment_rates <- tibble(scenario=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5", "Scenario 6","Scenario 7","Scenario 8"),
-                              asct_rate=c(0.0973, 0.145, 0.0922, 0.0973, 1, 1,1,1))
 
 ############################
 ## Alpha factors
@@ -113,13 +107,13 @@ df_hasdetected %>% filter( destination_country%in%african_countries ) -> df_hasd
 setdiff(unique(flights_all_cities$origin_city),unique(prev_all$origin_city))
 comb1 <- full_join(prev_all, table_key)
 comb2 <- full_join(comb1, flights_all_cities)
-comb3 <- full_join(comb2, ascertainment_rates)
+#comb3 <- full_join(comb2, ascertainment_rates)
 #comb4 <- full_join(comb3, alphas)
-comb4 <-  comb3
+comb4 <-  comb2
 
 all_dat <- comb4 %>% 
-  mutate(asct_rate = ifelse(origin_city == "Wuhan", 1, asct_rate),
-        is_wuhan=ifelse(origin_city=="Wuhan",1,0),
+  mutate(asct_rate = 1, #ifelse(origin_city == "Wuhan", 1, asct_rate),
+         is_wuhan=ifelse(origin_city=="Wuhan",1,0),
          is_prelockdown_date=ifelse(date <= as.Date("2020-01-23"),1,0),
          is_africa_d=ifelse(destination_country %in% african_countries, 1, 0),
          is_global_d=ifelse(destination_country %in% global_countries, 1, 0),
@@ -142,9 +136,8 @@ all_dat %>% select(origin_city, date, prevalence_o, scenario) %>%
   pull(date) %>%
   range()
 # 
- 
 
 
 
 
-  
+

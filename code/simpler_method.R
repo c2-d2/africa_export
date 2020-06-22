@@ -6,7 +6,7 @@ source("./code/simpler_method_fun.R")
 library(stats)
 library(tidyverse)
 
-create_scenario <- 7
+create_scenario <- 8
 
 if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
@@ -55,10 +55,15 @@ if(create_scenario == 7) {
   name_scenario <- "Scenario 7"
   save_name <- "./out/city_prev_mod07.Rdata"
 }
+if(create_scenario == 8) {  
+  asc_nonhubei_v_hubei <- 5 # Verity et al
+  name_scenario <- "Scenario 8"
+  save_name <- "./out/city_prev_mod08.Rdata"
+}
 ############################
 ## read in confirmed case data from James' covback repository
 ############################
-confirmed_cases<-read.csv("./data/midas_data_final.csv") %>% as_tibble()
+confirmed_cases<-read.csv("./data/midas_data_final.csv",stringsAsFactors=FALSE) %>% as_tibble()
 # subset to only provinces used in our analysis
 provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
              'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
@@ -87,29 +92,42 @@ prov_cum_incidence <- comp_cum_incidence( all_incidence_province, "./data/provin
 
 # add calibration value
 calibration_value <- tibble(  is_hubei=c(0,1),
-                              calv=c(asc_nonhubei_v_hubei,1) )
+                              calv=c(asc_nonhubei_v_hubei,1) ,
+                              calv_inverse=c(1, 1/asc_nonhubei_v_hubei))
   
 # calibrate incidence in Hubei and outside
 prov_inc_calibrated <- all_incidence_province %>% mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
   left_join( calibration_value, by="is_hubei" ) %>% 
-  mutate( n_infected_cal=n_infected/calv ) %>% 
+  mutate( n_infected_cal=n_infected/calv_inverse ) %>% 
   select( dates,province_raw,n_infected_cal )
 
 # distribute the cases into cities and add denominator
 prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
-city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , prov_city_adjust)
+city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , prov_city_adjust, aportion_all = create_scenario!=8)
 load(file="./out/df_city_pop.Rdata")
+
+## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
+## be the same within each province. Otherwise, is different.
 city_n_inf_caladj_den <- city_n_inf_caladj %>% left_join(df_city_pop,by=c("city"="asciiname")) %>% 
   mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
 
 # compute travel relevant prevalence
-# for scenarios 1-6:
+# for scenarios 1-6, 8:
 prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den, rel_dur = prev_days) # change rel_dur to # days prevalent for scenario
+prov_inc_prev_cali_raw <- comp_travel_rel_prev(city_n_inf_caladj, rel_dur = prev_days) 
 
 # for scenario 7:
 if(create_scenario == 7){
   prov_inc_prev_cali <- comp_travel_rel_prev_nonwuh_gap(city_n_inf_caladj_den) 
 }
+
+## Sense check
+## Plot incidence and prevalence together
+prov_inc_prev_cali %>% ggplot() + 
+  geom_line(aes(x=date,y=travel_prev)) + 
+  geom_line(data=city_n_inf_caladj_den, aes(x=date,y=n_infected_caladj),col="red") + 
+  facet_wrap(~city,scales="free_y")
+
 
 # rename columns for master table
 city_prev_mod0 <- prov_inc_prev_cali %>% 
@@ -172,6 +190,7 @@ confirmed_cases_date %>% filter(dates%in%date_v) %>%
 ## Estimating ascertainment rates from Verity et al. 
 verity <- read.csv("./data/digitize_verity.csv")
 asc_ratio_verity <- crossprod(verity$outside_wuhan,verity$outside_pop_prop)/crossprod(verity$wuhan,verity$wuhan_pop_prop)
+
 
 
 # # using healthcare worker seroprev, Wuhan
