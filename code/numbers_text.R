@@ -1,5 +1,6 @@
 library(tidyverse)
 library(lubridate)
+library(dplyr)
 #library(tidylog) # have it on when writing new pipes, otherwise overload with messages
 
 ############################
@@ -16,7 +17,7 @@ mt %>% group_by(scenario) %>%
   summarise(alpha_m=mean(alpha) ) %>% print() %>% 
   #
   mutate(alpha_lower=min(alpha_m),
-            alpha_upper=max(alpha_m)) %>% filter(scenario=="Scenario 4") # 1.52; 1.52-2.41
+            alpha_upper=max(alpha_m)) %>% filter(scenario=="Scenario 2") # 1.52; 1.52-2.41
 # from manuscript
 # each unit force of importation predicts 1.72 (range: 1.52 - 2.4) imported cases
 
@@ -99,7 +100,7 @@ mt %>%
   mutate(n=n()) %>% 
   filter( n==7 ) %>% 
   mutate( force_imp_week=sum(force_imp_day) ) %>% 
-  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  dplyr::slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
   #
   pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
   set_names( "date", "scenario", "non_W" , "W"  ) %>% 
@@ -116,7 +117,8 @@ pf_probt %>% group_by(date) %>%
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
-  filter(scenario=="Scenario 4") %>% print(n=Inf)
+  filter(scenario=="Scenario 2") %>% print(n=Inf)
+
 # from manuscript
 
 # majority of imported cases originated in Wuhan (90%; 63% - 95% in the week of 24 December 2019)
@@ -140,7 +142,7 @@ mt %>%
   mutate(n=n()) %>% 
   filter( n==7 ) %>% 
   mutate( force_imp_week=sum(force_imp_day) ) %>% 
-  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  dplyr::slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
   #
   pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
   set_names( "date", "scenario", "non_W" , "W"  ) %>% 
@@ -157,7 +159,7 @@ pf_probt %>% group_by(date) %>%
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
-  filter(scenario=="Scenario 4") %>% print(n=Inf)
+  filter(scenario=="Scenario 2") %>% print(n=Inf)
 # from manuscript
 
 # Wuhan contributed modestly to all imported cases throughout the time period, with its highest contribution estimated to be 57% (24% - 79%) in the early pandemic (the week of 8th January), subsequently declining to 0% in mid February (the week of 19th February)
@@ -252,7 +254,7 @@ mt %>%
   group_by(destination_country) %>% mutate( mean_pred= mean(sum),
                                             lower=range(sum)[1],
                                             upper=range(sum)[2]) %>% 
-  slice(1) %>% 
+  dplyr::slice(1) %>% 
   arrange( desc(mean_pred) ) %>% 
   select(-scenario,-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
 # from manuscript
@@ -365,3 +367,4 @@ prevalence_dat %>%
   ungroup() %>%
   summarise(min_prev = min(prevalence_percentage),
             max_prev = max(prevalence_percentage))
+
