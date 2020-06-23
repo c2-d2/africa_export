@@ -99,7 +99,7 @@ map<-ggplot(data = africa_risk) +
   #theme(legend.title=element_text(color = "black", size = 10),
         #legend.text = element_text(color = "black", size = 10))
 map
-ggsave("map_exports_africa_countries.pdf")
+ggsave("./figures/map_exports_africa_countries.pdf")
 
 ######## Stacked bar plot of imported cases by African destination countries, by origin city
 
@@ -154,7 +154,7 @@ stacked_bar_plot<-ggplot(pf_risk_all_cities,
 stacked_bar_plot$labels$fill<-"Origin City"
 stacked_bar_plot
 
-ggsave("stacked_bar_plot.pdf",width=6.8*0.9,height=2.8*0.9)
+ggsave("./figures/stacked_bar_plot.pdf",width=6.8*0.9,height=2.8*0.9)
 
 ######## Line plot of exported case trajectories in African destination countries
 
@@ -195,7 +195,7 @@ pf %>% filter( year=="2020" | week=="52"  ) %>%
          axis.text.y = element_blank(),
          axis.ticks.y = element_blank())
 
-ggsave("line_plot.pdf",width=8*0.85,height=1.8*0.85)
+ggsave("./figures/line_plot.pdf",width=8*0.85,height=1.8*0.85)
 
 # horizontal lines marking the window for each scenario 
 mt %>% 
@@ -233,7 +233,7 @@ range_x <- ggplot_build(p)$layout$panel_scales_x[[1]]$range$range
 rnage_y <- ggplot_build(p)$layout$panel_scales_y[[1]]$range$range
 ggplot_build(p)$layout$coord$limits
 
-ggsave("some_lines.pdf",width=8*0.85,height=1.8*0.85)
+ggsave("./figures/some_lines.pdf",width=8*0.85,height=1.8*0.85)
 
 ######## Plot of flight volume & prev over time
 
