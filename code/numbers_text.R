@@ -48,7 +48,7 @@ mt %>%
           frac_nW_lower=min(frac_nW),
           frac_nW_upper=max(frac_nW) ) # R: 1.96;0.32-3.39 # frac_nW: 0.569;0.249-0.781
 # from manuscript
-# for every case from Wuhan imported globally, there may have been 1.96 (range: 0.3 - 3.4) imported cases from other large Chinese cities
+# for every case from Wuhan imported globally, there may have been 0.6 (range of mean estimates across scenarios: 0.1 - 5.6) imported cases
 
 # every one case globally imported from Wuhan, 1.96 cases (0.3 - 3.4) may have been imported from outside Wuhan
 
