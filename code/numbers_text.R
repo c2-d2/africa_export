@@ -46,13 +46,12 @@ mt %>%
           frac_W_lower=range(frac_W)[1],
           frac_nW_mean=mean(frac_nW),
           frac_nW_lower=min(frac_nW),
-          frac_nW_upper=max(frac_nW) ) # R: 1.96;0.32-3.39 # frac_nW: 0.569;0.249-0.781
+          frac_nW_upper=max(frac_nW) ) # R: 
 # from manuscript
 # for every case from Wuhan imported globally, there may have been 0.6 (range of mean estimates across scenarios: 0.1 - 5.6) imported cases
 
-# every one case globally imported from Wuhan, 1.96 cases (0.3 - 3.4) may have been imported from outside Wuhan
+# for every one case globally imported from Wuhan, 0.6 cases (0.1 - 5.6) may have been imported from outside Wuhan
 
-# so that those cities contributed 57% (24% - 77%) of all case imports
 
 ############################
 ## Africa Ratio Wuhan/non-Wuhan
@@ -81,7 +80,7 @@ mt %>%
               )  # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
 # from Chinese cities outside of Wuhan (68%; 36% - 86%)
 
-# For countries in Africa this ratio was 3.4 (0.6 - 6.1)
+# For countries in Africa this ratio was 1 (0.1 - 9.8)
 
 ############################
 ## Weekly proportion -global
@@ -112,7 +111,7 @@ mt %>%
 pf_probt %>% 
   group_by( scenario ) %>% 
   mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
-  filter(prob_1>0.01) %>% ungroup() -> pf_probt
+  ungroup() -> pf_probt
 pf_probt %>% group_by(date) %>% 
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
@@ -120,9 +119,9 @@ pf_probt %>% group_by(date) %>%
   filter(scenario=="Scenario 2") %>% print(n=Inf)
 
 # from manuscript
+# the main source of global case exportation in early January was Wuhan (98%; 98%-99%), but due to the Wuhan lockdown and the rapid spread of the virus, main source of case exportation from mid February changed to cities outside of Wuhan (100% across scenarios)
 
-# majority of imported cases originated in Wuhan (90%; 63% - 95% in the week of 24 December 2019)
-# this proportion declined continuously until the end of January (62%; 20%-73% in the week of 22nd January 2020)
+# early on in the pandemic, the majority of imported cases originated in Wuhan (98%; 98% - 99% in the week of 1st January 2020), but this proportion then changed rapidly. In the week of 19th February, the proportion of globally imported cases sourced in Wuhan drops precipitously to 0% (across scenarios)
 
 
 ############################
@@ -154,7 +153,7 @@ mt %>%
 pf_probt %>% 
   group_by( scenario ) %>% 
   mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
-  filter(prob_1>0.01) %>% ungroup() -> pf_probt
+  ungroup() -> pf_probt
 pf_probt %>% group_by(date) %>% 
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
@@ -175,13 +174,13 @@ mt %>%
   summarise( sum=sum(imp_number) ) %>% print() %>% 
   summarise(sum_mean=mean(sum),
             sum_lower=min(sum),
-            sum_upper=max(sum)) # 45.2;13.6-73.7
+            sum_upper=max(sum)) # 
 # from manuscript
-# mean number of 45.2 (14 - 74) COVID-19 cases were imported to 26 destinations in Africa
+# mean number of 19 (10 - 101) COVID-19 cases were imported to 26 destinations in Africa
 
-# our model estimates 45 (14 - 74) imported COVID-19 cases
+# our model estimates 19 (10 - 101) imported COVID-19 cases
 
-# until the end of February (29 February 2020) 45.2 (range: 13.6 - 73.7) COVID-19 cases from all of China could have been imported
+# until the end of February (29 February 2020) 19 (range: 10 - 101) COVID-19 cases from all of China could have been imported
 
 # only from Wuhan
 mt %>% 
@@ -236,11 +235,11 @@ mt %>%
   summarise( mean_prop=mean(prop_prior),
              pro_lower=min(prop_prior),
              pro_upper=max(prop_prior) )
-# 99.2% (99.0% - 99.6%) of predicted imports would have occurred prior to any case detection
+# 100% (99.9% - 100%) of predicted imports would have occurred prior to any case detection
 
-# majority of predicted cases (99.2%; 99.0% - 99.6%) would have occurred prior to any confirmed cases
+# majority of predicted cases (100%; 99.9% - 100%) would have occurred prior to any confirmed cases
 
-# majority predicted on days prior to the first case detections in each location (99% for all scenarios)
+# majority predicted on days prior to the first case detections in each location (around 100% for all scenarios)
 
 ##
 ### for individual countries
@@ -251,12 +250,12 @@ mt %>%
   # by scenario
   group_by(destination_country,scenario) %>% 
   summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
-  group_by(destination_country) %>% mutate( mean_pred= mean(sum),
+  group_by(destination_country) %>% mutate( mean_pred= (sum),
                                             lower=range(sum)[1],
                                             upper=range(sum)[2]) %>% 
-  dplyr::slice(1) %>% 
+  dplyr::filter(scenario=="Scenario 2") %>% 
   arrange( desc(mean_pred) ) %>% 
-  select(-scenario,-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
+  select(-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
 # from manuscript
 #highest imported case count in South Africa (11; 4 - 19) and fewest cases in Equatorial Guinea (0.1; 0 - 0.13)
 
@@ -294,11 +293,11 @@ pf                 %>% filter( in_interval==1 ) %>%
   summarise( int_start=min(date),
              int_end=max(date)) 
 # from manuscript
-# between 17th January (±1 day) and 12th February (±2 days)
+# between 16th January (±2 day) and 6th February (±2 days)
 
-# 90% of all imported cases were estimated to be imported between 17th January 2020 (±1 day) and 12nd February 2020 (±2 days)
+# 90% of all imported cases were estimated to be imported between 16th January (±2 day) and 6th February (±2 days)
 
-# the majority of case imporations in Africa (90%) occurred between 17th January (±1 day) until 12th February (±2 days)
+# the majority of case imporations in Africa (90%) occurred between 16th January (±2 day) and 6th February (±2 days)
 
 ############################
 ## understimation
