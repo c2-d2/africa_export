@@ -344,7 +344,7 @@ pf_probt %>% group_by(date) %>%
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
-  filter(n==5) -> pf_probt_rib
+  filter(n==8) -> pf_probt_rib
 #
 pf_probt_rib %>% ggplot( aes(x=date)  )+
   geom_ribbon( aes(ymin=prob_W_lower,ymax=prob_W_upper) , fill="#473F44",alpha=0.5 ) +
