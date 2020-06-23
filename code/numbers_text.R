@@ -6,8 +6,10 @@ library(dplyr)
 ############################
 ## Load the master table
 ############################
-mt <- read_csv("./data/master_table.csv",guess_max = Inf)
-mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
+mt_all_dates <- read_csv("./data/master_table.csv",guess_max = Inf)
+dates_seq=seq(as.Date('2019-12-08'),as.Date('2020-02-29'),by="day")
+mt_all_dates %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt_all_dates
+mt <- mt_all_dates%>%filter(dates%in%dates_seq)
 mt %>% glimpse()
 
 ############################
