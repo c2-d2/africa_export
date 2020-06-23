@@ -41,14 +41,15 @@ export_theme <- theme_tufte() +
     strip.background=element_rect(fill="#f0f0f0"))
 
 # read in data
-mt=read.table("master_table.txt",sep=",",fill=TRUE,header=TRUE,quote='\\') # where is master_table.txt?
-# maybe I am missing master_table.txt
-# but for now I load master_table.csv
-mt_all_dates <- read_csv("./data/master_table.csv",guess_max = Inf)
-dates_seq=seq(as.Date('2019-12-08'),as.Date('2020-02-29'),by="day")
-mt_all_dates %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt_all_dates
-mt_all_dates$date=as.Date(mt_all_dates$date)
-mt <- mt_all_dates%>%filter(date%in%dates_seq)
+mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
+
+# don't require these steps if using updated master table w/ dates subset to focal period : 
+# mt_all_dates <- read_csv("./data/master_table.csv",guess_max = Inf)
+#dates_seq=seq(as.Date('2019-12-08'),as.Date('2020-02-29'),by="day")
+# mt_all_dates %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt_all_dates
+# mt_all_dates$date=as.Date(mt_all_dates$date)
+# mt <- mt_all_dates%>%filter(date%in%dates_seq)
 
 ######## Map of imported cases in African destination countries
 
