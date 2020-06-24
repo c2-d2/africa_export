@@ -101,6 +101,23 @@ prov_inc_calibrated <- all_incidence_province %>% mutate(is_hubei=as.numeric(pro
   mutate( n_infected_cal=n_infected/calv_inverse ) %>% 
   select( dates,province_raw,n_infected_cal )
 
+# plot calibrated incidence & symptom onset curves
+set.seed(96)
+
+## for three randomly selected provinces
+random_selection_provinces=sample_n(prov_inc_calibrated,3)$province_raw
+all_incidence_province_random_subset<-prov_inc_calibrated%>%
+  filter(province_raw%in%random_selection_provinces)
+confirmed_cases_date_subset<-confirmed_cases_date%>%
+  filter(province_raw%in%random_selection_provinces)
+p <- plot_conf_onset_2(all_incidence_province_random_subset,confirmed_cases_date_subset)
+p
+ggsave("./figures/incidence_subset.pdf",width=15,height=5)
+
+## all provinces
+p2 <- plot_conf_onset_2(prov_inc_calibrated,confirmed_cases_date)
+p2
+
 # distribute the cases into cities and add denominator
 prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
 city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , prov_city_adjust, aportion_all = create_scenario!=8)
