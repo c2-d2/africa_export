@@ -189,6 +189,8 @@ generate_alphas <- function( all_dat,file_obs_cnt ) {
                                 all_dat %>% filter(scenario==scenario_i) %>% 
                                                 filter( is_wuhan==1,is_prelockdown_date==1,is_highsurv_d==1 ) %>% 
                                                 mutate(force_imp=fvolume_od*prevalence_o) %>% 
+                                                filter(date%in%dates_seq)%>%
+
                                                 #
                                                 group_by(destination_country) %>% summarise( force_imp_sum=sum(force_imp) ) %>% 
                                                 #
