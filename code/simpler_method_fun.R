@@ -49,6 +49,30 @@ plot_conf_onset <- function(all_incidence_province,confirmed_cases_date) {
                 return(p)
 }
 
+plot_conf_onset_2 <- function(all_incidence_province,confirmed_cases_date) {
+  # --subset to only relevant columns -- #
+  columns<-c("dates","province_raw","n_onset","n_infected_cal")
+  
+  # all dates subset
+  all_incidence_province_subset<-all_incidence_province %>% select(any_of(columns) )
+  all_incidence_province_subset_long <- all_incidence_province_subset %>% 
+    pivot_longer( cols=c("n_onset","n_infected_cal"),names_to ="number_individuals")
+  
+  lineplot<-ggplot(all_incidence_province_subset_long,
+                   aes(x=dates,y=value))+
+    geom_point(data=confirmed_cases_date,aes(x=dates,y=n),size=0.25) +
+    geom_line(aes(col=number_individuals))+
+    scale_x_date(breaks="2 weeks",
+                 limits=c(as.Date('2020-01-01'),as.Date('2020-02-29')))+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+    #scale_color_discrete(labels = c("infection incidence",
+    # "symptom onset incidence"))+
+    labs(colour="Legend")+ylab("Number of individuals")+export_theme+
+    theme(axis.title.y=element_blank(),legend.position="none")
+  p <- lineplot+facet_wrap(.~province_raw,scales="free")
+  return(p)
+}
+
 comp_cum_incidence <- function(all_incidence_province, filen) {
                 all_incidence_province %>% 
                                 filter(!is.na(n_infected)) %>% 
