@@ -5,8 +5,10 @@
 source("./code/simpler_method_fun.R")
 library(stats)
 library(tidyverse)
+library(patchwork)
+library(RColorBrewer)
 
-create_scenario <- 8
+create_scenario <- 2
 
 if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
@@ -98,8 +100,9 @@ calibration_value <- tibble(  is_hubei=c(0,1),
 # calibrate incidence in Hubei and outside
 prov_inc_calibrated <- all_incidence_province %>% mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
   left_join( calibration_value, by="is_hubei" ) %>% 
-  mutate( n_infected_cal=n_infected/calv_inverse ) %>% 
-  select( dates,province_raw,n_infected_cal )
+  mutate( n_infected_cal=n_infected/calv_inverse ,
+          n_onset_cal = n_onset/calv_inverse) %>% 
+  select( dates,province_raw,n_infected_cal, n_onset_cal)
 
 
 
@@ -114,7 +117,7 @@ prov_inc_calibrated_2 <- all_incidence_province %>% mutate(is_hubei=as.numeric(p
 ## for three randomly selected provinces
 set.seed(96)
 random_selection_provinces=sample_n(prov_inc_calibrated,3)$province_raw
-all_incidence_province_random_subset<-prov_inc_calibrated%>%
+all_incidence_province_random_subset<-all_incidence_province%>%
   filter(province_raw%in%random_selection_provinces)
 confirmed_cases_date_subset<-confirmed_cases_date%>%
   filter(province_raw%in%random_selection_provinces)
@@ -122,6 +125,8 @@ confirmed_cases_date_subset<-confirmed_cases_date%>%
 p <- plot_conf_onset_2(all_incidence_province_random_subset,confirmed_cases_date_subset)
 p
 ggsave("./figures/incidence_subset.pdf",width=15,height=5)
+
+
 
 ## for all provinces
 p2 <- plot_conf_onset_2(prov_inc_calibrated,confirmed_cases_date)
@@ -217,6 +222,9 @@ confirmed_cases_date %>% filter(dates%in%date_v) %>%
 ## Estimating ascertainment rates from Verity et al. 
 verity <- read.csv("./data/digitize_verity.csv")
 asc_ratio_verity <- crossprod(verity$outside_wuhan,verity$outside_pop_prop)/crossprod(verity$wuhan,verity$wuhan_pop_prop)
+
+
+
 
 
 
