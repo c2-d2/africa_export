@@ -111,6 +111,9 @@ comb2 <- full_join(comb1, flights_all_cities)
 #comb4 <- full_join(comb3, alphas)
 comb4 <-  comb2
 
+
+dates_seq=seq(as.Date('2019-12-08'),as.Date('2020-02-29'),by="day")
+
 all_dat <- comb4 %>% 
   mutate(asct_rate = 1, #ifelse(origin_city == "Wuhan", 1, asct_rate),
          is_wuhan=ifelse(origin_city=="Wuhan",1,0),
@@ -121,9 +124,10 @@ all_dat <- comb4 %>%
   rename(fvolume_od=daily_volume) %>% 
   left_join( df_hasdetected, by=c("destination_country","date") ) %>% 
   mutate( has_detected_d=ifelse( ( is_africa_d==1 & is.na(has_detected_d) ),0,has_detected_d  ) ) %>% 
-  mutate( fvolume_od=replace_na(fvolume_od,replace=0) )
+  mutate( fvolume_od=replace_na(fvolume_od,replace=0) )%>%
+  filter( date%in%dates_seq)
 
-# generate alphas by fitting each scenario
+# generate alphas by fitting each scenario, using date sequence for focal period
 df_alphas <- generate_alphas( all_dat, file_obs_cnt="./data/who_imports.csv" )
 all_dat %>% left_join( df_alphas, by="scenario" ) -> all_dat
 

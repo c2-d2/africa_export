@@ -12,7 +12,7 @@ data %>% glimpse()
 data %>% 
                 mutate( dateRep=dmy(dateRep),
                         countriesAndTerritories=as.character(countriesAndTerritories)) %>% 
-                select(year,month,day,dateRep,continentExp,countriesAndTerritories,popData2018, 
+                select(year,month,day,dateRep,continentExp,countriesAndTerritories,popData2019, 
                        cases,deaths) %>% as_tibble() -> df
 
 ############################
