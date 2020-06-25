@@ -23,3 +23,17 @@ NumericVector calculate_preconfirmation_prevalence_from_infections(NumericVector
   }
   return(prevalence);
 }
+
+//[[Rcpp::export]]
+NumericVector calculate_presytmptomatic_prevalence(NumericVector infections, double incu_par1, double incu_par2){
+  int tmax = infections.size() - 1;
+  NumericVector prevalence(tmax+1);
+  for(int t = 0; t <= tmax; ++t){
+    prevalence[t] = 0;
+    for(int i = 0; i <= t; ++i) {
+      // Proportion that are pre-symptomatic from each day of infection in the past
+      prevalence[t] += infections[i] * (1.0 - R::plnorm(t-i, incu_par1, incu_par2, true, false));
+    }
+  }
+  return(prevalence);
+}

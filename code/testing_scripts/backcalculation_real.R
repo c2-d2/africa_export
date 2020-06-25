@@ -25,6 +25,20 @@ source("code/functions/backcalculation_funcs.R")
 ## Read in confirmed case counts
 confirmed_cases <- read_csv("data/midas_data_final.csv")
 
+## Subset confirmed case counts to only provinces used in our analysis
+provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
+             'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
+             'Jiangxi','Sichuan','Anhui','Fujian')
+confirmed_cases_final<-confirmed_cases[confirmed_cases$province_raw%in%provinces,]
+
+# match date indices to actual dates
+times <- dates <- seq(as.Date('2019-11-01'),as.Date('2020-03-12'),by="day")
+date=seq_along(dates)-1
+dates_and_date=cbind.data.frame(dates,date)
+confirmed_cases_date=merge(dates_and_date,confirmed_cases_final,by="date")
+confirmed_cases_date <- as_tibble(confirmed_cases_date) %>% rename(Location=province_raw)
+
+
 ## Read in line list data from Zhang et al.
 linelist_dat <- read_csv("~/Documents/GitHub/covback/data/real/zhang_appendix_lancet.csv")
 linelist_dat <- linelist_dat %>% 
@@ -90,23 +104,11 @@ daily_loc_delays <- daily_loc_delays %>% group_by(Location) %>%
   mutate(mean_delay_loc = ifelse(report_date < first_measured_date,first_delay,mean_delay_loc),
          mean_delay_loc = ifelse(report_date > last_measured_date,last_delay,mean_delay_loc))
 
-## Subset confirmed case counts to only provinces used in our analysis
-provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
-             'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
-             'Jiangxi','Sichuan','Anhui','Fujian')
-confirmed_cases_final<-confirmed_cases[confirmed_cases$province_raw%in%provinces,]
-
-# match date indices to actual dates
-dates=seq(as.Date('2019-11-01'),as.Date('2020-03-02'),by="day")
-date=seq(0,122)
-dates_and_date=cbind.data.frame(dates,date)
-confirmed_cases_date=merge(dates_and_date,confirmed_cases_final,by="date")
-confirmed_cases_date <- as_tibble(confirmed_cases_date) %>% rename(Location=province_raw)
 
 ## Have a look at confirmed cases by province used
 p_confirmed <- ggplot(confirmed_cases_date) + 
   geom_bar(aes(x=dates,y=n),stat="identity") + 
-  facet_wrap(~province_raw,scales="free_y")
+  facet_wrap(~Location,scales="free_y")
 p_confirmed
 
 ##############################################################################################################
@@ -301,3 +303,34 @@ png("figures/real_augmented_shift.png",width=8,height=8,res=300,units="in")
 p_backcalc_overall
 dev.off()
 
+
+## Check that forward-delays from the augmented infection curve make sense
+onsets_forward <- infections %>% 
+  filter(ver == "Overall mean") %>% 
+  ungroup() %>%
+  uncount(n) %>% 
+  mutate(incu_period = floor(rlnorm(n(), incu_par1, incu_par2)),
+         onset_date = infection_date + incu_period) %>%
+  rename(date=onset_date) %>%
+  select(Location, date) %>%
+  group_by(Location, date) %>%
+  tally() %>%
+  mutate(date=lubridate::round_date(date))
+
+confirmations_forward <- onsets_forward %>%
+  left_join(forward_delay_dists %>% select(date, gamma_scale_forward,gamma_shape_forward)) %>%
+  uncount(n) %>%
+  mutate(confirm_delay = rdgamma(n(), gamma_shape_forward,scale=gamma_scale_forward),
+         confirm_date = date + confirm_delay) %>%
+  group_by(Location, confirm_date) %>%
+  tally()
+
+p_forward_sim_from_augmented_byoverallmean <- ggplot(confirmations_forward) +
+  geom_bar(data=confirmed_cases_date %>% filter(n > 0),aes(x=dates,y=n),stat="identity",fill="grey60",col="grey20") +
+  geom_line(aes(x=confirm_date,y=n),col="red") +
+  facet_wrap(~Location,scales="free_y")
+png("figures/real_forward_augment_check.png",width=8,height=8,res=300,units="in")
+p_forward_sim_from_augmented_byoverallmean
+dev.off()
+
+all_dat_expand <- expand_grid()
