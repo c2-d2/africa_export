@@ -316,9 +316,9 @@ pf                 %>% filter( in_interval==1 ) %>%
 
 
 # 1 wuhan detected / 2.8 wuhan real / 2.8*1.96 call of china real
-1- 1/(2.8+2.8*1.96) # fraction missed
-1- 1/(2.8+2.8*0.32) # fraction missed - lower
-1- 1/(2.8+2.8*3.39) # fraction missed - upper
+1- 1/(2.8+2.8*0.555) # fraction missed
+1- 1/(2.8+2.8*0.0555) # fraction missed - lower
+1- 1/(2.8+2.8*5.55) # fraction missed - upper
 
 # 88% (73% - 92%) of all cases imported globally may have been undetected
 
