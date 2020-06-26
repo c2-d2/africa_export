@@ -6,7 +6,7 @@ setwd("~/Documents/GitHub/africa_export/")
 source("code/functions/backcalculation_funcs.R")
 
 tmin <- as.Date("2019-11-01")
-tmax <- as.Date("2020-03-03")
+tmax <- as.Date("2020-03-12")
 times <- seq(tmin, tmax, by="1 day")
 times_plot <- seq(as.Date("2020-01-01"),as.Date("2020-02-20"),by="1 day")
 

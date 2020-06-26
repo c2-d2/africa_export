@@ -6,12 +6,37 @@ library(gam)
 library(data.table)
 library(Bolstad2)
 library(lubridate)
+library(ggthemes)
 
 # settings
 select <- dplyr::select
 tibble.print_max <- 5
 tibble.print_min <- 5
 
+
+# plot theme, courtesy of James Hay
+export_theme <- theme_tufte() + 
+  theme(
+    ## Axis text and titles
+    axis.text.x = element_text(size=6,angle = 45, hjust = 1,family="sans"),
+    axis.text.y=element_text(size=6,family="sans"),
+    axis.title.x=element_text(size=8,family="sans",vjust=-1),
+    axis.title.y=element_text(size=8,family="sans"),
+    ## Axis lines
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    ## Legends
+    legend.title=element_text(size=10,family="sans",face="italic"),
+    legend.text=element_text(size=6,family="sans"),
+    legend.key.size= unit(0.2, "cm"),
+    legend.margin = margin(0,0,0,0, "cm"),
+    ## Strips for facet_wrap
+    strip.text=element_text(size=8,family="sans"),
+    strip.background=element_rect(fill="#f0f0f0"),
+    ## Tags
+    plot.tag=element_text(size=10,family="sans",face="bold",hjust=0,vjust=-3),
+    plot.title=element_text(size=8,family="sans",hjust=0.5,face="bold",vjust=-3)
+    )
 
 
 shift_2_delays <- function(confirmed_cases_date,incubation_period,delay) {
