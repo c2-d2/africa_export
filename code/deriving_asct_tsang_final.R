@@ -1,6 +1,6 @@
 # Source: https://github.com/timktsang/covid19_casedef/blob/master/2020_03_10_figure3.R (timktsang)
 
-data <- read.csv("Epidemic_curve_China.csv")
+data <- read.csv("./data/Epidemic_curve_China.csv")
 data <- data[-82,]
 data$dateid <- 1:nrow(data)
 
@@ -8,7 +8,7 @@ data1 <- data[,c("date","dateid","wuhan.confirmed","hubeiexclwuhan.confirmed","c
 #1/15 1/18 1/22 1/27 2/4 2/18
 # 45   48   52   57   65  79
 
-test <- read.csv("pred_f3.csv")
+test <- read.csv("./data/pred_f3.csv")
 
 testp <- test
 testp <- testp[,c(2:5,7:10,12:15)] - testp[,c(2:5,7:10,12:15)-1] 
