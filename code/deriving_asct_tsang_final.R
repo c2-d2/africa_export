@@ -3,6 +3,24 @@ library(ggplot2)
 library(tidyverse)
 library(data.table)
 
+## Read in MCMC outputs
+load("data/tsang2020/image_0.729555189609528.Rdata")
+sourceCpp("data/tsang2020/nov.cpp")
+## Data used by Tsang et al.
+data1 <- rbind(data1, matrix(0, ncol=4,nrow=14))
+## Model predicted incidence
+gg <- pred(data1,z1[,1])
+pred_dat <- gg[[4]]
+## Take posterior mean assuming version 5 reporting throughout
+pred_final <- as.data.frame(pred_dat[,c(5,10,15)])
+colnames(pred_final) <- c("Wuhan","Hubei","China")
+pred_final$date <- seq(as.Date("2019-12-02"),as.Date("2020-03-05"),by="1 day")
+plot(pred_final$Wuhan,type='l')
+lines(pred_final$China)
+
+## Store for later analysis
+## write_csv(pred_final, "~/Documents/GitHub/africa_export/data/tsang_onset_predictions.csv")
+
 data <- read.csv("./data/Epidemic_curve_China.csv")
 data <- data[-82,]
 data$dateid <- 1:nrow(data)
@@ -287,8 +305,6 @@ for (i in 1:nrow(date_cases_rest)){
 ggplot(date_cases_both_2_by_day,aes(x=date_mid,y=asct_ratio))+geom_line()+xlab("date")+ylab("ascertainment rate ratio")
 ggsave("five_periods_ascertainment_rate_ratio_plot.pdf")
 
-
-
 ## Save table of ascertainment rates
 dates <- as.Date(as.character(data$date),origin="01/01/2019",format="%d/%m/%Y")
 start_date <- c(min(dates), as.Date(c("2020-01-15","2020-01-18","2020-01-22","2020-02-14")))
@@ -305,3 +321,4 @@ enumerated_asc_rates <- tibble(date=seq(as.Date("2019-11-01"), as.Date("2020-03-
   left_join(date_cases_both_2_summary)
 
 write_csv(enumerated_asc_rates, "data/tsang_ascertainment_rates.csv")
+

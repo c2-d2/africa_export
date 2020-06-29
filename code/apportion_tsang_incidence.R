@@ -69,10 +69,15 @@ final_dat <- tsang_predictions_raw %>%
   select(Wuhan, date) %>% 
   rename(n_predict=Wuhan, dates=date) %>%
   mutate(province_raw="Hubei") %>%
-  bind_rows(tsang_predictions %>% select(n_predict, dates, province_raw))
+  bind_rows(tsang_predictions %>% select(n_predict, dates, province_raw)) %>%
+  rename(n=n_predict) %>%
+  mutate(date_full=dates) %>%
+  group_by(province_raw) %>%
+  mutate(date=seq(0,n()-1, by=1)) %>% 
+  ungroup()
 
 final_dat %>% ggplot() +
-  geom_line(aes(x=dates,y=n_predict)) + 
+  geom_line(aes(x=dates,y=n)) + 
   geom_line(data=china_onsets %>% filter(province_raw %in% provinces), aes(x=dates,y=n_onset),col="red") +
   facet_wrap(~province_raw,scales="free_y")
 

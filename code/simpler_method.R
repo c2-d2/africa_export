@@ -8,7 +8,7 @@ library(tidyverse)
 library(patchwork)
 library(RColorBrewer)
 
-create_scenario <- 9
+create_scenario <- 10
 
 if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
@@ -102,9 +102,9 @@ confirmed_cases_date$n[ c((which_replace[1]-1),(which_replace[2]+1)) ] -> put_in
 confirmed_cases_date$n[ which_replace ] <- put_instead
 
 # backculation: shift by mean reporting delays & incubation period
-if(create_scenario != 9){
-  all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
-} else {
+all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
+
+if(create_scenario == 9){
   ## If Tsang scaling, shift back to onsets, then inflate, then shift back to infections
   all_incidence_province <- confirmed_cases_date%>%
     arrange( province_raw,dates ) %>%  # helps to check the df visually
@@ -117,8 +117,8 @@ if(create_scenario != 9){
     mutate(n_onset_scaled=ifelse(province_raw == "Hubei", 
                                  n_onset/asct_rest,
                                  n_onset/asct_wuhan))
-                                 #n_onset + rnbinom(n(), n_onset,prob=asct_rest), 
-                                 #n_onset + rnbinom(n(), n_onset,prob=asct_wuhan)))
+  #n_onset + rnbinom(n(), n_onset,prob=asct_rest), 
+  #n_onset + rnbinom(n(), n_onset,prob=asct_wuhan)))
   scaled_inc <- scaled_inc %>% select(-n_onset) %>% rename(n_onset=n_onset_scaled)
   all_incidence_province <- scaled_inc%>%
     arrange( province_raw,dates ) %>%  # helps to check the df visually
@@ -127,6 +127,10 @@ if(create_scenario != 9){
     ungroup() %>% 
     relocate( dates, province_raw,n_infected) 
   
+} 
+if(create_scenario == 10){
+  all_incidence_province <- read_csv("data/tsang_predicted_onsets_byprovince.csv")
+  all_incidence_province <- shift_2_delays(all_incidence_province,incubation_period=-5,delay=0)
 }
 
 # plot the results

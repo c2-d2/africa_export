@@ -45,7 +45,8 @@ origin_cities <- c("Hefei", "Beijing", "Chongqing", "Fuzhou", "Guangzhou", "Dong
                    "Xi'an", "Shanghai", "Chengdu", "Tianjin", "Hangzhou", "Jiaxing")
 
 ## All scenarios 1-5 , Scenario 6 = Model 0
-scenarios <- c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6","Scenario 7", "Scenario 8")
+scenarios <- c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6","Scenario 7", "Scenario 8",
+               "Scenario 9","Scenario 10")
 
 ## All dates 2019-12-08 to 2020-02-29
 dates <- seq(as.Date("2019-11-01"),as.Date("2020-03-03"),by="1 day")
@@ -76,7 +77,16 @@ load( file = "./out/city_prev_mod07.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
 load( file = "./out/city_prev_mod08.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-ggplot(prev_all) + geom_line(aes(x=date,y=prevalence_o,col=scenario)) + facet_wrap(~origin_city,scales="free_y")
+load( file = "./out/city_prev_mod09.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod10.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+prev_all$scenario <- factor(prev_all$scenario, levels=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5", 
+                                                        "Scenario 6", "Scenario 7", "Scenario 8", "Scenario 9", "Scenario 10"))
+ggplot(prev_all) + 
+  geom_line(aes(x=date,y=prevalence_o,col=scenario)) + 
+  scale_color_manual(values=brewer.pal(10,"Paired")) +
+  facet_wrap(~origin_city,scales="free_y")
 ############################
 ## Get all flight data
 ############################

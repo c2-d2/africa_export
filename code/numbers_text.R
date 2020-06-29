@@ -6,7 +6,7 @@ library(dplyr)
 ############################
 ## Load the master table
 ############################
-
+main_scenario <- "Scenario 10"
 mt <- read_csv("./data/master_table.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 
@@ -25,7 +25,7 @@ mt %>% group_by(scenario) %>%
   summarise(alpha_m=mean(alpha) ) %>% print() %>% 
   #
   mutate(alpha_lower=min(alpha_m),
-            alpha_upper=max(alpha_m)) %>% filter(scenario=="Scenario 2") # 1.52; 1.52-2.41
+            alpha_upper=max(alpha_m)) %>% filter(scenario==main_scenario) # 1.52; 1.52-2.41
 # from manuscript
 # each unit force of importation predicts 1.72 (range: 1.52 - 2.4) imported cases
 
@@ -124,12 +124,19 @@ pf_probt %>% group_by(date) %>%
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
-  filter(scenario=="Scenario 2") %>% print(n=Inf)
-
+  filter(scenario==main_scenario) %>% print(n=Inf)
+pf_probt %>% group_by(date) %>% 
+  mutate( n=n() ) %>% 
+  mutate( prob_W_lower=min(prop_wuhan),
+          prob_W_upper=max(prop_wuhan)) %>% 
+  filter(scenario==main_scenario) %>%
+  ggplot() + geom_line(aes(x=date,y=prop_wuhan))
 # from manuscript
-# the main source of global case exportation in early January was Wuhan (98%; 98%-99%), but due to the Wuhan lockdown and the rapid spread of the virus, main source of case exportation from mid February changed to cities outside of Wuhan (100% across scenarios)
+# the main source of global case exportation in early January was Wuhan (98%; 98%-99%), but due to the Wuhan lockdown and the rapid spread of the virus, 
+## main source of case exportation from mid February changed to cities outside of Wuhan (100% across scenarios)
 
-# early on in the pandemic, the majority of imported cases originated in Wuhan (98%; 98% - 99% in the week of 1st January 2020), but this proportion then changed rapidly. In the week of 19th February, the proportion of globally imported cases sourced in Wuhan drops precipitously to 0% (across scenarios)
+# early on in the pandemic, the majority of imported cases originated in Wuhan (98%; 98% - 99% in the week of 1st January 2020), but this proportion then changed rapidly. 
+## In the week of 19th February, the proportion of globally imported cases sourced in Wuhan drops precipitously to 0% (across scenarios)
 
 
 ############################
@@ -166,7 +173,7 @@ pf_probt %>% group_by(date) %>%
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
-  filter(scenario=="Scenario 2") %>% print(n=Inf)
+  filter(scenario==main_scenario) %>% print(n=Inf)
 # from manuscript
 
 # Wuhan contributed modestly to all imported cases throughout the time period, with its highest contribution estimated to be 57% (24% - 79%) in the early pandemic (the week of 8th January), subsequently declining to 0% in mid February (the week of 19th February)
@@ -261,7 +268,7 @@ mt %>%
   group_by(destination_country) %>% mutate( mean_pred= (sum),
                                             lower=range(sum)[1],
                                             upper=range(sum)[2]) %>% 
-  dplyr::filter(scenario=="Scenario 2") %>% 
+  dplyr::filter(scenario==main_scenario) %>% 
   arrange( desc(mean_pred) ) %>% 
   select(-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
 # from manuscript
