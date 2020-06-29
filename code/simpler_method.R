@@ -8,7 +8,7 @@ library(tidyverse)
 library(patchwork)
 library(RColorBrewer)
 
-create_scenario <- 2
+create_scenario <- 9
 
 if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
@@ -69,7 +69,8 @@ if(create_scenario == 8) {
 #}
 
 if(create_scenario == 9) {  
-  asc_nonhubei_v_hubei <- c(0.947381, 1.323449, 1.265765, 1.212640, 1.046407) # Tsang et al.
+  asc_rates <- read_csv("data/tsang_ascertainment_rates.csv")
+  asc_nonhubei_v_hubei <- rep(1,5) # Tsang et al.
   name_scenario <- "Scenario 9"
   save_name <- "./out/city_prev_mod09.Rdata"
 }
@@ -96,7 +97,32 @@ confirmed_cases_date$n[ c((which_replace[1]-1),(which_replace[2]+1)) ] -> put_in
 confirmed_cases_date$n[ which_replace ] <- put_instead
 
 # backculation: shift by mean reporting delays & incubation period
-all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
+if(create_scenario != 9){
+  all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
+} else {
+  ## If Tsang scaling, shift back to onsets, then inflate, then shift back to infections
+  all_incidence_province <- confirmed_cases_date%>%
+    arrange( province_raw,dates ) %>%  # helps to check the df visually
+    group_by(province_raw)%>%
+    mutate(n_onset=shift(n,n=-7)) %>% 
+    ungroup() %>% 
+    relocate( dates, province_raw,n_onset ) 
+  
+  scaled_inc <- all_incidence_province %>% left_join(asc_rates %>% rename(dates=date)) %>% 
+    mutate(n_onset_scaled=ifelse(province_raw == "Hubei", 
+                                 n_onset/asct_rest,
+                                 n_onset/asct_wuhan))
+                                 #n_onset + rnbinom(n(), n_onset,prob=asct_rest), 
+                                 #n_onset + rnbinom(n(), n_onset,prob=asct_wuhan)))
+  scaled_inc <- scaled_inc %>% select(-n_onset) %>% rename(n_onset=n_onset_scaled)
+  all_incidence_province <- scaled_inc%>%
+    arrange( province_raw,dates ) %>%  # helps to check the df visually
+    group_by(province_raw)%>%
+    mutate(n_infected=shift(n_onset,n=-5)) %>% 
+    ungroup() %>% 
+    relocate( dates, province_raw,n_infected) 
+  
+}
 
 # plot the results
 p <- plot_conf_onset(all_incidence_province,confirmed_cases_date)
@@ -105,28 +131,31 @@ p <- plot_conf_onset(all_incidence_province,confirmed_cases_date)
 prov_cum_incidence <- comp_cum_incidence( all_incidence_province, "./data/provinces_popn_size_statista.csv" ) # 15 rows
 
 # add calibration value
-calibration_value <- tibble(  is_hubei=c(0,1),
-                              calv=c(asc_nonhubei_v_hubei,1) ,
-                              calv_inverse=c(1, 1/asc_nonhubei_v_hubei))
-## for scenario 9
-calibration_value_scen_9 <- tibble(  is_hubei=c(0,1),
-                              calv1=c(asc_nonhubei_v_hubei[1],1) ,
-                              calv2=c(asc_nonhubei_v_hubei[2],1) ,
-                              calv3=c(asc_nonhubei_v_hubei[3],1) ,
-                              calv4=c(asc_nonhubei_v_hubei[4],1) ,
-                              calv5=c(asc_nonhubei_v_hubei[5],1) ,
-                              calv_inverse1=c(1, 1/asc_nonhubei_v_hubei[1]),
-                              calv_inverse2=c(1, 1/asc_nonhubei_v_hubei[2]),
-                              calv_inverse3=c(1, 1/asc_nonhubei_v_hubei[3]),
-                              calv_inverse4=c(1, 1/asc_nonhubei_v_hubei[4]),
-                              calv_inverse5=c(1, 1/asc_nonhubei_v_hubei[5]))
-
-## define ascertainment rate ratio periods for scenario 9
-asct_period_1<-seq(as.Date('2019-12-02'),as.Date('2020-01-17'),by="day")
-asct_period_2<-seq(as.Date('2020-01-18'),as.Date('2020-01-21'),by="day")
-asct_period_3<-seq(as.Date('2020-01-22'),as.Date('2020-01-26'),by="day")
-asct_period_4<-seq(as.Date('2020-01-27'),as.Date('2020-02-03'),by="day")
-asct_period_5<-seq(as.Date('2020-02-04'),as.Date('2020-03-02'),by="day")
+if(create_scenario != 9){
+  calibration_value <- tibble(  is_hubei=c(0,1),
+                                calv=c(asc_nonhubei_v_hubei,1) ,
+                                calv_inverse=c(1, 1/asc_nonhubei_v_hubei))
+} else {
+  ## for scenario 9
+  calibration_value_scen_9 <- tibble(  is_hubei=c(0,1),
+                                calv1=c(asc_nonhubei_v_hubei[1],1) ,
+                                calv2=c(asc_nonhubei_v_hubei[2],1) ,
+                                calv3=c(asc_nonhubei_v_hubei[3],1) ,
+                                calv4=c(asc_nonhubei_v_hubei[4],1) ,
+                                calv5=c(asc_nonhubei_v_hubei[5],1) ,
+                                calv_inverse1=c(1, 1/asc_nonhubei_v_hubei[1]),
+                                calv_inverse2=c(1, 1/asc_nonhubei_v_hubei[2]),
+                                calv_inverse3=c(1, 1/asc_nonhubei_v_hubei[3]),
+                                calv_inverse4=c(1, 1/asc_nonhubei_v_hubei[4]),
+                                calv_inverse5=c(1, 1/asc_nonhubei_v_hubei[5]))
+  
+  ## define ascertainment rate ratio periods for scenario 9
+  asct_period_1<-seq(as.Date('2019-12-02'),as.Date('2020-01-17'),by="day")
+  asct_period_2<-seq(as.Date('2020-01-18'),as.Date('2020-01-21'),by="day")
+  asct_period_3<-seq(as.Date('2020-01-22'),as.Date('2020-01-26'),by="day")
+  asct_period_4<-seq(as.Date('2020-01-27'),as.Date('2020-02-03'),by="day")
+  asct_period_5<-seq(as.Date('2020-02-04'),as.Date('2020-03-02'),by="day")
+}
 
 # calibrate incidence in Hubei and outside
 
@@ -135,12 +164,13 @@ if (create_scenario!=9){
     left_join( calibration_value, by="is_hubei" ) %>% 
     mutate( n_infected_cal=n_infected/calv_inverse ,
           n_onset_cal = n_onset/calv_inverse) %>% 
-    select( dates,province_raw,n_infected_cal, n_onset_cal)
+    select( dates,province_raw,n_infected_cal, n_onset_cal) %>%
+    rename(n_onset=n_onset_cal)
   }
 if (create_scenario==9){
   prov_inc_calibrated <- all_incidence_province %>% 
   mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
-  left_join( calibration_value_scen9, by="is_hubei" ) %>% 
+  left_join( calibration_value_scen_9, by="is_hubei" ) %>% 
   mutate(n_infected_cal=ifelse(dates%in%asct_period_1,n_infected/calv_inverse1,
                                ifelse(dates%in%asct_period_2,n_infected/calv_inverse2,
                                ifelse(dates%in%asct_period_3,n_infected/calv_inverse3,
@@ -165,7 +195,7 @@ all_incidence_province_random_subset<-all_incidence_province%>%
 confirmed_cases_date_subset<-confirmed_cases_date%>%
   filter(province_raw%in%random_selection_provinces)
 
-p <- plot_conf_onset_2(all_incidence_province_random_subset,confirmed_cases_date_subset)
+p <- plot_conf_onset_2(all_incidence_province_random_subset %>% rename(n_infected_cal=n_infected),confirmed_cases_date_subset)
 p
 ggsave("./figures/incidence_subset.pdf",width=15,height=5)
 
