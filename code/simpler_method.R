@@ -62,6 +62,12 @@ if(create_scenario == 8) {
   name_scenario <- "Scenario 8"
   save_name <- "./out/city_prev_mod08.Rdata"
 }
+#if(create_scenario == 9) {  
+#  asc_nonhubei_v_hubei <- c(0.947381, 1.323449, 1.265765, 1.212640, 1.046407) # Tsang et al.
+#  name_scenario <- "Scenario 9"
+#  save_name <- "./out/city_prev_mod09.Rdata"
+#}
+
 if(create_scenario == 9) {  
   asc_nonhubei_v_hubei <- c(0.947381, 1.323449, 1.265765, 1.212640, 1.046407) # Tsang et al.
   name_scenario <- "Scenario 9"

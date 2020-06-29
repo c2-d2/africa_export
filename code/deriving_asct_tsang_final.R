@@ -1,4 +1,7 @@
 # Source: https://github.com/timktsang/covid19_casedef/blob/master/2020_03_10_figure3.R (timktsang)
+library(ggplot2)
+library(tidyverse)
+library(data.table)
 
 data <- read.csv("./data/Epidemic_curve_China.csv")
 data <- data[-82,]
@@ -10,11 +13,41 @@ data1 <- data[,c("date","dateid","wuhan.confirmed","hubeiexclwuhan.confirmed","c
 
 test <- read.csv("./data/pred_f3.csv")
 
+## Name predictions and plot
+colnames(test) <- c("wuhan_v1","wuhan_v1b","wuhan_v2","wuhan_v4","wuhan_v5",
+                    "hubei_v1","hubei_v1b","hubei_v2","hubei_v4","hubei_v5",
+                    "china_v1","china_v1b","china_v2","china_v4","china_v5"
+                    )
+## Melt and relabel location and case definition for plotting
+predicted_dat <- as_tibble(test) %>% 
+  mutate(t = 1:n()) %>% 
+  pivot_longer(-t) %>%
+  mutate(loc="Wuhan",
+         loc=ifelse(name %like% "hubei", "Hubei", loc),
+         loc=ifelse(name %like% "china","China (non-Hubei)",loc)) %>%
+  mutate(case_def = "V1",
+         case_def=ifelse(name %like% "v2", "V2", case_def),
+         case_def=ifelse(name %like% "v4", "V4", case_def),
+         case_def=ifelse(name %like% "v5", "V5", case_def)
+         )
+predicted_dat %>% ggplot() + 
+  geom_line(aes(x=t,y=value,col=case_def)) + 
+  theme_bw() +
+  facet_wrap(~loc, ncol=1)
+
+## Get fold-change in case definition changes relative to previous def
 testp <- test
+## How many more cases on this day under case definition X relative to def X-1?
 testp <- testp[,c(2:5,7:10,12:15)] - testp[,c(2:5,7:10,12:15)-1] 
-testp[,1:4] <- testp[,1:4]/rowSums(testp[,1:4])
-testp[,1:4+4] <- testp[,1:4+4]/rowSums(testp[,1:4+4])
-testp[,1:4+8] <- testp[,1:4+8]/rowSums(testp[,1:4+8])
+
+total_additional_cases_wuhan <- rowSums(testp[,1:4])
+total_additional_cases_hubei <- rowSums(testp[,1:4 + 4])
+total_additional_cases_china <- rowSums(testp[,1:4 + 8])
+
+## Find proportion of additional cases attributed to each case definition
+testp[,1:4] <- testp[,1:4]/total_additional_cases_wuhan
+testp[,1:4+4] <- testp[,1:4+4]/total_additional_cases_wuhan
+testp[,1:4+8] <- testp[,1:4+8]/total_additional_cases_china
 #pred<- as.matrix(test)
 #test <- pred
 
@@ -70,7 +103,7 @@ for (i in 1:length(xvec)){
 # ADD: calculate ascertainment rate as ratio of observed and cases estimated under version 5 case definition
 date_cases_wuhan$asct=date_cases_wuhan$num_observed/date_cases_wuhan$num_estimated_5
 # ADD: if more observed cases than cases estimated under version 5 case definition, set ascertainment rate equal to 1 
-date_cases_wuhan$asct=ifelse(date_cases_wuhan$asct>1,1,date_cases_wuhan$asct)
+#date_cases_wuhan$asct=ifelse(date_cases_wuhan$asct>1,1,date_cases_wuhan$asct)
 
 
 ## extract all provinces != Hubei observed & estimated case counts (Figure 3A)
@@ -102,7 +135,10 @@ for (i in 1:length(xvec)){
 # calculate ascertainment rate as ratio of observed and cases estimated under version 5 case definition
 date_cases_rest$asct=date_cases_rest$num_observed/date_cases_rest$num_estimated_5
 # if more observed cases than cases estimated under version 5 case definition, set ascertainment rate equal to 1 
-date_cases_rest$asct=ifelse(date_cases_rest$asct>1,1,date_cases_rest$asct)
+#date_cases_rest$asct=ifelse(date_cases_rest$asct>1,1,date_cases_rest$asct)
+
+plot(date_cases_wuhan$asct,type='l')
+lines(date_cases_rest$asct,col="red")
 
 ## DAILY ASCERTAINMENT RATE RATIO
 # combined ascertainment rate for wuhan and for all provinces != Hubei
@@ -118,7 +154,10 @@ colnames(asct_both)=c("date_lb","date_ub","asct_wuhan","asct_rest","asct_ratio")
 asct_both$date_mid=((asct_both$date_ub-asct_both$date_lb)/2)+asct_both$date_lb
 
 # plot ascertainment rate ratio
-ggplot(asct_both,aes(x=date_mid,y=asct_ratio))+geom_line()+xlab("date")+ylab("ascertainment rate ratio")
+ggplot(asct_both,aes(x=date_mid,y=asct_ratio))+
+  geom_line() +
+  xlab("date")+
+  ylab("ascertainment rate ratio")
 ggsave("daily_ascertainment_rate_ratio_plot.pdf")
 
 ## ASCERTAINMENT RATE PRE-VERSION 2 CASE DEFINITION AND POST-VERSION 2 CASE DEFINITION
@@ -249,3 +288,20 @@ ggplot(date_cases_both_2_by_day,aes(x=date_mid,y=asct_ratio))+geom_line()+xlab("
 ggsave("five_periods_ascertainment_rate_ratio_plot.pdf")
 
 
+
+## Save table of ascertainment rates
+dates <- as.Date(as.character(data$date),origin="01/01/2019",format="%d/%m/%Y")
+start_date <- c(min(dates), as.Date(c("2020-01-15","2020-01-18","2020-01-22","2020-02-14")))
+end_date <- c(as.Date(c("2020-01-17","2020-01-21","2020-01-26","2020-02-03")),max(dates))
+date_cases_both_2_summary %>% mutate(start_date=start_date,end_date=end_date)
+
+enumerated_asc_rates <- tibble(date=seq(as.Date("2019-11-01"), as.Date("2020-03-04"),by="1 day")) %>%
+  mutate(indicator=5,
+         indicator=ifelse(date < start_date[5], 4,indicator),
+         indicator=ifelse(date < start_date[4], 3,indicator),
+         indicator=ifelse(date < start_date[3], 2,indicator),
+         indicator=ifelse(date < start_date[2], 1,indicator)
+         ) %>%
+  left_join(date_cases_both_2_summary)
+
+write_csv(enumerated_asc_rates, "data/tsang_ascertainment_rates.csv")
