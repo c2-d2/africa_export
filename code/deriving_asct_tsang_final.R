@@ -44,6 +44,8 @@ bar.hwid=0.45
 date_cases_wuhan=data.frame(matrix(nrow=81,ncol=4))
 colnames(date_cases_wuhan)<-c("date_lb","date_ub","num_observed","num_estimated_5")
 
+xvec <- 1:81-0.5
+
 for (i in 1:length(xvec)){
   #polygon(c(rep(xvec[i]-bar.hwid,2),rep(xvec[i]+bar.hwid,2)), 
         #  c(0,rep(data1[i,3],2), 0), col='dodgerblue2', border=F)	 #dodgerblue2
