@@ -18,10 +18,10 @@ indicator_tab <- tibble(dates=seq(as.Date("2019-11-01"), as.Date("2020-03-04"),b
          indicator=ifelse(dates < start_date[2], 2,indicator),
          indicator=ifelse(dates < start_date[1], 1,indicator)
   )
-indicator_tab <- tibble(dates=seq(as.Date("2019-11-01"), as.Date("2020-03-04"),by="1 day")) %>%
-  mutate(indicator=2,
-         indicator=ifelse(dates < "2020-01-23", 1,indicator)
-  )
+#indicator_tab <- tibble(dates=seq(as.Date("2019-11-01"), as.Date("2020-03-04"),by="1 day")) %>%
+#  mutate(indicator=2,
+#         indicator=ifelse(dates < "2020-01-23", 1,indicator)
+#  )
 
 ## Get non-Hubei provinces
 china_onsets <- all_incidence_province %>% 
