@@ -72,7 +72,7 @@ if(create_scenario == 9) {
   asc_rates <- read_csv("data/tsang_ascertainment_rates.csv")
   asc_nonhubei_v_hubei <- rep(1,5) # Tsang et al.
   name_scenario <- "Scenario 9"
-  save_name <- "./out/city_prev_mod09.Rdata"
+  save_name <- "./out/city_prev_mod09b.Rdata"
 }
 if(create_scenario == 10) {  
   asc_nonhubei_v_hubei <- 1 # Verity et al
