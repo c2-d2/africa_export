@@ -92,7 +92,6 @@ List sim_data(NumericMatrix data,NumericVector para){
   int b1;
   int b2;
   int b3;
-  int b4;
   
   NumericMatrix data1(clone(data));   
   
@@ -149,7 +148,6 @@ NumericMatrix loglik(NumericMatrix data1,NumericVector para){
   int b1;
   int b2;
   int b3;
-  int b4;
   
   // for record likelihood
   NumericMatrix out(data1.nrow(),4);
@@ -276,7 +274,6 @@ List pred(NumericMatrix data1,NumericVector para){
   int b1;
   int b2;
   int b3;
-  int b4;
   
   // for record likelihood
   NumericMatrix out(data1.nrow(),4);
@@ -460,8 +457,6 @@ List mcmc(NumericMatrix data1,
   int b0;
   int b1;
   int b2;
-  int b3;
-  int b4;
   int moveindex;
   
   // need to set number of parameter here

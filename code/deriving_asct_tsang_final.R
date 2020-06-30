@@ -2,30 +2,34 @@
 library(ggplot2)
 library(tidyverse)
 library(data.table)
-
-## Read in MCMC outputs
-load("data/tsang2020/image_0.729555189609528.Rdata")
-sourceCpp("data/tsang2020/nov.cpp")
-## Data used by Tsang et al.
-data1 <- rbind(data1, matrix(0, ncol=4,nrow=14))
-## Model predicted incidence
-gg <- pred(data1,z1[,1])
-pred_dat <- gg[[4]]
-## Take posterior mean assuming version 5 reporting throughout
-pred_final <- as.data.frame(pred_dat[,c(5,10,15)])
-colnames(pred_final) <- c("Wuhan","Hubei","China")
-pred_final$date <- seq(as.Date("2019-12-02"),as.Date("2020-03-05"),by="1 day")
-plot(pred_final$Wuhan,type='l')
-lines(pred_final$China)
-
-## Store for later analysis
-## write_csv(pred_final, "~/Documents/GitHub/africa_export/data/tsang_onset_predictions.csv")
+library(Rcpp)
 
 data <- read.csv("./data/Epidemic_curve_China.csv")
 data <- data[-82,]
 data$dateid <- 1:nrow(data)
+data_melted <- data %>% 
+  mutate(date=as.Date(as.character(date), origin="2019-01-01",format="%d/%m/%Y"))%>%
+  select(-c("china.asymptomatic","china.clindiag","china.confirmed",
+            "china.onset","china.suspected","china.total","china.reported")) %>%
+  pivot_longer(-c(date,dateid)) %>%
+  mutate(region="Wuhan",
+         region=ifelse(name %like% "hubeiexclwuhan","Hubei",region),
+         region=ifelse(name %like% "chinaexclhubei","China (non-Hubei)",region),
+         region=ifelse(name == "china.reported","china_overall",region)
+         ) %>%
+  mutate(name1="total",
+         name1=ifelse(name %like% "asymptomatic", "asymptomatic",name1),
+         name1=ifelse(name %like% "clindiag", "clindiag",name1),
+         name1=ifelse(name %like% "confirmed", "confirmed",name1),
+         name1=ifelse(name %like% "onset", "onset",name1),
+         name1=ifelse(name %like% "reported", "reported",name1),
+         name1=ifelse(name %like% "suspected", "suspected",name1),
+         name1=ifelse(name == "china.reported","china_overall",name1)
+  )
+data_melted %>% ggplot() + geom_line(aes(x=date,y=value,col=name1)) + facet_wrap(~region,ncol=1,scales="free_y")
 
 data1 <- data[,c("date","dateid","wuhan.confirmed","hubeiexclwuhan.confirmed","chinaexclhubei.confirmed")]
+data1$date <- as.Date(as.character(data1$date),origin="2019-01-01",format="%d/%m/%Y")
 #1/15 1/18 1/22 1/27 2/4 2/18
 # 45   48   52   57   65  79
 
@@ -39,7 +43,8 @@ colnames(test) <- c("wuhan_v1","wuhan_v1b","wuhan_v2","wuhan_v4","wuhan_v5",
 ## Melt and relabel location and case definition for plotting
 predicted_dat <- as_tibble(test) %>% 
   mutate(t = 1:n()) %>% 
-  pivot_longer(-t) %>%
+  mutate(date=data1$date) %>%
+  pivot_longer(-c(t,date)) %>%
   mutate(loc="Wuhan",
          loc=ifelse(name %like% "hubei", "Hubei", loc),
          loc=ifelse(name %like% "china","China (non-Hubei)",loc)) %>%
@@ -48,10 +53,22 @@ predicted_dat <- as_tibble(test) %>%
          case_def=ifelse(name %like% "v4", "V4", case_def),
          case_def=ifelse(name %like% "v5", "V5", case_def)
          )
+
+## Compare Tsang predicted onsets to observed
 predicted_dat %>% ggplot() + 
-  geom_line(aes(x=t,y=value,col=case_def)) + 
+  geom_bar(data=data_melted %>% filter(name1 == "confirmed") %>% rename(loc=region),
+           aes(x=date, y=value),stat="identity",fill="grey70") +
+  geom_line(aes(x=date,y=value,col=case_def)) + 
+  scale_x_date(breaks="7 days") +
   theme_bw() +
-  facet_wrap(~loc, ncol=1)
+  facet_wrap(~loc, ncol=1,scales="free_y")
+
+## Compare ascertainment rate of onsets under case version 5
+dat_jh <- data_melted %>% filter(name1 == "confirmed") %>% select(date, value, region) %>%
+  rename(observed=value, loc=region) %>%
+  left_join(predicted_dat %>% filter(case_def == "V5") %>% select(-c(name,t))) %>%
+  mutate(asc_rate = observed/value) 
+dat_jh %>% ggplot() + geom_line(aes(x=date,y=asc_rate,col=loc))
 
 ## Get fold-change in case definition changes relative to previous def
 testp <- test
@@ -161,6 +178,12 @@ lines(date_cases_rest$asct,col="red")
 ## ASCERTAINMENT RATE IN EACH PERIOD OF CASE DEFINITIONS 
 
 # define an indicator for each period of case definitions (Wuhan)
+
+date_cases_wuhan$date_mid=((date_cases_wuhan$date_ub-date_cases_wuhan$date_lb)/2)+date_cases_wuhan$date_lb
+date_cases_wuhan$indicator=ifelse(date_cases_wuhan$date_mid>51,1,0)
+date_cases_rest$date_mid=((date_cases_rest$date_ub-date_cases_rest$date_lb)/2)+date_cases_rest$date_lb
+date_cases_rest$indicator=ifelse(date_cases_rest$date_mid>51,1,0)
+
 for (i in 1:nrow(date_cases_wuhan)){
   if(date_cases_wuhan$date_mid[i]<=54){
     date_cases_wuhan$indicator_2[i]=1
