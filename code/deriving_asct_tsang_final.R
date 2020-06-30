@@ -158,25 +158,118 @@ date_cases_rest$asct=date_cases_rest$num_observed/date_cases_rest$num_estimated_
 plot(date_cases_wuhan$asct,type='l')
 lines(date_cases_rest$asct,col="red")
 
-## DAILY ASCERTAINMENT RATE RATIO
-# combined ascertainment rate for wuhan and for all provinces != Hubei
-asct_both=cbind.data.frame(date_cases_wuhan$date_lb,
-                           date_cases_wuhan$date_ub, date_cases_wuhan$asct,date_cases_rest$asct)
-# ascertainment rate ratio = ascertainment rate all other / ascertainment rate wuhan
-# if ascertainment rate = 0 for both, ratio = 1
-asct_both$asct_ratio=ifelse(asct_both$`date_cases_wuhan$asct`==0 & asct_both$`date_cases_rest$asct`==0, 1,
-                       asct_both$`date_cases_rest$asct`/asct_both$`date_cases_wuhan$asct`)
-colnames(asct_both)=c("date_lb","date_ub","asct_wuhan","asct_rest","asct_ratio")
+## ASCERTAINMENT RATE IN EACH PERIOD OF CASE DEFINITIONS 
 
-# calculate mid date
-asct_both$date_mid=((asct_both$date_ub-asct_both$date_lb)/2)+asct_both$date_lb
+# define an indicator for each period of case definitions (Wuhan)
+for (i in 1:nrow(date_cases_wuhan)){
+  if(date_cases_wuhan$date_mid[i]<=54){
+    date_cases_wuhan$indicator_2[i]=1
+  }
+  else if (date_cases_wuhan$date_mid[i]>54&date_cases_wuhan$date_mid[i]<=57) {
+    date_cases_wuhan$indicator_2[i]=2
+  }
+  else if (date_cases_wuhan$date_mid[i]>57&date_cases_wuhan$date_mid[i]<=61) {
+    date_cases_wuhan$indicator_2[i]=3
+  }
+  else if (date_cases_wuhan$date_mid[i]>61&date_cases_wuhan$date_mid[i]<=66) {
+    date_cases_wuhan$indicator_2[i]=4
+  }
+  else{
+    date_cases_wuhan$indicator_2[i]=5
+  }
+}
 
-# plot ascertainment rate ratio
-ggplot(asct_both,aes(x=date_mid,y=asct_ratio))+
-  geom_line() +
-  xlab("date")+
-  ylab("ascertainment rate ratio")
-ggsave("daily_ascertainment_rate_ratio_plot.pdf")
+# summarize version 5 estimated & observed cases by period indicator (for Wuhan)
+date_cases_wuhan_2_summary<-date_cases_wuhan%>%
+  group_by(indicator_2)%>%
+  summarise(sum_num_observed=sum(num_observed),sum_num_estimated_5=sum(num_estimated_5))%>%
+  mutate(asct=sum_num_observed/sum_num_estimated_5)
+
+# define an indicator for each period of cases definitions (all provinces != Hubei)
+for (i in 1:nrow(date_cases_rest)){
+  if(date_cases_rest$date_mid[i]<=54){
+    date_cases_rest$indicator_2[i]=1
+  }
+  else if (date_cases_rest$date_mid[i]>54&date_cases_rest$date_mid[i]<=57) {
+    date_cases_rest$indicator_2[i]=2
+  }
+  else if (date_cases_rest$date_mid[i]>57&date_cases_rest$date_mid[i]<=61) {
+    date_cases_rest$indicator_2[i]=3
+  }
+  else if (date_cases_rest$date_mid[i]>61&date_cases_rest$date_mid[i]<=66) {
+    date_cases_rest$indicator_2[i]=4
+  }
+  else{
+    date_cases_rest$indicator_2[i]=5
+  }
+}
+
+# summarize version 5 estimated & observed cases by period indicator (for Wuhan)
+date_cases_wuhan_2_summary<-date_cases_wuhan%>%
+  group_by(indicator_2)%>%
+  summarise(sum_num_observed=sum(num_observed),sum_num_estimated_5=sum(num_estimated_5))%>%
+  mutate(asct=sum_num_observed/sum_num_estimated_5)
+
+# summarize version 5 estimated & observed cases by period indicator (for all provinces != Hubei)
+date_cases_rest_2_summary<-date_cases_rest%>%
+  group_by(indicator_2)%>%
+  summarise(sum_num_observed=sum(num_observed),sum_num_estimated_5=sum(num_estimated_5))%>%
+  mutate(asct=sum_num_observed/sum_num_estimated_5)
+
+date_cases_both_2_summary<-cbind.data.frame(date_cases_rest_2_summary$indicator_2,
+                                          date_cases_wuhan_2_summary$asct,
+                                          date_cases_rest_2_summary$asct)
+colnames(date_cases_both_2_summary)<-c("indicator","asct_wuhan","asct_rest")
+
+# divide ascertainment rate for rest by ascertainment rate for wuhan
+date_cases_both_2_summary$asct_ratio=date_cases_both_2_summary$asct_rest/date_cases_both_2_summary$asct_wuhan
+
+# assign corresponding ascertainment rate ratio to each day of cases
+date_cases_both_2_by_day=data.frame(matrix(nrow=81,ncol=2))
+date_cases_both_2_by_day[,1]<-date_cases_wuhan$date_mid
+colnames(date_cases_both_2_by_day)<-c("date_mid","asct_ratio")
+
+for (i in 1:nrow(date_cases_rest)){
+  if(date_cases_rest$date_mid[i]<=54){
+    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==1)]
+  }
+  else if (date_cases_rest$date_mid[i]>54&date_cases_rest$date_mid[i]<=57) {
+    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==2)]
+  }
+  else if (date_cases_rest$date_mid[i]>57&date_cases_rest$date_mid[i]<=61) {
+    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==3)]
+  }
+  else if (date_cases_rest$date_mid[i]>61&date_cases_rest$date_mid[i]<=66) {
+    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==4)]
+  }
+  else{
+    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==5)]
+  }
+}
+
+
+# plot
+ggplot(date_cases_both_2_by_day,aes(x=date_mid,y=asct_ratio))+geom_line()+xlab("date")+ylab("ascertainment rate ratio")
+ggsave("five_periods_ascertainment_rate_ratio_plot.pdf")
+
+## Save table of ascertainment rates
+dates <- as.Date(as.character(data$date),origin="01/01/2019",format="%d/%m/%Y")
+start_date <- c(min(dates), as.Date(c("2020-01-15","2020-01-25","2020-01-28","2020-02-01")))
+end_date <- c(as.Date(c("2020-01-24","2020-01-27","2020-01-31","2020-02-05")),max(dates))
+date_cases_both_2_summary %>% mutate(start_date=start_date,end_date=end_date)
+
+enumerated_asc_rates <- tibble(date=seq(as.Date("2019-11-01"), as.Date("2020-03-04"),by="1 day")) %>%
+  mutate(indicator=5,
+         indicator=ifelse(date < start_date[5], 4,indicator),
+         indicator=ifelse(date < start_date[4], 3,indicator),
+         indicator=ifelse(date < start_date[3], 2,indicator),
+         indicator=ifelse(date < start_date[2], 1,indicator)
+         ) %>%
+  left_join(date_cases_both_2_summary)
+
+write_csv(enumerated_asc_rates, "data/tsang_ascertainment_rates2.csv")
+
+######### OLD STUFF
 
 ## ASCERTAINMENT RATE PRE-VERSION 2 CASE DEFINITION AND POST-VERSION 2 CASE DEFINITION
 
@@ -218,107 +311,23 @@ colnames(date_cases_both_by_day)<-c("date_mid","asct_ratio")
 ggplot(date_cases_both_by_day,aes(x=date_mid,y=asct_ratio))+geom_line()+xlab("date")+ylab("ascertainment rate ratio")
 ggsave("two_periods_ascertainment_rate_ratio_plot.pdf")
 
-## ASCERTAINMENT RATE IN EACH PERIOD OF CASE DEFINITIONS (UP TO VERSION 5)
+## DAILY ASCERTAINMENT RATE RATIO
+# combined ascertainment rate for wuhan and for all provinces != Hubei
+asct_both=cbind.data.frame(date_cases_wuhan$date_lb,
+                           date_cases_wuhan$date_ub, date_cases_wuhan$asct,date_cases_rest$asct)
+# ascertainment rate ratio = ascertainment rate all other / ascertainment rate wuhan
+# if ascertainment rate = 0 for both, ratio = 1
+asct_both$asct_ratio=ifelse(asct_both$`date_cases_wuhan$asct`==0 & asct_both$`date_cases_rest$asct`==0, 1,
+                       asct_both$`date_cases_rest$asct`/asct_both$`date_cases_wuhan$asct`)
+colnames(asct_both)=c("date_lb","date_ub","asct_wuhan","asct_rest","asct_ratio")
 
-# define an indicator for each period of case definitions (Wuhan)
-for (i in 1:nrow(date_cases_wuhan)){
-  if(date_cases_wuhan$date_mid[i]<=47){
-    date_cases_wuhan$indicator_2[i]=1
-  }
-  else if (date_cases_wuhan$date_mid[i]>47&date_cases_wuhan$date_mid[i]<=51) {
-    date_cases_wuhan$indicator_2[i]=2
-  }
-  else if (date_cases_wuhan$date_mid[i]>51&date_cases_wuhan$date_mid[i]<=56) {
-    date_cases_wuhan$indicator_2[i]=3
-  }
-  else if (date_cases_wuhan$date_mid[i]>56&date_cases_wuhan$date_mid[i]<=64) {
-    date_cases_wuhan$indicator_2[i]=4
-  }
-  else{
-    date_cases_wuhan$indicator_2[i]=5
-  }
-}
+# calculate mid date
+asct_both$date_mid=((asct_both$date_ub-asct_both$date_lb)/2)+asct_both$date_lb
 
-# define an indicator for each period of cases definitions (all provinces != Hubei)
-for (i in 1:nrow(date_cases_rest)){
-  if(date_cases_rest$date_mid[i]<=47){
-    date_cases_rest$indicator_2[i]=1
-  }
-  else if (date_cases_rest$date_mid[i]>47&date_cases_rest$date_mid[i]<=51) {
-    date_cases_rest$indicator_2[i]=2
-  }
-  else if (date_cases_rest$date_mid[i]>51&date_cases_rest$date_mid[i]<=56) {
-    date_cases_rest$indicator_2[i]=3
-  }
-  else if (date_cases_rest$date_mid[i]>56&date_cases_rest$date_mid[i]<=64) {
-    date_cases_rest$indicator_2[i]=4
-  }
-  else{
-    date_cases_rest$indicator_2[i]=5
-  }
-}
-
-# summarize version 5 estimated & observed cases by period indicator (for Wuhan)
-date_cases_wuhan_2_summary<-date_cases_wuhan%>%
-  group_by(indicator_2)%>%
-  summarise(sum_num_observed=sum(num_observed),sum_num_estimated_5=sum(num_estimated_5))%>%
-  mutate(asct=sum_num_observed/sum_num_estimated_5)
-
-# summarize version 5 estimated & observed cases by period indicator (for all provinces != Hubei)
-date_cases_rest_2_summary<-date_cases_rest%>%
-  group_by(indicator_2)%>%
-  summarise(sum_num_observed=sum(num_observed),sum_num_estimated_5=sum(num_estimated_5))%>%
-  mutate(asct=sum_num_observed/sum_num_estimated_5)
-
-date_cases_both_2_summary<-cbind.data.frame(date_cases_rest_2_summary$indicator_2,
-                                          date_cases_wuhan_2_summary$asct,
-                                          date_cases_rest_2_summary$asct)
-colnames(date_cases_both_2_summary)<-c("indicator","asct_wuhan","asct_rest")
-
-# divide ascertainment rate for rest by ascertainment rate for wuhan
-date_cases_both_2_summary$asct_ratio=date_cases_both_2_summary$asct_rest/date_cases_both_2_summary$asct_wuhan
-
-# assign corresponding ascertainment rate ratio to each day of cases
-date_cases_both_2_by_day=data.frame(matrix(nrow=81,ncol=2))
-date_cases_both_2_by_day[,1]<-date_cases_wuhan$date_mid
-colnames(date_cases_both_2_by_day)<-c("date_mid","asct_ratio")
-
-for (i in 1:nrow(date_cases_rest)){
-  if(date_cases_rest$date_mid[i]<=47){
-    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==1)]
-  }
-  else if (date_cases_rest$date_mid[i]>47&date_cases_rest$date_mid[i]<=51) {
-    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==2)]
-  }
-  else if (date_cases_rest$date_mid[i]>51&date_cases_rest$date_mid[i]<=56) {
-    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==3)]
-  }
-  else if (date_cases_rest$date_mid[i]>56&date_cases_rest$date_mid[i]<=64) {
-    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==4)]
-  }
-  else{
-    date_cases_both_2_by_day$asct_ratio[i]=date_cases_both_2_summary$asct_ratio[which(date_cases_both_2_summary$indicator==5)]
-  }
-}
-
-# plot
-ggplot(date_cases_both_2_by_day,aes(x=date_mid,y=asct_ratio))+geom_line()+xlab("date")+ylab("ascertainment rate ratio")
-ggsave("five_periods_ascertainment_rate_ratio_plot.pdf")
-
-## Save table of ascertainment rates
-dates <- as.Date(as.character(data$date),origin="01/01/2019",format="%d/%m/%Y")
-start_date <- c(min(dates), as.Date(c("2020-01-15","2020-01-18","2020-01-22","2020-02-14")))
-end_date <- c(as.Date(c("2020-01-17","2020-01-21","2020-01-26","2020-02-03")),max(dates))
-date_cases_both_2_summary %>% mutate(start_date=start_date,end_date=end_date)
-
-enumerated_asc_rates <- tibble(date=seq(as.Date("2019-11-01"), as.Date("2020-03-04"),by="1 day")) %>%
-  mutate(indicator=5,
-         indicator=ifelse(date < start_date[5], 4,indicator),
-         indicator=ifelse(date < start_date[4], 3,indicator),
-         indicator=ifelse(date < start_date[3], 2,indicator),
-         indicator=ifelse(date < start_date[2], 1,indicator)
-         ) %>%
-  left_join(date_cases_both_2_summary)
-
-write_csv(enumerated_asc_rates, "data/tsang_ascertainment_rates.csv")
+# plot ascertainment rate ratio
+ggplot(asct_both,aes(x=date_mid,y=asct_ratio))+
+  geom_line() +
+  xlab("date")+
+  ylab("ascertainment rate ratio")
+ggsave("daily_ascertainment_rate_ratio_plot.pdf")
 
