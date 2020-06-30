@@ -6,8 +6,8 @@ library(dplyr)
 ############################
 ## Load the master table
 ############################
-main_scenario <- "Scenario 10"
-mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+main_scenario <- "Scenario 10" #main_scenario <- "Scenario 9"
+mt <- read_csv("./data/master_table.csv",guess_max = Inf) #mt <- read_csv("./data/master_table_2.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 
 # don't require these steps if using updated master table w/ dates subset to focal period : 
