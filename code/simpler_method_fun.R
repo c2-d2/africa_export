@@ -103,7 +103,7 @@ comp_cum_incidence <- function(all_incidence_province, filen) {
                                 filter(!is.na(n_infected)) %>% 
                                 group_by( province_raw ) %>% 
                                 summarise(  cum_inc=sum(n_infected) ) -> df
-                popn_size_provinces<-read.csv(filen) %>% as_tibble()
+                popn_size_provinces<-read.csv(filen,stringsAsFactors=FALSE) %>% as_tibble()
                 left_join( df,popn_size_provinces, by=c("province_raw"="province") ) -> df
                 df %>% mutate(cum_inc_percap=cum_inc/popn_size_province  ) ->df
                 return(df)
@@ -219,7 +219,7 @@ adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, apo
 ############
 generate_alphas <- function( all_dat,file_obs_cnt ) {
                 # get the observed counts
-                cases_high_cap_loc <-read.csv(file_obs_cnt)
+                cases_high_cap_loc <-read.csv(file_obs_cnt,stringsAsFactors=FALSE)
                 cases_high_cap_loc$cases_scaled <- ifelse(cases_high_cap_loc$Country!='Singapore',
                                                           round(cases_high_cap_loc$Cases_lm*2.5),
                                                           cases_high_cap_loc$Cases_lm) 

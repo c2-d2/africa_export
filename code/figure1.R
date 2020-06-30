@@ -52,13 +52,29 @@ pB <- prov_inc_prev_cali %>% filter(city == use_city) %>%
 
 pA | pB
 
-#mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+date_min <- as.Date("2019-12-01")
+
+mt <- read_csv("./data/master_table.csv",guess_max = Inf)
 prev_all <- mt %>% select(is_wuhan, prevalence_o, date, scenario,origin_city) %>% distinct()
 
 prev_summary <- prev_all %>% 
   group_by(date, is_wuhan, scenario) %>% 
   summarize(prev_average=mean(prevalence_o)) %>%
   rename(Scenario=scenario)
+
+scenario_key <- c("Scenario 1"="Scenario 3", 
+                  "Scenario 2"="Scenario 1", 
+                  "Scenario 3"="Scenario 4", 
+                  "Scenario 4"="Scenario 5", 
+                  "Scenario 5"="Scenario 6", 
+                  "Scenario 6"="Scenario 7", 
+                  "Scenario 7"="Scenario 8", 
+                  "Scenario 8"="Scenario 9", 
+                  "Scenario 9"="Scenario 10", 
+                  "Scenario 10" = "Scenario 2*")
+prev_summary$Scenario <- scenario_key[prev_summary$Scenario]
+prev_summary$Scenario <- factor(prev_summary$Scenario, levels=c("Scenario 1", "Scenario 2*", "Scenario 3", "Scenario 4", "Scenario 5", 
+                                                                "Scenario 6", "Scenario 7", "Scenario 8", "Scenario 9", "Scenario 10"))
 
 pC <- prev_summary %>% filter(is_wuhan ==1) %>%
   ggplot() + 
@@ -69,25 +85,26 @@ pC <- prev_summary %>% filter(is_wuhan ==1) %>%
   export_theme +
   ylab("Prevalence (per capita)") +
   xlab("Date") +
-  theme(legend.position=c(0.8,0.7),
+  theme(legend.position=c(0.2,0.7),
         legend.title=element_blank(),
         plot.margin = margin(0,0,0,0, "cm"))+
   ggtitle("Wuhan") +
   labs(tag="C")
+
 pD <- prev_summary %>% filter(is_wuhan ==0) %>%
   ggplot() + geom_line(aes(x=date,y=prev_average,col=Scenario))+
   scale_x_date(limits=c(date_min, date_max+5),labels=seq(date_min, date_max+5,by="7 days"),breaks=seq(date_min, date_max+5,by="7 days")) +
-  scale_y_continuous(expand=c(0,0),limits=c(0,0.0005),breaks=seq(0,0.0005,by=0.0001)) +
+  scale_y_continuous(expand=c(0,0),limits=c(0,0.0002),breaks=seq(0,0.0002,by=0.00005)) +
   xlab("Date") +
   ylab("Prevalence (per capita)") +
   ggtitle("China (excluding Wuhan)") +
   export_theme +
-  theme(legend.position=c(0.8,0.7),
+  theme(legend.position=c(0.2,0.7),
         legend.title=element_blank(),
         plot.margin = margin(0,0,0,0, "cm"))+
   labs(tag="D")
 
 
-pdf("figures/Fig1.pdf",height=5,width=8)
+#pdf("figures/Fig1.pdf",height=5,width=8)
 (pA | pB)/ (pC | pD)
-dev.off()
+#dev.off()

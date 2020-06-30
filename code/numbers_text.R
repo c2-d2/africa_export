@@ -7,7 +7,8 @@ library(dplyr)
 ## Load the master table
 ############################
 main_scenario <- "Scenario 10" #main_scenario <- "Scenario 9"
-mt <- read_csv("./data/master_table_2.csv",guess_max = Inf) #mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+#mt <- read_csv("./data/master_table_2.csv",guess_max = Inf) 
+mt <- read_csv("./data/master_table.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 
 # don't require these steps if using updated master table w/ dates subset to focal period : 
@@ -129,8 +130,8 @@ pf_probt %>% group_by(date) %>%
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
-  filter(scenario==main_scenario) %>%
-  ggplot() + geom_line(aes(x=date,y=prop_wuhan))
+  #filter(scenario==main_scenario) %>%
+  ggplot() + geom_line(aes(x=date,y=prop_wuhan,col=scenario))
 # from manuscript
 # the main source of global case exportation in early January was Wuhan (98%; 98%-99%), but due to the Wuhan lockdown and the rapid spread of the virus, 
 ## main source of case exportation from mid February changed to cities outside of Wuhan (100% across scenarios)
@@ -333,8 +334,9 @@ pf                 %>% filter( in_interval==1 ) %>%
 ## Prevalence estimates for the 5 scenarios
 ############################
 prevalence_dat <- mt %>% 
-  select(origin_city, scenario, date, prevalence_o) %>% 
+  select(origin_city, scenario, date, prevalence_o,is_wuhan) %>% 
   distinct()
+
 
 ############################
 ## Peak time overall
@@ -344,7 +346,35 @@ prevalence_dat %>%
   filter(prevalence_o == max(prevalence_o)) %>%
   group_by(scenario) %>%
   summarise(min_date=min(date),
-            max_date=max(date)) 
+            max_date=max(date))
+
+############################
+## Ratio of prevalence indicator in to outside Wuhan
+############################
+prev_ratio <- prevalence_dat %>% filter(scenario == "Scenario 2") %>%
+  group_by(date, is_wuhan) %>%
+  summarize(total_prev = mean(prevalence_o)) %>%
+  pivot_wider(values_from=total_prev,names_from=is_wuhan) %>%
+  mutate(prev_ratio=`0`/`1`) %>% drop_na() %>%
+  ungroup()
+
+prev_ratio %>%
+  summarize(1/mean(prev_ratio))
+  
+prev_ratio %>%  ggplot() + 
+  geom_line(aes(x=date,y=1/prev_ratio)) +
+  scale_y_log10() + 
+  geom_hline(yintercept=1)
+
+############################
+## Highest and lowest peak prevalence
+############################
+prevalence_dat %>% 
+  group_by(scenario, origin_city) %>%
+  filter(prevalence_o == max(prevalence_o)) %>%
+  arrange(scenario, -prevalence_o) %>%
+  filter(scenario == "Scenario 10")
+
 
 ############################
 ## Peak prevalence in Jiaxing

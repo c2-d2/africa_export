@@ -88,6 +88,14 @@ all_preds <- all_preds %>% as_tibble() %>% pivot_longer(-c(samp, date)) %>%
   left_join(data1_melted %>% rename(observed=value)) %>%
   mutate(observed=ifelse(is.na(observed),0,observed))
 
+## Ratio of within-Wuhan to non-Wuhan
+all_preds %>% group_by(samp, name) %>% 
+  summarize(n=sum(value)) %>% 
+  pivot_wider(values_from=n,names_from=name) %>% 
+  mutate(prop=Wuhan/`China (non-Hubei)`) %>% 
+  ungroup() %>% 
+  summarize(mean(prop))
+
 ## Get posterior estimates on model trajectories
 quants <- all_preds %>%
   group_by(name,date) %>%
@@ -111,6 +119,10 @@ quants_asc <- all_preds %>%
             upper=quantile(observed/value,0.975),
             mean=mean(observed/value))
 
+####################################################
+## CHECKPOINT 3.
+## - Generating predicted trajectories using posterior medians, following Tsang et al's Fig 3
+####################################################
 ## Model predicted incidence based on Tsang et al. Fig 3
 gg <- pred(data1,z1[,1])
 pred_dat <- gg[[4]]
@@ -120,6 +132,9 @@ colnames(pred_final) <- c("Wuhan","Hubei","China (non-Hubei)")
 pred_final$date <- seq(as.Date("2019-12-02"),as.Date("2020-03-05"),by="1 day")
 pred_final <- pred_final %>% pivot_longer(-date)
 
+####################################################
+## CHECKPOINT 4.
+####################################################
 ## Combination of Figure 2 and 3 from Tsang et al.
 p_tsang <- ggplot(quants) + 
   #geom_line(data=data_tot,aes(x=date,y=Total),col="grey40",linetype="dashed") +
@@ -283,7 +298,6 @@ tsang_predictions_ver2 <- quants %>% filter(name=="China (non-Hubei)") %>%
   left_join(prop_mod_v2) %>%
   mutate(n_predict = n_prop*median)
   
-
 tsang_predictions_ver2 <- tsang_predictions_ver2 %>% 
   filter(province_raw %in% provinces) %>%
   bind_rows(quants %>% filter(name == "Wuhan") %>% mutate(province_raw = "Hubei", n_predict=median))
