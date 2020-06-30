@@ -55,11 +55,13 @@ if(create_scenario == 6) {
 if(create_scenario == 7) {  
   asc_nonhubei_v_hubei <- 2 # Verity et al
   name_scenario <- "Scenario 7"
+  prev_days <- 5
   save_name <- "./out/city_prev_mod07.Rdata"
 }
 if(create_scenario == 8) {  
   asc_nonhubei_v_hubei <- 5 # Verity et al
   name_scenario <- "Scenario 8"
+  prev_days <- 5
   save_name <- "./out/city_prev_mod08.Rdata"
 }
 #if(create_scenario == 9) {  
@@ -72,11 +74,13 @@ if(create_scenario == 9) {
   asc_rates <- read_csv("data/tsang_ascertainment_rates2.csv")   #asc_rates <- read_csv("data/tsang_ascertainment_rates.csv")
   asc_nonhubei_v_hubei <- rep(1,5) # Tsang et al.
   name_scenario <- "Scenario 9"
+  prev_days <- 5
   save_name <- "./out/city_prev_mod09b.Rdata"
 }
 if(create_scenario == 10) {  
   asc_nonhubei_v_hubei <- 1 # Verity et al
   name_scenario <- "Scenario 10"
+  prev_days <- 5
   save_name <- "./out/city_prev_mod10.Rdata"
 }
 
@@ -129,7 +133,11 @@ if(create_scenario == 9){
   
 } 
 if(create_scenario == 10){
-  all_incidence_province <- read_csv("data/tsang_predicted_onsets_byprovince.csv")
+  all_incidence_province <- read_csv("data/tsang_predictions_apportioned.csv") %>% 
+    rename(n=n_predict) %>%
+    mutate(date_full=date) %>%
+    rename(dates=date) %>%
+    filter(ver == "Overall")
   all_incidence_province <- shift_2_delays(all_incidence_province,incubation_period=-5,delay=0)
 }
 
@@ -304,3 +312,4 @@ confirmed_cases_date %>% filter(dates%in%date_v) %>%
 ## Estimating ascertainment rates from Verity et al. 
 verity <- read.csv("./data/digitize_verity.csv")
 asc_ratio_verity <- crossprod(verity$outside_wuhan,verity$outside_pop_prop)/crossprod(verity$wuhan,verity$wuhan_pop_prop)
+
