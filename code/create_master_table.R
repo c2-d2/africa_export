@@ -84,6 +84,7 @@ bind_rows(prev_all,city_prev_mod0) -> prev_all
 #bind_rows(prev_all,city_prev_mod0) -> prev_all
 load( file = "./out/city_prev_mod10.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
+prev_all %>% write_csv("data/all_prevalence_estimates.csv")
 
 #prev_all$scenario <- factor(prev_all$scenario, levels=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5", 
 #                                                        "Scenario 6", "Scenario 7", "Scenario 8", "Scenario 10"))
