@@ -156,7 +156,7 @@ line_plot
 #save(risk_all_cities_africa_line_weekly,file="risk_all_cities_africa_line_weekly.Rdata")
 ggsave("./figures/line_plot.pdf",width=20*0.6,height=6*0.6)
 library(tidyverse)
-mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 mt %>% count(scenario)
 
@@ -339,16 +339,16 @@ mt %>%
 pf_probt %>% 
   group_by( scenario ) %>% 
   mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
-  filter(prob_1>0.01) %>% ungroup() -> pf_probt
+  #filter(prob_1>0.01) %>% 
+  ungroup() -> pf_probt
 pf_probt %>% group_by(date) %>% 
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
-          prob_W_upper=max(prop_wuhan)) %>% 
-  filter(n==8) -> pf_probt_rib
+          prob_W_upper=max(prop_wuhan)) -> pf_probt_rib
 #
 pf_probt_rib %>% ggplot( aes(x=date)  )+
   geom_ribbon( aes(ymin=prob_W_lower,ymax=prob_W_upper) , fill="#473F44",alpha=0.5 ) +
-  geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
+  #geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
   export_theme +
   theme( axis.title.x = element_blank())
 ggsave("./figures/frac_time_plot.pdf",width=4*0.85,height=2)
