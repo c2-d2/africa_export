@@ -8,7 +8,8 @@ library(dplyr)
 ############################
 main_scenario <- "Scenario 10" #main_scenario <- "Scenario 9"
 #mt <- read_csv("./data/master_table_2.csv",guess_max = Inf) 
-mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+#mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 
 # don't require these steps if using updated master table w/ dates subset to focal period : 
@@ -251,7 +252,7 @@ mt %>%
   summarise( mean_prop=mean(prop_prior),
              pro_lower=min(prop_prior),
              pro_upper=max(prop_prior) )
-# 100% (99.9% - 100%) of predicted imports would have occurred prior to any case detection
+# 100% (100% - 100%) of predicted imports would have occurred prior to any case detection
 
 # majority of predicted cases (100%; 99.9% - 100%) would have occurred prior to any confirmed cases
 
