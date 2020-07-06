@@ -348,6 +348,7 @@ pf_probt %>% group_by(date) %>%
 #
 pf_probt_rib %>% ggplot( aes(x=date)  )+
   geom_ribbon( aes(ymin=prob_W_lower,ymax=prob_W_upper) , fill="#473F44",alpha=0.5 ) +
+  geom_line( aes(x=date,y=prop_wuhan, color=scenario) ) +
   #geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
   export_theme +
   theme( axis.title.x = element_blank())
