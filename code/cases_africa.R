@@ -28,7 +28,7 @@ df %>% summarise( sum(cases) )
 df %>% filter(countriesAndTerritories=="China") %>% summarise( sum(cases) )
 
 df %>% filter(continentExp=="Africa") %>% summarise( sum(cases) )
-df %>% filter(continentExp=="Africa") %>% count(countriesAndTerritories)
+df %>% filter(continentExp=="Africa",cases!=0) %>% count(countriesAndTerritories)
 
 df %>% filter(cases!=0) %>%  count(countriesAndTerritories)
 
