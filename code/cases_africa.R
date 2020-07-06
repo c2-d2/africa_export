@@ -15,6 +15,12 @@ data %>%
                 select(year,month,day,dateRep,continentExp,countriesAndTerritories,popData2019, 
                        cases,deaths) %>% as_tibble() -> df
 
+df$dateRep %>% max() # get most current data
+df$cases %>% sum() # total cases 
+df$cases[df$countriesAndTerritories=="China"] %>% sum() # cases in China
+df$countriesAndTerritories[df$cases!=0] %>% unique() %>% length() # how many different locations
+# As of 6th July 2020, 1.1 million confirmed cases of COVID-19 have been registered worldwide, with 85 thousand detected in mainland China and the remainder detected internationally in 209 other locations
+
 ############################
 ## all current cases
 ############################
