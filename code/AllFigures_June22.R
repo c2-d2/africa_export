@@ -172,9 +172,9 @@ mt %>%
   filter( n==7 ) %>% 
   mutate( exp_risk_weekly=mean(exp_risk_daily)) %>% slice(1) %>% ungroup() -> pf
 #
-pf %>% group_by( destination_country ) %>% 
-  summarise( sum=sum(exp_risk_weekly)  ) %>% 
-  arrange(desc(sum)) %>% slice(1:5) %>% pull(destination_country) -> top_5_c
+pf %>% group_by( destination_country ) %>% filter(date=="2020-01-29") %>% 
+  summarise( sum=exp_risk_weekly  ) %>% 
+  arrange(desc(sum)) %>% slice(1:6) %>% pull(destination_country) -> top_5_c
 
 pf %>% filter( year=="2020" | week=="52"  ) %>% 
   mutate( destination_country_new=ifelse(destination_country%in%top_5_c,as.character(destination_country),"other") ) %>% 
@@ -188,14 +188,15 @@ pf %>% filter( year=="2020" | week=="52"  ) %>%
                               "Kenya"="#88CCEE",
                               "Algeria"="#DDCC77",
                               "Morocco"="#CC6677",
+                              "Zambia"="#44AA99",
                               "other"="lightgrey")) +
   export_theme +
   theme( axis.title.x = element_blank(),
          axis.title.y = element_blank(),
          axis.text.y = element_blank(),
-         axis.ticks.y = element_blank())
+         axis.ticks = element_blank())
 
-ggsave("./figures/line_plot.pdf",width=8*0.85,height=1.8*0.85)
+ggsave("./figures/line_plot.pdf",width=8*0.85,height=1.68)
 
 # horizontal lines marking the window for each scenario 
 mt %>% 
@@ -233,7 +234,7 @@ range_x <- ggplot_build(p)$layout$panel_scales_x[[1]]$range$range
 rnage_y <- ggplot_build(p)$layout$panel_scales_y[[1]]$range$range
 ggplot_build(p)$layout$coord$limits
 
-ggsave("./figures/some_lines.pdf",width=8*0.85,height=1.8*0.85)
+ggsave("./figures/some_lines.pdf",width=8*0.85,height=1.68)
 
 ######## Plot of flight volume & prev over time
 
