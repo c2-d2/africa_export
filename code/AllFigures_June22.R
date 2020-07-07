@@ -41,7 +41,7 @@ export_theme <- theme_tufte() +
     strip.background=element_rect(fill="#f0f0f0"))
 
 # read in data
-mt <- read_csv("./data/master_table.csv",guess_max = Inf)
+mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 
 # don't require these steps if using updated master table w/ dates subset to focal period : 
@@ -353,9 +353,44 @@ mt %>%
           min_tot_imp=min(tot_imp[tot_imp!=0]),
           prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
   dplyr::select(-W,-non_W) -> pf_probt
-pf_probt %>% filter(date>=ymd("2020-01-01")) %>% ggplot( aes(x=date,col=scenario)  )+
-  geom_line(aes(y=prop_wuhan))
-ggsave("./figures/frac_time_plot_each_scen_afr.pdf",width=4*0.85,height=2)
+pf_probt %>% filter(date>=ymd("2020-01-01")) %>% 
+  ggplot( aes(x=date,col=(scenario)) )+
+  geom_line(aes(y=prop_wuhan),show.legend=F) +
+  scale_y_continuous(breaks=c(0,0.5,1)) +
+  labs(x="",y="") +
+  export_theme
+ggsave("./figures/frac_time_plot_each_scen_afr.pdf",width=4*0.85*0.9*0.92,height=2*0.9)
+
+# proportion over time ----------------------------------------------------
+mt %>% 
+  # filter
+  filter(is_global_d==1) %>% 
+  filter(date>"2019-11-01") %>% 
+  mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
+  # 
+  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
+  mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
+  # by scenario and week
+  group_by(is_wuhan,scenario,year,week) %>% 
+  arrange(date) %>% 
+  mutate(n=n()) %>% 
+  filter( n==7 ) %>% 
+  mutate( force_imp_week=sum(force_imp_day) ) %>% 
+  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  #
+  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
+  set_names( "date", "scenario", "non_W" , "W"  ) %>% 
+  mutate( tot_imp=(W+non_W),
+          min_tot_imp=min(tot_imp[tot_imp!=0]),
+          prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
+  dplyr::select(-W,-non_W) -> pf_probt
+pf_probt %>% filter(date>=ymd("2020-01-01")) %>% 
+  ggplot( aes(x=date,col=(scenario)) )+
+  geom_line(aes(y=prop_wuhan),show.legend=F) +
+  scale_y_continuous(breaks=c(0,0.5,1)) +
+  labs(x="",y="") +
+  export_theme
+ggsave("./figures/frac_time_plot_each_scen_global.pdf",width=4*0.85*0.9*0.92,height=2*0.9)
 
 
 
