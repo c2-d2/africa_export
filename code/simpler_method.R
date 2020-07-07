@@ -2,13 +2,13 @@
 ## Description: Estimating province-level prevalence
 ## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
 ## Date: 17 June 2020
+setwd("~/Documents/GitHub/africa_export/")
 source("./code/simpler_method_fun.R")
 library(stats)
 library(tidyverse)
 library(patchwork)
 library(RColorBrewer)
-
-create_scenario <- 4
+create_scenario <- 2
 
 if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
@@ -52,14 +52,16 @@ if(create_scenario == 6) {
   save_name <- "./out/city_prev_mod06.Rdata"
   #
 }
+## Delayed prevalence contribution non-Wuhan
 if(create_scenario == 7) {  
   asc_nonhubei_v_hubei <- 2 # Verity et al
   name_scenario <- "Scenario 7"
   prev_days <- 5
   save_name <- "./out/city_prev_mod07.Rdata"
 }
+## Aportion by city frac
 if(create_scenario == 8) {  
-  asc_nonhubei_v_hubei <- 5 # Verity et al
+  asc_nonhubei_v_hubei <- 2 # Verity et al
   name_scenario <- "Scenario 8"
   prev_days <- 5
   save_name <- "./out/city_prev_mod08.Rdata"
@@ -121,6 +123,10 @@ prov_inc_calibrated <- all_incidence_province %>% mutate(is_hubei=as.numeric(pro
   left_join( calibration_value, by="is_hubei" ) %>% 
   mutate( n_infected_cal=n_infected/calv_inverse ,
         n_onset_cal = n_onset/calv_inverse) %>% 
+  
+  #mutate( n_infected_cal=n_infected/calv ,
+  #       n_onset_cal = n_onset/calv) %>% 
+  
   select( dates,province_raw,n_infected_cal, n_onset_cal) %>%
   rename(n_onset=n_onset_cal)
 # plot calibrated incidence & symptom onset curves
