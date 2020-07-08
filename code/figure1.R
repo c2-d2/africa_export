@@ -1,6 +1,7 @@
 #####
 ## NOTE - NEED TO RUN SIMPLER_METHOD.R FIRST
 library(pals)
+library(patchwork)
 
 ## Plot example province
 date_min <- as.Date("2020-01-01")
@@ -175,7 +176,7 @@ pS2 <- all_incidence_province %>%
   geom_ribbon(aes(x=dates,ymax=n_infected,ymin=0),alpha=0.2,fill="#E69F00") +
   geom_line(aes(x=dates,y=n_infected),col="#E69F00",size=0.75) +
   #scale_y_continuous(expand=c(0,0)) +
-  scale_x_date(limits=c(date_min, date_max+5),labels=seq(date_min, date_max+5,by="7 days"),breaks=seq(date_min, date_max+5,by="7 days")) +
+  scale_x_date(limits=c(date_min, date_max+5),labels=seq(date_min, date_max+5,by="14 days"),breaks=seq(date_min, date_max+5,by="14 days")) +
   xlab("Date") +
   scale_color_manual(values=fill_cols)+
   geom_vline(xintercept=as.Date("2020-01-23"),linetype="dashed") +
@@ -224,9 +225,9 @@ pS3 <- prev_summary %>%
   left_join(max_prevs) %>%
   mutate(prev_average_scaled = prev_average/max_prev_wuhan) %>%
   ggplot() + 
-  geom_line(aes(x=date,y=prev_average_scaled,col=Scenario)) +
+  geom_line(aes(x=date,y=prev_average_scaled,col=Scenario),show.legend = F) +
   #geom_jitter(aes(x=date,y=prev_average,col=Scenario)) +
-  scale_x_date(limits=c(date_min, date_max+5),labels=seq(date_min, date_max+5,by="7 days"),breaks=seq(date_min, date_max+5,by="7 days")) +
+  scale_x_date(limits=c(date_min, date_max+5),labels=seq(date_min, date_max+5,by="14 days"),breaks=seq(date_min, date_max+5,by="14 days")) +
   #scale_y_continuous(expand=c(0,0),limits=c(0,0.005),breaks=seq(0,0.005,by=0.001)) +
   export_theme +
   scale_color_manual(values=fill_cols)+
@@ -237,7 +238,7 @@ pS3 <- prev_summary %>%
         legend.title=element_blank())+
   facet_wrap(~origin_city,scales="free_y", ncol=4)
 pS3
-pdf("figures/FigS3.pdf",height=7,width=8)
+pdf("figures/FigS3.pdf",height=7*0.9,width=8*0.9)
 pS3
 dev.off()
 png("figures/FigS3.png",height=7,width=8,res=300,units="in")

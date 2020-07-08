@@ -292,7 +292,7 @@ pf_fly %>% filter( year=="2020" | week=="52"  ) %>%
          axis.text.y = element_blank(),
          axis.text.x = element_blank(),
          axis.ticks.y = element_blank())
-ggsave("line_plot2_vol.pdf",width=8*0.85,height=1.05*0.85)
+ggsave("./figures/linesplot_vol.pdf",width=8*0.85,height=1.68)
 
 
 # proportion over time ----------------------------------------------------
