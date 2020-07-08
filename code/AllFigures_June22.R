@@ -215,10 +215,10 @@ mt %>%
   #filter(scenario=="Scenario 1") %>% 
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
   #
-  group_by(date,scenario) %>% 
+  group_by(date,scenario2) %>% 
   summarise( sum_daily=sum(imp_number) ) %>% ungroup() %>% 
-  arrange( scenario,desc(sum_daily) ) %>% 
-  group_by(scenario) %>% 
+  arrange( scenario2,desc(sum_daily) ) %>% 
+  group_by(scenario2) %>% 
   #normalise
   mutate( sum_daily=sum_daily/sum(sum_daily) ) %>% 
   mutate( cumsum_daily=cumsum(sum_daily) ) %>% 
