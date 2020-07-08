@@ -43,6 +43,17 @@ export_theme <- theme_tufte() +
 # read in data
 mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
+scenario_key <- c("Scenario 1"="Scenario 3", 
+                  "Scenario 2"="Scenario 1*", 
+                  "Scenario 3"="Scenario 4", 
+                  "Scenario 4"="Scenario 5", 
+                  "Scenario 5"="Scenario 6", 
+                  "Scenario 6"="Scenario 7", 
+                  "Scenario 7"="Scenario 8", 
+                  "Scenario 8"="Scenario 9", 
+                  "Scenario 9"="Scenario 10", 
+                  "Scenario 10" = "Scenario 2")  %>% enframe() %>% set_names( c("scenario","scenario2") )
+left_join(mt,scenario_key, by="scenario") -> mt
 
 # don't require these steps if using updated master table w/ dates subset to focal period : 
 # mt_all_dates <- read_csv("./data/master_table.csv",guess_max = Inf)
@@ -332,16 +343,17 @@ ggsave("./figures/frac_time_plot2.pdf",width=4*0.85,height=2)
 
 #
 # proportion over time ----------------------------------------------------
+fill_cols <- as.vector(polychrome(10)[c(1,3:10)])
 mt %>% 
   # filter
   filter(is_africa_d==1) %>% 
   filter(date>"2019-11-01") %>% 
   mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
   # 
-  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
+  group_by(date,is_wuhan,scenario2) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
   mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
   # by scenario and week
-  group_by(is_wuhan,scenario,year,week) %>% 
+  group_by(is_wuhan,scenario2,year,week) %>% 
   arrange(date) %>% 
   mutate(n=n()) %>% 
   filter( n==7 ) %>% 
@@ -349,17 +361,18 @@ mt %>%
   slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
   #
   pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
-  set_names( "date", "scenario", "non_W" , "W"  ) %>% 
+  set_names( "date", "scenario2", "non_W" , "W"  ) %>% 
   mutate( tot_imp=(W+non_W),
           min_tot_imp=min(tot_imp[tot_imp!=0]),
           prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
   dplyr::select(-W,-non_W) -> pf_probt
-pf_probt %>% filter(date>=ymd("2020-01-01")) %>% 
-  ggplot( aes(x=date,col=(scenario)) )+
-  geom_line(aes(y=prop_wuhan),show.legend=F) +
+(p <- pf_probt %>% filter(date>=ymd("2020-01-01")) %>% 
+  ggplot(  )+
+  geom_line(aes(y=prop_wuhan,x=date,col=(scenario2)),show.legend=T) +
   scale_y_continuous(breaks=c(0,0.5,1)) +
+  scale_color_manual(values=fill_cols) +
   labs(x="",y="") +
-  export_theme
+  export_theme  ) 
 ggsave("./figures/frac_time_plot_each_scen_afr.pdf",width=4*0.85*0.9*0.92,height=2*0.9)
 
 # proportion over time ----------------------------------------------------
@@ -369,10 +382,10 @@ mt %>%
   filter(date>"2019-11-01") %>% 
   mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
   # 
-  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
+  group_by(date,is_wuhan,scenario2) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
   mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
   # by scenario and week
-  group_by(is_wuhan,scenario,year,week) %>% 
+  group_by(is_wuhan,scenario2,year,week) %>% 
   arrange(date) %>% 
   mutate(n=n()) %>% 
   filter( n==7 ) %>% 
@@ -380,15 +393,16 @@ mt %>%
   slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
   #
   pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
-  set_names( "date", "scenario", "non_W" , "W"  ) %>% 
+  set_names( "date", "scenario2", "non_W" , "W"  ) %>% 
   mutate( tot_imp=(W+non_W),
           min_tot_imp=min(tot_imp[tot_imp!=0]),
           prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
   dplyr::select(-W,-non_W) -> pf_probt
 pf_probt %>% filter(date>=ymd("2020-01-01")) %>% 
-  ggplot( aes(x=date,col=(scenario)) )+
+  ggplot( aes(x=date,col=(scenario2)) )+
   geom_line(aes(y=prop_wuhan),show.legend=F) +
   scale_y_continuous(breaks=c(0,0.5,1)) +
+  scale_color_manual(values=fill_cols) +
   labs(x="",y="") +
   export_theme
 ggsave("./figures/frac_time_plot_each_scen_global.pdf",width=4*0.85*0.9*0.92,height=2*0.9)
