@@ -344,7 +344,6 @@ pf_probt %>%
 pf_probt %>% group_by(date) %>% 
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
-<<<<<<< HEAD
           prob_W_upper=max(prop_wuhan)) -> pf_probt_rib
 #
 pf_probt_rib %>% ggplot( aes(x=date)  )+
@@ -353,9 +352,7 @@ pf_probt_rib %>% ggplot( aes(x=date)  )+
   #geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
   export_theme +
   theme( axis.title.x = element_blank())
-=======
-          prob_W_upper=max(prop_wuhan)) %>% 
-  filter(n==9) -> pf_probt_rib
+
 
 # NEW fraction over time plot
 pf_probt_rib %>% ggplot( aes(x=date)  )+
@@ -366,7 +363,6 @@ pf_probt_rib %>% ggplot( aes(x=date)  )+
          axis.ticks.y = element_blank())+
   geom_path(aes(x=date,y=prop_wuhan,col=scenario))
 
->>>>>>> 3c15323bef4853f1b64f4afc997c740c686d7114
 ggsave("./figures/frac_time_plot.pdf",width=4*0.85,height=2)
 
 # proportion import - africa ----------------------------------------------
