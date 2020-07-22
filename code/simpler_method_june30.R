@@ -91,7 +91,7 @@ confirmed_cases_date$n[ which_replace ] <- put_instead
 all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
 
 if(create_scenario == 10){
-  all_incidence_province <- import("./data/tsang_predictions_apportioned") %>%
+  all_incidence_province <- import("./data/tsang_predictions_apportioned.csv") %>%
     rename(n=n_predict) %>%
     mutate(date=as.Date(date))%>%
     mutate(date_full=date) %>%
