@@ -117,7 +117,7 @@ colnames(flights_date_all_cities)<-c("date","origin_city","destination_country",
 #write.csv(flights_date_all_cities,"all_flight_pairs_0630.csv",row.names=F)
 
 
-flights_all_cities_2<-flights_date_all_cities %>%
+flights_all_cities2<-flights_date_all_cities %>%
   group_by(date, origin_city, destination_country) %>%
   summarise(daily_volume=sum(daily_volume))
 
@@ -179,4 +179,3 @@ df_alphas <- generate_alphas( all_dat, file_obs_cnt="./data/who_imports.csv" )
 all_dat %>% left_join( df_alphas, by="scenario" ) -> all_dat
 
 write.csv(all_dat,"./data/master_table_0630.csv",row.names=F)
-

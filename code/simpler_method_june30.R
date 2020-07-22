@@ -2,8 +2,9 @@ library(stats)
 library(tidyverse)
 library(patchwork)
 library(RColorBrewer)
+library(rio)
 
-create_scenario <- 8
+create_scenario <- 10
 
 if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)

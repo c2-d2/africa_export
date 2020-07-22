@@ -20,7 +20,7 @@ scenario_key <- c("Scenario 1"="Scenario 3",
 ############################
 main_scenario <- "Scenario 2"
 
-mt <- read.csv("master_table_0630-FINAL_VERSION.csv")   #all_dat
+mt <- read.csv("./data/master_table_0630.csv")   #all_dat
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 mt %>% glimpse()
 
