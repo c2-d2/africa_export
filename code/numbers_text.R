@@ -9,15 +9,13 @@ library(dplyr)
 main_scenario <- "Scenario 10" 
 #mt <- read_csv("./data/master_table_2.csv",guess_max = Inf) 
 #mt <- read_csv("./data/master_table.csv",guess_max = Inf)
-mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
+#mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
+#mt <- read_csv("/Users/taylorchin/Dropbox (Harvard University)/nCoV export/master_table_0630.csv",guess_max = Inf)
+#mt <- read_csv("/Users/taylorchin/Dropbox (Harvard University)/nCoV export/master_table_0630-FINAL.csv",guess_max = Inf)
+mt <- read_csv("/Users/taylorchin/Dropbox (Harvard University)/nCoV export/master_table_0630.csv",guess_max = Inf)
+
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 
-# don't require these steps if using updated master table w/ dates subset to focal period : 
-# mt_all_dates <- read_csv("./data/master_table.csv",guess_max = Inf)
-#dates_seq=seq(as.Date('2019-12-08'),as.Date('2020-02-29'),by="day")
-# mt_all_dates %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt_all_dates
-# mt_all_dates$date=as.Date(mt_all_dates$date)
-# mt <- mt_all_dates%>%filter(date%in%dates_seq)
 mt %>% glimpse()
 
 ############################
@@ -28,8 +26,8 @@ mt %>% group_by(scenario) %>%
   #
   mutate(alpha_lower=min(alpha_m),
             alpha_upper=max(alpha_m)) %>% filter(scenario==main_scenario) # 
-# from manuscript
-# each unit force of importation predicts 1.72 (range: 1.52 - 2.4) imported cases
+
+
 
 ############################
 ## global Ratio Wuhan/non-Wuhan
@@ -57,10 +55,10 @@ mt %>%
           frac_nW_mean=mean(frac_nW),
           frac_nW_lower=min(frac_nW),
           frac_nW_upper=max(frac_nW) ) # R: 
-# from manuscript
-# for every case from Wuhan imported globally, there may have been 0.6 (range of mean estimates across scenarios: 0.1 - 5.6) imported cases
 
-# for every one case globally imported from Wuhan, 0.6 cases (0.1 - 5.6) may have been imported from outside Wuhan
+# from manuscript
+#  abstract: for every case from Wuhan imported globally, there may have been 0.6 (range of mean estimates across scenarios: 0.1 - 5.6) imported cases
+#  results: we estimated that globally for every one case imported from Wuhan, 0.6 cases (0.1 - 5.6) may have been imported from outside Wuhan. 
 
 
 ############################
@@ -87,10 +85,11 @@ mt %>%
              frac_nW_mean=mean(frac_nW),
              frac_nW_lower=range(frac_nW)[1],
              frac_nW_upper=range(frac_nW)[2],
-              )  # R: 0.9 - 10.2, frac_nW= 0.5 - 0.91
-# from Chinese cities outside of Wuhan (68%; 36% - 86%)
+              )  # R
 
-# For countries in Africa this ratio was 1 (0.1 - 9.8)
+# from manuscript
+#  abstract: (1 case from those cities for each case from Wuhan, range of model scenarios: 0.1-9.8)
+#  results: for countries in Africa this ratio was 1 (0.1 - 9.8)
 
 ############################
 ## Weekly proportion -global
@@ -133,12 +132,6 @@ pf_probt %>% group_by(date) %>%
           prob_W_upper=max(prop_wuhan)) %>% 
   #filter(scenario==main_scenario) %>%
   ggplot() + geom_line(aes(x=date,y=prop_wuhan,col=scenario))
-# from manuscript
-# the main source of global case exportation in early January was Wuhan (98%; 98%-99%), but due to the Wuhan lockdown and the rapid spread of the virus, 
-## main source of case exportation from mid February changed to cities outside of Wuhan (100% across scenarios)
-
-# early on in the pandemic, the majority of imported cases originated in Wuhan (98%; 98% - 99% in the week of 1st January 2020), but this proportion then changed rapidly. 
-## In the week of 19th February, the proportion of globally imported cases sourced in Wuhan drops precipitously to 0% (across scenarios)
 
 
 ############################
@@ -176,9 +169,15 @@ pf_probt %>% group_by(date) %>%
   mutate( prob_W_lower=min(prop_wuhan),
           prob_W_upper=max(prop_wuhan)) %>% 
   filter(scenario==main_scenario) %>% print(n=Inf)
-# from manuscript
 
-# Wuhan contributed modestly to all imported cases throughout the time period, with its highest contribution estimated to be 57% (24% - 79%) in the early pandemic (the week of 8th January), subsequently declining to 0% in mid February (the week of 19th February)
+# from manuscript
+# CHECK THIS
+#  results: We found that early on in the pandemic, the majority of imported cases originated in Wuhan (99%; 58%-100% in the week of 1st January 2020), but this proportion then changed rapidly. ... dropping precipitously to 0% in the week of 19th February
+#  discussion: Our model predicts for the early pandemic that between 58%-100% of globally imported cases came from Wuhan in the week of 1st January 2020, with the rest originating from other Chinese cities. We find this proportion  dropped to 0% in the week of 19th February. 
+
+## where is this: 
+#  results: For the African destinations in our analysis, Wuhan contributed slightly less early in the epidemic (97%; 33% - 98% in the week of 1st January 2020, where 33% corresponds to Scenario 2), subsequently declining in early February to 0% (across scenarios) in mid February (the week of 19th February).
+#  discussion: We found that for the African locations the average proportion of cases exported from Wuhan in the week of 1st January 2020 was slightly lower than that of all destinations, ranging from 33%-98% in the week of 1st January 2020, but similarly declining to 0% in mid-February.
 
 ############################
 ## total number of predicted cases for Africa
@@ -192,12 +191,12 @@ mt %>%
   summarise(sum_mean=mean(sum),
             sum_lower=min(sum),
             sum_upper=max(sum)) # 
+
 # from manuscript
-# mean number of 19 (10 - 101) COVID-19 cases were imported to 26 destinations in Africa
-
-# our model estimates 19 (10 - 101) imported COVID-19 cases
-
-# until the end of February (29 February 2020) 19 (range: 10 - 101) COVID-19 cases from all of China could have been imported
+#  abstract: Our model predicts that 18.4 (8.5 - 100) COVID-19 cases were imported to 26 destination countries in Africa
+#  results: Our model estimates in our African destinations a total of 18.4 (8.5 - 100) imported COVID-19 cases
+#  results: (Scenario 8) However, overall trends in the number of imported cases over time in the African destination countries remained relatively unchanged, with the exception of Egypt, as did the total number of imports (20.6). 
+#  discussion: Our model predicted that until the end of February (29 February 2020) 18.4 (range: 8.5 - 100) COVID-19 cases from all of China could have been imported to the 26 African destinations included here.
 
 # only from Wuhan
 mt %>% 
@@ -209,6 +208,7 @@ mt %>%
   summarise(sum_mean=mean(sum),
             sum_lower=min(sum),
             sum_upper=max(sum))
+
 # only from non-Wuhan
 mt %>% 
   filter(is_africa_d==1,is_wuhan==0) %>% 
@@ -252,11 +252,11 @@ mt %>%
   summarise( mean_prop=mean(prop_prior),
              pro_lower=min(prop_prior),
              pro_upper=max(prop_prior) )
-# 100% (100% - 100%) of predicted imports would have occurred prior to any case detection
 
-# majority of predicted cases (100%; 99.9% - 100%) would have occurred prior to any confirmed cases
-
-# majority predicted on days prior to the first case detections in each location (around 100% for all scenarios)
+#from manuscript:
+#  results: Our model estimates in our African destinations a total of 18.4 (8.5 - 100) imported COVID-19 cases, with approximately 100% predicted on days prior to the first case detections in each location.
+#  Figure 2: The vast majority of predicted cases (100%; 99.9% - 100%) would have occurred prior to any confirmed cases in those locations. 
+# CHECK THIS: update this to 100% - 100%??
 
 ##
 ### for individual countries
@@ -273,16 +273,10 @@ mt %>%
   dplyr::filter(scenario==main_scenario) %>% 
   arrange( desc(mean_pred) ) %>% 
   select(-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
+
 # from manuscript
-#highest imported case count in South Africa (11; 4 - 19) and fewest cases in Equatorial Guinea (0.1; 0 - 0.13)
+# results: The highest numbers of imports are expected for South Africa (4.5; 1.7 - 18) and Egypt (3.9; 1.0 - 33), followed by Kenya (2.0; 0.8 - 9.2) and Algeria (1.6; 0.2 - 2.2). We estimate the lowest expected case counts in Equatorial Guinea and Mauritania (both 0.04; 0 - 0.2)
 
-# highest numbers of imports are expected for South Africa (11; 3.9 - 18.5) and Egypt (9.5; 1.8 - 15.3), followed by Kenya (4.2; 1.5 - 6.9) and Zambia (3.3; 1.4 - 5.4)
-
-# lowest expected case counts in Mauritania (0.1; 0-0.14) and Equatorial Guinea (0.1; 0 - 0.13) 
-
-# highest numbers are expected for South Africa (11; 3.9 - 18.5) and Egypt (9.5; 1.8 - 15.3), followed by Kenya (4.2; 1.5 - 6.9) and Ethiopia (3.0; 0.5 - 4.8).
-
-#  the lowest numbers for Mauritania (0.1; 0 - 0.2) and for Equatorial Guinea (0.1; 0 - 0.1)
 
 ############################
 ## date range (for majority of case arrival)
@@ -309,12 +303,12 @@ mt %>%
 pf                 %>% filter( in_interval==1 ) %>% 
   summarise( int_start=min(date),
              int_end=max(date)) 
+
 # from manuscript
-# between 16th January (±2 day) and 6th February (±2 days)
+#  abstract: with most of them (90%) predicted to have arrived between 7th January (±10 days) and 5th February (±3 days)
+#  results: 90% of all imported cases were estimated to be imported between 7th January (±10 days) and 5th February (±3 days).  
+#  discussion: It predicted that the majority (90%) of case importations in these locations occurred between 7th January (±10 day) and 5th February (±3 days). 
 
-# 90% of all imported cases were estimated to be imported between 16th January (±2 day) and 6th February (±2 days)
-
-# the majority of case imporations in Africa (90%) occurred between 16th January (±2 day) and 6th February (±2 days)
 
 ############################
 ## understimation
@@ -346,6 +340,9 @@ prevalence_dat %>%
   group_by(scenario) %>%
   summarise(min_date=min(date),
             max_date=max(date))
+
+# from manuscript:
+##  results: Under these assumptions, we found that the prevalence indicator peaked in all Chinese cities between 19th and 26th January 2020 (Figure 1 C&D and Figure S3).
 
 ############################
 ## Ratio of prevalence indicator in to outside Wuhan

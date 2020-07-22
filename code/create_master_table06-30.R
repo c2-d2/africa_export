@@ -3,7 +3,7 @@ library(dvmisc)
 library(tidyverse)
 library(rio)
 ## Generate master table
-setwd("~/Desktop/nCoV exports")
+#setwd("~/Desktop/nCoV exports")
 ## Need all destinations
 destination_countries <- c("Spain", "United States", "Algeria", "Nigeria", "United Kingdom", 
                            "Ethiopia", "Australia", "Netherlands", "Ghana", "New Zealand", 
@@ -64,23 +64,23 @@ table_key <- as_tibble(expand_grid(date=dates,
 ## Read in all prevalences
 ############################
 # add Scenarios 1-7
-load( file = "city_prev_mod01.Rdata" )
+load( file = "./out/city_prev_mod01.Rdata" )
 prev_all=city_prev_mod0
-load( file = "city_prev_mod02.Rdata" )
+load( file = "./out/city_prev_mod02.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod03.Rdata" )
+load( file = "./out/city_prev_mod03.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod04.Rdata" )
+load( file = "./out/city_prev_mod04.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod05.Rdata" )
+load( file = "./out/city_prev_mod05.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod06.Rdata" )
+load( file = "./out/city_prev_mod06.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod07.Rdata" )
+load( file = "./out/city_prev_mod07.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod08.Rdata" )
+load( file = "./out/city_prev_mod08.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod10.Rdata" )
+load( file = "./out/city_prev_mod10.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
 
 ############################
@@ -143,7 +143,7 @@ flights_all_cities2$origin_city<- ifelse(flights_all_cities2$origin_city == "Xi 
 ############################
 ## has detected cases
 ############################
-load(file="hasdetected.Rdata")
+load(file="./data/hasdetected.Rdata")
 african_countries %>% length() # 26
 dates %>% length() # 124
 df_hasdetected %>% filter( destination_country%in%african_countries ) -> df_hasdetected
@@ -175,8 +175,8 @@ all_dat <- comb4 %>%
   filter( date%in%dates_seq)
 
 # generate alphas by fitting each scenario, using date sequence for focal period
-df_alphas <- generate_alphas( all_dat, file_obs_cnt="./who_imports.csv" )
+df_alphas <- generate_alphas( all_dat, file_obs_cnt="./data/who_imports.csv" )
 all_dat %>% left_join( df_alphas, by="scenario" ) -> all_dat
 
-write.csv(all_dat,"master_table_0630.csv",row.names=F)
+write.csv(all_dat,"/Users/taylorchin/Dropbox (Harvard University)/nCoV export/master_table_0630.csv",row.names=F)
 

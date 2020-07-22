@@ -63,6 +63,17 @@ save( df_hasdetected, file="./data/hasdetected.Rdata" )
 ############################
 ## cases in africa
 ############################
+
+highsurv_countries <-c('United States','Australia','Canada','Korea (South)',
+                       'United Kingdom',
+                       'Netherlands','Sweden',
+                       'Germany','Spain','Singapore')
+african_countries<-c('Mauritius','Mauritania','South Africa','Kenya','Egypt','Ethiopia','Morocco',
+                     'Algeria','Nigeria','Ghana','Tanzania','Senegal','Guinea',
+                     'Zimbabwe','Congo (Kinshasa)','Sudan','Angola','Zambia',
+                     'Gabon','Madagascar','Equatorial Guinea','Tunisia',
+                     'Uganda','Mozambique','Seychelles', "Cote D'Ivoire")
+
 df2 %>% filter( destination_country%in%african_countries ) %>% 
                 group_by(destination_country) %>% summarise( sum=sum(cases),date=max(date) ) %>% print(n=Inf)
                
