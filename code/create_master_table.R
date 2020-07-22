@@ -1,7 +1,4 @@
 ## Generate master tablelibrary(stats)
-library(tidyverse)
-library(patchwork)
-library(RColorBrewer)
 source("./code/simpler_method_fun.R")
 
 ## Need all destinations

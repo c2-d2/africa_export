@@ -82,7 +82,7 @@ map<-ggplot(data = africa_risk) +
   theme(legend.title=element_text(color = "black", size = 10),
         legend.text = element_text(color = "black", size = 10))
 
-ggsave("./figures/map_exports_africa_countries.pdf")
+ggsave("./figures/map_exports_africa_countries.pdf",width = 6,height=6)
 
 ######## Line Plot
 ## estimated number of cases exported from all cities in China to destination countries

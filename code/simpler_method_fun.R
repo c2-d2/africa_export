@@ -7,6 +7,10 @@ library(data.table)
 library(Bolstad2)
 library(lubridate)
 library(ggthemes)
+library(stats)
+library(tidyverse)
+library(patchwork)
+library(RColorBrewer)
 
 # settings
 select <- dplyr::select

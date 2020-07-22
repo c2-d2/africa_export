@@ -4,11 +4,9 @@
 ## Date: 17 June 2020
 setwd("~/Documents/GitHub/africa_export/")
 source("./code/simpler_method_fun.R")
-library(stats)
-library(tidyverse)
-library(patchwork)
-library(RColorBrewer)
-create_scenario <- 2
+
+# change this following setting to create all scenarios
+create_scenario <- 2 # possible values: 1,2,3,4,5,6,7,8,9,10
 
 if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
@@ -98,6 +96,7 @@ confirmed_cases_date$n[ which_replace ] <- put_instead
 all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
 
 if(create_scenario == 10){
+  # Tsang et al. (Lancet Public Health 2020)
   all_incidence_province <- read_csv("data/tsang_predictions_apportioned.csv") %>% 
     rename(n=n_predict) %>%
     mutate(date_full=date) %>%
@@ -205,8 +204,7 @@ city_prev_mod0 %>% ggplot(aes(x=date,y=prevalence_o)) +
   geom_line(  ) +
   facet_wrap(~origin_city,scales="free")
 
-## Estimating ascertainment rates from M&B
-
+## Estimating ascertainment rates from Maier & Brockmann (Science 2020)
 # estimating the period-specific ascertainment rate
 mnb<-read.csv("./data/m&b_digitized_hubei_other.csv")
 
