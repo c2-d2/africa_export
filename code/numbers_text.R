@@ -6,7 +6,7 @@ library(dplyr)
 ############################
 ## Load the master table
 ############################
-main_scenario <- "Scenario 10" #main_scenario <- "Scenario 9"
+main_scenario <- "Scenario 10" 
 #mt <- read_csv("./data/master_table_2.csv",guess_max = Inf) 
 #mt <- read_csv("./data/master_table.csv",guess_max = Inf)
 mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
@@ -27,7 +27,7 @@ mt %>% group_by(scenario) %>%
   summarise(alpha_m=mean(alpha) ) %>% print() %>% 
   #
   mutate(alpha_lower=min(alpha_m),
-            alpha_upper=max(alpha_m)) %>% filter(scenario==main_scenario) # 1.52; 1.52-2.41
+            alpha_upper=max(alpha_m)) %>% filter(scenario==main_scenario) # 
 # from manuscript
 # each unit force of importation predicts 1.72 (range: 1.52 - 2.4) imported cases
 

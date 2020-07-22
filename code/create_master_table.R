@@ -1,4 +1,4 @@
-## Generate master tablelibrary(stats)
+## Generate master table
 source("./code/simpler_method_fun.R")
 
 ## Need all destinations

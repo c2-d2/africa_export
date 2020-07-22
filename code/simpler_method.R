@@ -2,7 +2,6 @@
 ## Description: Estimating province-level prevalence
 ## Author: Tigist Menkir (Center for Communicable Disease Dynamics, Harvard T.H. Chan School of Public Health)
 ## Date: 17 June 2020
-setwd("~/Documents/GitHub/africa_export/")
 source("./code/simpler_method_fun.R")
 
 # change this following setting to create all scenarios

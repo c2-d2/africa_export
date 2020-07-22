@@ -58,7 +58,7 @@ df2             %>% group_by( destination_country ) %>%
                 mutate( cases_cumsum=cumsum(cases) ) %>% 
                 mutate( has_detected_d = as.numeric(cases_cumsum!=0) ) %>% 
                 select(-cases,-cases_cumsum) %>% ungroup() -> df_hasdetected
-save( df_hasdetected, file="./out/hasdetected.Rdata" )
+save( df_hasdetected, file="./data/hasdetected.Rdata" )
 
 ############################
 ## cases in africa
