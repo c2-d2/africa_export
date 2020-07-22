@@ -104,7 +104,6 @@ if(create_scenario == 10){
 p <- plot_conf_onset(all_incidence_province,confirmed_cases_date)
 
 # compute cumulative incidence and add population size
-setwd("./data/prevalence data")
 prov_cum_incidence <- comp_cum_incidence( all_incidence_province, 
                                           "./provinces_popn_size_statista.csv" ) # 15 rows
 
@@ -125,7 +124,6 @@ prov_inc_calibrated <- all_incidence_province %>%
 # plot calibrated incidence & symptom onset curves
 
 # distribute the cases into cities and add denominator
-setwd("./data/nCoV exports")
 prov_city_adjust <- get_prov_city_adjust(file="./data/frac_popn_city.Rdata" )
 ## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
 ## be the same within each province. Otherwise, is different.
