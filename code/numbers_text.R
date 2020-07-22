@@ -9,10 +9,7 @@ library(dplyr)
 main_scenario <- "Scenario 10" 
 #mt <- read_csv("./data/master_table_2.csv",guess_max = Inf) 
 #mt <- read_csv("./data/master_table.csv",guess_max = Inf)
-#mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
-#mt <- read_csv("/Users/taylorchin/Dropbox (Harvard University)/nCoV export/master_table_0630.csv",guess_max = Inf)
-#mt <- read_csv("/Users/taylorchin/Dropbox (Harvard University)/nCoV export/master_table_0630-FINAL.csv",guess_max = Inf)
-mt <- read_csv("/Users/taylorchin/Dropbox (Harvard University)/nCoV export/master_table_0630.csv",guess_max = Inf)
+mt <- read_csv("./data/master_table_0630.csv",guess_max = Inf)
 
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 
