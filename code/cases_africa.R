@@ -1,20 +1,23 @@
 # load confirmed cases from all over the world
 
-# run create_master_table.R first
 
 #these libraries need to be loaded
 library(utils)
 library(tidyverse)
 library(lubridate)
+
+# load ECDC data
 data <- read.csv("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv", na.strings = "", fileEncoding = "UTF-8-BOM")
 data %>% glimpse()
-#
+
+# initial wrangle
 data %>% 
                 mutate( dateRep=dmy(dateRep),
                         countriesAndTerritories=as.character(countriesAndTerritories)) %>% 
                 select(year,month,day,dateRep,continentExp,countriesAndTerritories,popData2019, 
                        cases,deaths) %>% as_tibble() -> df
 
+# explore
 df$dateRep %>% max() # get most current data
 df$cases %>% sum() # total cases 
 df$cases[df$countriesAndTerritories=="China"] %>% sum() # cases in China

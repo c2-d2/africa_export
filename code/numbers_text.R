@@ -323,7 +323,6 @@ pf                 %>% filter( in_interval==1 ) %>%
 1/2.8
 # all china / all wuhan
 
-
 # 1 wuhan detected / 2.8 wuhan real / 2.8*1.96 call of china real
 1- 1/(2.8+2.8*0.555) # fraction missed
 1- 1/(2.8+2.8*0.0555) # fraction missed - lower
@@ -337,7 +336,6 @@ pf                 %>% filter( in_interval==1 ) %>%
 prevalence_dat <- mt %>% 
   select(origin_city, scenario, date, prevalence_o,is_wuhan) %>% 
   distinct()
-
 
 ############################
 ## Peak time overall

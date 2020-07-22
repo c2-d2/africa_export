@@ -143,7 +143,7 @@ all_dat <- comb4 %>%
 df_alphas <- generate_alphas( all_dat, file_obs_cnt="./data/who_imports.csv" )
 all_dat %>% left_join( df_alphas, by="scenario" ) -> all_dat
 
-write_csv(all_dat, "data/master_table.csv")
+write_csv(all_dat, "data/master_table_0630.csv")
 
 ## Get peak time by city
 all_dat %>% select(origin_city, date, prevalence_o, scenario) %>% 

@@ -47,8 +47,8 @@ shift_2_delays <- function(confirmed_cases_date,incubation_period,delay) {
                 confirmed_cases_date%>%
                                 arrange( province_raw,dates ) %>%  # helps to check the df visually
                                 group_by(province_raw)%>%
-                                mutate(n_onset=shift(n,n=delay))%>% 
-                                mutate(n_infected=shift(n_onset,n=incubation_period)) %>% 
+                                mutate(n_onset=data.table::shift(n,n=delay)) %>% 
+                                mutate(n_infected=data.table::shift(n_onset,n=incubation_period)) %>% 
                                 ungroup() %>% 
                                 relocate( dates, province_raw,n_infected,n_onset ) ->df
                 return(df)
