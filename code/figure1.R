@@ -1,4 +1,5 @@
-#####
+##### run additional Figures
+
 ## NOTE - NEED TO RUN SIMPLER_METHOD.R FIRST
 library(pals)
 library(patchwork)
