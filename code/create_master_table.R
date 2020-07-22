@@ -83,8 +83,6 @@ load( file = "./out/city_prev_mod10.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
 prev_all %>% write_csv("data/all_prevalence_estimates.csv")
 
-#prev_all$scenario <- factor(prev_all$scenario, levels=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5", 
-#                                                        "Scenario 6", "Scenario 7", "Scenario 8", "Scenario 10"))
 ggplot(prev_all %>% filter(scenario %in% c("Scenario 1","Scenario 2","Scenario 8","Scenario 10"))) + 
   geom_line(aes(x=date,y=prevalence_o,col=scenario)) + 
   scale_color_manual(values=brewer.pal(10,"Paired")) +
@@ -96,13 +94,6 @@ flights_all_cities <- read_csv("data/all_flight_pairs.csv")
 flights_all_cities <- flights_all_cities %>% group_by(date, origin_city, destination_country) %>%
   summarise(daily_volume=sum(daily_volume))
 flights_all_cities <- flights_all_cities %>% ungroup() %>% mutate(origin_city = ifelse(origin_city == "Xi An","Xi'an",origin_city))
-
-############################
-## Alpha factors
-############################
-# alphas <- tibble(scenario=c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5"),
-#                  alpha=c(1.522779, 2.412217, 1.597522, 1.522779, 1.522779))
-
 
 ############################
 ## has detected cases
