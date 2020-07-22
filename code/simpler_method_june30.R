@@ -91,7 +91,7 @@ confirmed_cases_date$n[ which_replace ] <- put_instead
 all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
 
 if(create_scenario == 10){
-  all_incidence_province <- import("https://raw.githubusercontent.com/c2-d2/africa_export/master/data/tsang_predictions_apportioned.csv?token=AHOEEDDIMFV2KHVQZQD2GVS7EGKBO") %>%
+  all_incidence_province <- import("./data/tsang_predictions_apportioned") %>%
     rename(n=n_predict) %>%
     mutate(date=as.Date(date))%>%
     mutate(date_full=date) %>%
@@ -105,7 +105,7 @@ p <- plot_conf_onset(all_incidence_province,confirmed_cases_date)
 
 # compute cumulative incidence and add population size
 prov_cum_incidence <- comp_cum_incidence( all_incidence_province, 
-                                          "./provinces_popn_size_statista.csv" ) # 15 rows
+                                          "./data/provinces_popn_size_statista.csv" ) # 15 rows
 
 # add calibration value
 calibration_value <- tibble(  is_hubei=c(0,1),
@@ -124,13 +124,13 @@ prov_inc_calibrated <- all_incidence_province %>%
 # plot calibrated incidence & symptom onset curves
 
 # distribute the cases into cities and add denominator
-prov_city_adjust <- get_prov_city_adjust(file="./data/frac_popn_city.Rdata" )
+prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
 ## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
 ## be the same within each province. Otherwise, is different.
 city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , 
                                                prov_city_adjust, 
                                                aportion_all = create_scenario!=8)
-load(file="./data/df_city_pop.Rdata")
+load(file="./out/df_city_pop.Rdata")
 city_n_inf_caladj_den <- city_n_inf_caladj %>% 
   left_join(df_city_pop,by=c("city"="asciiname")) %>% 
   mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
