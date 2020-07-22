@@ -9,67 +9,67 @@ if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
   name_scenario <- "Scenario 1" # Maier and Brockmann
   prev_days <- 5
-  save_name <- "city_prev_mod01.Rdata"
+  save_name <- "./out/city_prev_mod01.Rdata"
 }
 #
 if(create_scenario == 2) {
   asc_nonhubei_v_hubei <- 2 # Verity et al
   name_scenario <- "Scenario 2"
   prev_days <- 5
-  save_name <- "city_prev_mod02.Rdata"
+  save_name <- "./out/city_prev_mod02.Rdata"
   #
 }
 if(create_scenario == 3) { 
   asc_nonhubei_v_hubei <- 2 # Verity et al
   name_scenario <- "Scenario 3"
   prev_days <- 2
-  save_name <- "city_prev_mod03.Rdata"
+  save_name <- "./out/city_prev_mod03.Rdata"
   #
 }
 if(create_scenario == 4) { 
   asc_nonhubei_v_hubei <- 2 # Verity et al
   name_scenario <- "Scenario 4"
   prev_days <- 7
-  save_name <- "city_prev_mod04.Rdata"
+  save_name <- "./out/city_prev_mod04.Rdata"
   #
 }
 if(create_scenario == 5) {  
   asc_nonhubei_v_hubei <- 0.2 # Verity et al / 10
   name_scenario <- "Scenario 5"
   prev_days <- 5
-  save_name <- "city_prev_mod05.Rdata"
+  save_name <- "./out/city_prev_mod05.Rdata"
   #
 }
 if(create_scenario == 6) {  
   asc_nonhubei_v_hubei <- 20 # Verity et al * 10 
   name_scenario <- "Scenario 6"
   prev_days <- 5
-  save_name <- "city_prev_mod06.Rdata"
+  save_name <- "./out/city_prev_mod06.Rdata"
   #
 }
 if(create_scenario == 7) {  
   asc_nonhubei_v_hubei <- 2 # Verity et al
   name_scenario <- "Scenario 7"
   prev_days <- 5
-  save_name <- "city_prev_mod07.Rdata"
+  save_name <- "./out/city_prev_mod07.Rdata"
 }
 if(create_scenario == 8) {  
   asc_nonhubei_v_hubei <- 2 # Verity et al
   name_scenario <- "Scenario 8"
   prev_days <- 5
-  save_name <- "city_prev_mod08.Rdata"
+  save_name <- "./out/city_prev_mod08.Rdata"
 }
 if(create_scenario == 10) {  
   asc_nonhubei_v_hubei <- 1 # Verity et al
   name_scenario <- "Scenario 10"
   prev_days <- 5
-  save_name <- "city_prev_mod10.Rdata"
+  save_name <- "./out/city_prev_mod10.Rdata"
 }
 
 ############################
 ## read in confirmed case data from James' covback repository
 ############################
-confirmed_cases<-read.csv("midas_data_final.csv",stringsAsFactors=FALSE) %>% as_tibble()
+confirmed_cases<-read.csv("./data/midas_data_final.csv",stringsAsFactors=FALSE) %>% as_tibble()
 # subset to only provinces used in our analysis
 provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
              'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
@@ -104,7 +104,7 @@ if(create_scenario == 10){
 p <- plot_conf_onset(all_incidence_province,confirmed_cases_date)
 
 # compute cumulative incidence and add population size
-setwd("~/Desktop/nCoV exports/prevalence data")
+setwd("./data/prevalence data")
 prov_cum_incidence <- comp_cum_incidence( all_incidence_province, 
                                           "./provinces_popn_size_statista.csv" ) # 15 rows
 
@@ -125,14 +125,14 @@ prov_inc_calibrated <- all_incidence_province %>%
 # plot calibrated incidence & symptom onset curves
 
 # distribute the cases into cities and add denominator
-setwd("~/Desktop/nCoV exports")
-prov_city_adjust <- get_prov_city_adjust(file="frac_popn_city.Rdata" )
+setwd("./data/nCoV exports")
+prov_city_adjust <- get_prov_city_adjust(file="./data/frac_popn_city.Rdata" )
 ## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
 ## be the same within each province. Otherwise, is different.
 city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , 
                                                prov_city_adjust, 
                                                aportion_all = create_scenario!=8)
-load(file="df_city_pop.Rdata")
+load(file="./data/df_city_pop.Rdata")
 city_n_inf_caladj_den <- city_n_inf_caladj %>% 
   left_join(df_city_pop,by=c("city"="asciiname")) %>% 
   mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
