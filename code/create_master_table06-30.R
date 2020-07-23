@@ -176,6 +176,7 @@ all_dat <- comb4 %>%
 
 # generate alphas by fitting each scenario, using date sequence for focal period
 df_alphas <- generate_alphas( all_dat, file_obs_cnt="./data/who_imports.csv" )
+
 all_dat %>% left_join( df_alphas, by="scenario" ) -> all_dat
 
 write.csv(all_dat,"./data/master_table_0630.csv",row.names=F)

@@ -67,6 +67,7 @@ if(create_scenario == 10) {
   save_name <- "./out/city_prev_mod10.Rdata"
 }
 
+
 ############################
 ## read in confirmed case data from James' covback repository
 ############################
