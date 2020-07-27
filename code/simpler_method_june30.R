@@ -126,13 +126,13 @@ prov_inc_calibrated <- all_incidence_province %>%
 # plot calibrated incidence & symptom onset curves
 
 # distribute the cases into cities and add denominator
-prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
+prov_city_adjust <- get_prov_city_adjust(file="./data/frac_popn_city.Rdata" )
 ## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
 ## be the same within each province. Otherwise, is different.
 city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , 
                                                prov_city_adjust, 
                                                aportion_all = create_scenario!=8)
-load(file="./out/df_city_pop.Rdata")
+load(file="./data/df_city_pop.Rdata")
 city_n_inf_caladj_den <- city_n_inf_caladj %>% 
   left_join(df_city_pop,by=c("city"="asciiname")) %>% 
   mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
