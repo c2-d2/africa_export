@@ -1,5 +1,4 @@
-# load confirmed cases from all over the world
-
+# load gloabbly confirmed cases, source:ECDC
 
 #these libraries need to be loaded
 library(utils)
