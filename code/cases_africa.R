@@ -60,7 +60,7 @@ df2             %>% group_by( destination_country ) %>%
 save( df_hasdetected, file="./data/hasdetected.Rdata" )
 
 df2 %>% group_by(destination_country) %>% 
-                slice(1) %>% select(destination_country,continentExp) -> df_country_cont_ecdc
+                slice(1) %>% ungroup() %>% select(destination_country,continentExp) -> df_country_cont_ecdc
 save( df_country_cont_ecdc, file="./data/df_country_cont_ecdc.Rdata" )
 
 ############################

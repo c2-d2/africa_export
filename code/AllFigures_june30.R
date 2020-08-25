@@ -407,12 +407,27 @@ pf_probt_africa %>% filter(date>=ymd("2020-01-01")) %>% ggplot( aes(x=date,col=s
 ggsave("frac_time_plot_each_scen_afr.pdf",width=4*0.85,height=2)
 
 #### 
+fill_cols <- as.vector(polychrome(10)[c(1,3:10)])
+
 mt %>% as_tibble() %>% 
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
   filter( scenario=="Scenario 2" ) %>% 
   # by scenario
   group_by(destination_country) %>% 
   summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
-  right_join(  )
+  right_join( df_country_cont_ecdc, by="destination_country" ) %>% 
+  filter(destination_country%in%global_countries) %>% 
+  mutate(continentExp=factor(continentExp,levels = c("Asia",
+                                                     "Europe",
+                                                     "Africa",
+                                                     "America",
+                                                     "Oceania")) ) %>% 
+  arrange(continentExp) %>% 
+  mutate(n=1:n()) -> pf
+pf %>% ggplot( aes(x=fct_inorder(destination_country),y=log(sum),col=continentExp)  ) +
+  geom_point() +
+  scale_color_manual(values=c("#5A5156","#F6222E","#16FF32","#3283FE","#FEAF16") ) +
+  labs(x="",y="",col="Continent") +
+  export_theme
 
                                             
