@@ -417,17 +417,27 @@ mt %>% as_tibble() %>%
   summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
   right_join( df_country_cont_ecdc, by="destination_country" ) %>% 
   filter(destination_country%in%global_countries) %>% 
+  mutate( continentExp=ifelse(destination_country%in%c("United States","Canada"),"North America",continentExp))  %>% 
+  mutate( continentExp=ifelse(destination_country%in%c("Chile","Argentina","Brazil"),"South America",continentExp))  %>% 
   mutate(continentExp=factor(continentExp,levels = c("Asia",
                                                      "Europe",
                                                      "Africa",
-                                                     "America",
+                                                     "North America",
+                                                     "South America",
                                                      "Oceania")) ) %>% 
   arrange(continentExp) %>% 
   mutate(n=1:n()) -> pf
-pf %>% ggplot( aes(x=fct_inorder(destination_country),y=log(sum),col=continentExp)  ) +
+
+pf %>% ggplot( aes(x=fct_inorder(destination_country),y=(sum),col=continentExp)  ) +
   geom_point() +
-  scale_color_manual(values=c("#5A5156","#F6222E","#16FF32","#3283FE","#FEAF16") ) +
+  geom_segment(aes(xend = fct_inorder(destination_country),
+                   y = min(pf$sum), yend = sum, col=continentExp)) +
+  scale_y_log10() +
+  scale_color_manual(values=c("#F6222E","#5A5156","#FE00FA","#3283FE","#1CFFCE","#FEAF16") ) +
   labs(x="",y="",col="Continent") +
   export_theme
+ggsave("./figures/diff_continents_cases.pdf",width=9,height=6, units="cm")
+
+# repeat with more countries
 
                                             
