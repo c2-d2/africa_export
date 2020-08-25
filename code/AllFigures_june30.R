@@ -406,4 +406,13 @@ pf_probt_africa %>% filter(date>=ymd("2020-01-01")) %>% ggplot( aes(x=date,col=s
          axis.ticks.y = element_blank())
 ggsave("frac_time_plot_each_scen_afr.pdf",width=4*0.85,height=2)
 
+#### 
+mt %>% as_tibble() %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  filter( scenario=="Scenario 2" ) %>% 
+  # by scenario
+  group_by(destination_country) %>% 
+  summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
+  right_join(  )
 
+                                            
