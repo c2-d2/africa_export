@@ -425,7 +425,7 @@ mt %>% as_tibble() %>%
                                                      "North America",
                                                      "South America",
                                                      "Oceania")) ) %>% 
-  arrange(continentExp) %>% 
+  arrange(continentExp,desc(sum)) %>% 
   mutate(n=1:n()) -> pf
 
 pf %>% ggplot( aes(x=fct_inorder(destination_country),y=(sum),col=continentExp)  ) +
@@ -439,5 +439,48 @@ pf %>% ggplot( aes(x=fct_inorder(destination_country),y=(sum),col=continentExp) 
 ggsave("./figures/diff_continents_cases.pdf",width=9,height=6, units="cm")
 
 # repeat with more countries
+all_used <- c(highsurv_countries,african_countries,global_countries) %>% unique()
+mt %>% as_tibble() %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  filter( scenario=="Scenario 2" ) %>% 
+  # by scenario
+  group_by(destination_country) %>% 
+  summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
+  right_join( df_country_cont_ecdc, by="destination_country" ) %>% 
+  mutate( continentExp=ifelse(destination_country%in%c("United States","Canada"),"North America",continentExp))  %>% 
+  mutate( continentExp=ifelse(destination_country%in%c("Chile",
+                                                       "Argentina",
+                                                       "Brazil",
+                                                       # new relative to above code
+                                                       "Colombia",
+                                                       "Peru",
+                                                       "Venezuela",
+                                                       "Ecuador",
+                                                       "Bolivia",
+                                                       "Paraguay",
+                                                       "Uruguay"),"South America",continentExp)) %>%  
+  mutate(continentExp=factor(continentExp,levels = c("Asia",
+                                                     "Europe",
+                                                     "Africa",
+                                                     "North America",
+                                                     "South America",
+                                                     "Oceania")) ) %>% 
+  filter(!is.na(continentExp)) %>% 
+  filter(!is.na(sum)) %>% 
+  filter(destination_country%in%all_used) %>% 
+  arrange(desc(sum)) %>% 
+  mutate(n=1:n()) -> pf
 
+
+pf %>% arrange(continentExp) %>% print(n=Inf) # 43
+pf %>% count(continentExp,wt = n())
+pf %>% ggplot( aes(x=fct_inorder(destination_country),y=(sum),col=continentExp)  ) +
+  geom_point() +
+  geom_segment(aes(xend = fct_inorder(destination_country),
+                   y = 0.03649287, yend = sum, col=continentExp)) +
+  scale_y_log10() +
+  scale_color_manual(values=c("#F6222E","#5A5156","#FE00FA","#3283FE","#1CFFCE","#FEAF16") ) +
+  labs(x="",y="",col="Continent") +
+  export_theme
+ggsave("./figures/diff_continents_cases_more.pdf",width=18,height=6, units="cm")
                                             
