@@ -4,7 +4,9 @@ library(patchwork)
 library(RColorBrewer)
 library(rio)
 
-create_scenario <- 10
+source("./code/simpler_method_fun.R")
+
+create_scenario <- 11
 
 if(create_scenario == 1) {
   asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
@@ -67,6 +69,14 @@ if(create_scenario == 10) {
   save_name <- "./out/city_prev_mod10.Rdata"
 }
 
+apportion_col <- "f_pop_city_prov"
+if(create_scenario == 11) {  
+  asc_nonhubei_v_hubei <- 1 # Verity et al
+  name_scenario <- "Scenario 11"
+  prev_days <- 5
+  save_name <- "./out/city_prev_mod11.Rdata"
+  apportion_col <- "frac_cases_reported"
+}
 
 ############################
 ## read in confirmed case data from James' covback repository
@@ -123,16 +133,21 @@ prov_inc_calibrated <- all_incidence_province %>%
           n_onset_cal = n_onset/calv_inverse) %>% 
   select( dates,province_raw,n_infected_cal, n_onset_cal) %>%
   rename(n_onset=n_onset_cal)
+save(prov_inc_calibrated, file="./data/prov_inc_calibrated.RData")
+
+
 # plot calibrated incidence & symptom onset curves
 
 # distribute the cases into cities and add denominator
-prov_city_adjust <- get_prov_city_adjust(file="./data/frac_popn_city.Rdata" )
+prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
 ## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
 ## be the same within each province. Otherwise, is different.
 city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , 
                                                prov_city_adjust, 
-                                               aportion_all = create_scenario!=8)
-load(file="./data/df_city_pop.Rdata")
+                                               aportion_all = !(create_scenario %in% c(8,11)),
+                                               aportion_col = apportion_col)
+
+load(file="./out/df_city_pop.Rdata")
 city_n_inf_caladj_den <- city_n_inf_caladj %>% 
   left_join(df_city_pop,by=c("city"="asciiname")) %>% 
   mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
@@ -149,10 +164,10 @@ if(create_scenario == 7){
 
 ## Sense check
 ## Plot incidence and prevalence together
-#prov_inc_prev_cali %>% ggplot() + 
- # geom_line(aes(x=date,y=travel_prev)) + 
- # geom_line(data=city_n_inf_caladj_den, aes(x=date,y=n_infected_caladj),col="red") + 
-  #facet_wrap(~city,scales="free_y")
+prov_inc_prev_cali %>% ggplot() + 
+  geom_line(aes(x=date,y=travel_prev)) + 
+  geom_line(data=city_n_inf_caladj_den, aes(x=date,y=n_infected_caladj),col="red") + 
+  facet_wrap(~city,scales="free_y")
 
 # rename columns for master table
 city_prev_mod0 <- prov_inc_prev_cali %>% 

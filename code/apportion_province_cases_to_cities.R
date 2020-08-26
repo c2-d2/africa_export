@@ -1,3 +1,10 @@
+## CRUCIAL NOTES
+## - For cities we use that are included in the cityName column, we just find the proportion of cases 
+##   in that province reported in that city
+## - For "cities" we use that actually correspond to provinces (see https://en.wikipedia.org/wiki/Direct-administered_municipalities_of_China)
+##   we just use the total number of that "province" ie. the Beijing cities account for 100% of cases in Beijing
+
+
 library(tidyverse)
 setwd("~/Documents/GitHub/africa_export/")
 dat <- read_csv("data/table_getAreaStat_en_2020-03-19.csv") #%>% select(-comment)
@@ -48,3 +55,16 @@ prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
 prov_city_adjust <- prov_city_adjust %>% full_join(apportioned_dat_use)
 frac_popn_city2 <- prov_city_adjust
 save(frac_popn_city2,file="./out/frac_popn_city.Rdata")
+
+## Test apportioning code
+load(file="./data/prov_inc_calibrated.RData")
+apportion_default <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,aportion_all=TRUE) %>% mutate(ver="default")
+apportion_by_pop <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,aportion_all=FALSE,aportion_col="default") %>% mutate(ver="by_pop")
+apportion_by_cases <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,aportion_all=FALSE,aportion_col="frac_cases_reported") %>% mutate(ver="by_cases")
+
+apportioned_dat_combined <- bind_rows(apportion_default, apportion_by_pop, apportion_by_cases)
+
+ggplot(apportioned_dat_combined) + 
+  geom_line(aes(x=date,y=n_infected_caladj,col=ver)) + 
+  facet_wrap(~city, scales="free_y")
+
