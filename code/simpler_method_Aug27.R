@@ -11,7 +11,7 @@ scenario_key <- readxl::read_excel("./data/scenario_key.xlsx")
 
 incu_period <- 5
 conf_delay <- 7
-save_outputs <- TRUE
+save_outputs <- FALSE
 
 overall_save_name <- paste0("./out/all_prev_mods.Rdata")
 
@@ -38,9 +38,6 @@ which(confirmed_cases_date$province_raw=="Hubei" & confirmed_cases_date$n>4000 )
 confirmed_cases_date$n[ c((which_replace[1]-1),(which_replace[2]+1)) ] -> put_instead
 confirmed_cases_date$n[ which_replace ] <- put_instead
 
-# backculation: shift by mean reporting delays & incubation period
-all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-incu_period,delay=-conf_delay)
-
 ## df_city_pop, data frame with population of each City
 load(file="./out/df_city_pop.Rdata")
 
@@ -66,6 +63,9 @@ for(index in 1:nrow(scenario_key)){
   print("")
   print(paste0("Generating scenario ID: ",scenario_id, "; ARR: ", asc_nonhubei_v_hubei, "; days prevalent: ", prev_days,
             "; assignment: ", assignment))
+  
+  # backculation: shift by mean reporting delays & incubation period
+  all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-incu_period,delay=-conf_delay)
   
   ## If using time-varying ascertainment rates, use the estimated onset data from Tsang et al. directly
   if(is.na(asc_nonhubei_v_hubei)){
@@ -155,4 +155,40 @@ for(index in 1:nrow(scenario_key)){
 }
 
 all_outputs <- do.call("bind_rows", all_outputs)
-save(all_outputs, file=overall_save_name)
+if(save_outputs){
+  save(all_outputs, file=overall_save_name)
+}
+
+## Have a look at the different sensitivity analyses
+p_main <- all_outputs %>% filter(sensitivity == "main") %>%
+  ggplot() +
+  geom_line(aes(x=date,y=prevalence_o,col=scenario)) +
+  facet_wrap(~origin_city,scales="free_y") +
+  export_theme +
+  theme(legend.position=c(0.8,0.1))
+
+p_prevalent <- all_outputs %>% filter(sensitivity == "days_prevalent" | scenario == "Scenario 1") %>%
+  ggplot() +
+  geom_line(aes(x=date,y=prevalence_o,col=scenario)) +
+  facet_wrap(~origin_city,scales="free_y") +
+  export_theme +
+  theme(legend.position=c(0.8,0.1))
+
+p_arr <- all_outputs %>% filter(sensitivity == "ARR" | scenario == "Scenario 1") %>%
+  ggplot() +
+  geom_line(aes(x=date,y=prevalence_o,col=scenario)) +
+  facet_wrap(~origin_city,scales="free_y") +
+  export_theme +
+  theme(legend.position=c(0.8,0.1))
+
+p_assignment <- all_outputs %>% filter(sensitivity == "assignment" | scenario == "Scenario 1") %>%
+  ggplot() +
+  geom_line(aes(x=date,y=prevalence_o,col=scenario)) +
+  facet_wrap(~origin_city,scales="free_y") +
+  export_theme +
+  theme(legend.position=c(0.8,0.1))
+
+p_main
+p_prevalent
+p_arr
+p_assignment
