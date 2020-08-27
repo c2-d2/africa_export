@@ -7,6 +7,9 @@ library(rio)
 source("./code/simpler_method_fun.R")
 scenario_key <- readxl::read_excel("./data/scenario_key.xlsx")
 
+incu_period <- 5
+conf_delay <- 7
+
 ############################
 ## read in confirmed case data
 ############################
@@ -16,6 +19,7 @@ provinces<-c('Hubei','Beijing','Shanghai','Guangdong','Henan',
              'Tianjin','Zhejiang','Hunan','Shaanxi','Jiangsu','Chongqing',
              'Jiangxi','Sichuan','Anhui','Fujian') # 15
 confirmed_cases_final<-confirmed_cases[confirmed_cases$province_raw%in%provinces,] # 124 unique dates
+
 # match date indices to actual dates
 dates_and_date=tibble(dates=seq(as.Date('2020-03-02')-122,as.Date('2020-03-02'),by="day")) %>% 
   mutate(date=(1:n()-1))
@@ -27,7 +31,7 @@ confirmed_cases_date$n[ c((which_replace[1]-1),(which_replace[2]+1)) ] -> put_in
 confirmed_cases_date$n[ which_replace ] <- put_instead
 
 # backculation: shift by mean reporting delays & incubation period
-all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
+all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-incu_period,delay=-conf_delay)
 
 ## df_city_pop, data frame with population of each City
 load(file="./out/df_city_pop.Rdata")
@@ -43,6 +47,7 @@ for(index in 1:nrow(scenario_key)){
   prev_days <- as.numeric(scenario_key$days_prevalent[index])
   asc_nonhubei_v_hubei <- as.numeric(scenario_key$ARR[index])
   
+  ## How are province cases assigned to cities?
   assignment <- scenario_key$assignment
   
   ## If using time-varying ascertainment rates, use the estimated onset data from Tsang et al. directly
@@ -53,7 +58,7 @@ for(index in 1:nrow(scenario_key)){
       mutate(date_full=date) %>%
       rename(dates=date) %>%
       filter(ver == "Overall")
-    all_incidence_province <- shift_2_delays(all_incidence_province,incubation_period=-5,delay=0)
+    all_incidence_province <- shift_2_delays(all_incidence_province,incubation_period=-incu_period,delay=0)
   }
   
   # plot the results
@@ -69,6 +74,7 @@ for(index in 1:nrow(scenario_key)){
                                 calv_inverse=c(1, 1/asc_nonhubei_v_hubei))
 
   # calibrate incidence in Hubei and outside
+  ## amounts to inflating Hubei case counts
   prov_inc_calibrated <- all_incidence_province %>% 
     mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
     left_join( calibration_value, by="is_hubei" ) %>% 
@@ -77,27 +83,24 @@ for(index in 1:nrow(scenario_key)){
     select( dates,province_raw,n_infected_cal, n_onset_cal) %>%
     rename(n_onset=n_onset_cal)
 
-  # plot calibrated incidence & symptom onset curves
-  
-  ## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
-  ## be the same within each province. Otherwise, is different.
+  ## Figure out what proportion of a province's cases should get assigned to each city
   city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , 
                                                  prov_city_adjust, 
-                                                 aportion_all = !(create_scenario %in% c(8,11)),
-                                                 aportion_col = apportion_col)
+                                                 assignment=assignment)
   
   
+  ## Convert city-level case counts to per capita
   city_n_inf_caladj_den <- city_n_inf_caladj %>% 
     left_join(df_city_pop,by=c("city"="asciiname")) %>% 
     mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
   
   # compute travel relevant prevalence
-  # for scenarios 1-6, 8:
-  prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den, rel_dur = prev_days) # change rel_dur to # days prevalent for scenario
-  prov_inc_prev_cali_raw <- comp_travel_rel_prev(city_n_inf_caladj, rel_dur = prev_days) 
-  
-  # for scenario 7:
-  if(create_scenario == 7){
+  ## amounts to each case being relevant for travel for `prev_days`
+  ## But if NA, then we're using the special scenario where cases are prevalent for longer in Hubei
+  if(!is.na(prev_days)){
+    prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den, rel_dur = prev_days) 
+    prov_inc_prev_cali_raw <- comp_travel_rel_prev(city_n_inf_caladj, rel_dur = prev_days) 
+  } else {
     prov_inc_prev_cali <- comp_travel_rel_prev_nonwuh_gap(city_n_inf_caladj_den) 
   }
   
@@ -123,6 +126,6 @@ for(index in 1:nrow(scenario_key)){
     mutate(prevalence_o=replace_na(prevalence_o,replace = 0)) -> city_prev_mod0
   
   # save
-  save( city_prev_mod0, file = save_name )
+  save(city_prev_mod0, file = save_name )
 }
 
