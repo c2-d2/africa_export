@@ -9,8 +9,8 @@ source("./code/simpler_method_fun.R")
 create_scenario <- 11
 
 if(create_scenario == 1) {
-  asc_nonhubei_v_hubei <- 1.4 # relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
-  name_scenario <- "Scenario 1" # Maier and Brockmann
+  asc_nonhubei_v_hubei <- 5.14 #1.4 - relative ascertainment rate non-hubei versus hubei (for example 5 for a 1:5 ratio of Hubei versus non-Hubei ascertainment rate)
+  name_scenario <- "Scenario 1" # Replacing Maier and Brockmann for now 
   prev_days <- 5
   save_name <- "./out/city_prev_mod01.Rdata"
 }
