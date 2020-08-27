@@ -242,7 +242,7 @@ adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, ass
 ############
 generate_alphas <- function( all_dat,file_obs_cnt ) {
                 # get the observed counts
-                cases_high_cap_loc <-read.csv(file_obs_cnt,stringsAsFactors=TRUE) 
+                cases_high_cap_loc <-read.csv(file_obs_cnt,stringsAsFactors=FALSE) 
                 cases_high_cap_loc$cases_scaled <- ifelse(cases_high_cap_loc$Country!='Singapore',
                                                           round(cases_high_cap_loc$Cases_lm*2.5),
                                                           cases_high_cap_loc$Cases_lm) 

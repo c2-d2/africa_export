@@ -76,6 +76,7 @@ for(index in 1:nrow(scenario_key)){
       rename(dates=date) %>%
       filter(ver == "Overall")
     all_incidence_province <- shift_2_delays(all_incidence_province,incubation_period=-incu_period,delay=0)
+    asc_nonhubei_v_hubei <- 1
   }
   
   # plot the back-shifted curves
