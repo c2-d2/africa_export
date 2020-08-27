@@ -6,7 +6,7 @@ library(rio)
 
 ## Working directory should be the africa_export repo
 
-source("./code/simpler_method_fun.R")
+source("./code/functions/simpler_method_fun.R")
 scenario_key <- readxl::read_excel("./data/scenario_key.xlsx")
 
 incu_period <- 5
