@@ -11,7 +11,7 @@ scenario_key <- readxl::read_excel("./data/scenario_key.xlsx")
 
 incu_period <- 5
 conf_delay <- 7
-save_outputs <- FALSE
+save_outputs <- TRUE
 
 overall_save_name <- paste0("./out/all_prev_mods.Rdata")
 
