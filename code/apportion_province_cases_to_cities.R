@@ -7,6 +7,8 @@
 
 library(tidyverse)
 setwd("~/Documents/GitHub/africa_export/")
+source("./code/simpler_method_fun.R")
+
 dat <- read_csv("data/table_getAreaStat_en_2020-03-19.csv") #%>% select(-comment)
 dat <- dat %>% select(-comment)
 dat <- dat %>% pivot_longer(c(confirmedCount,suspectedCount,curedCount,deadCount))
@@ -47,11 +49,13 @@ apportioned_dat_use <- apportioned_dat1 %>% filter(name == "confirmedCount") %>%
   select(city_name_use, provinceShortName, frac_cases) %>%
   rename(province=provinceShortName,
          city=city_name_use,
-         frac_cases_reported=frac_cases)
+         by_cases=frac_cases)
 
 
 ## Read in existing frac allocation
 prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
+prov_city_adjust <- prov_city_adjust[,1:4]
+colnames(prov_city_adjust)[1:4] <- c("province","city","by_pop","by_city")
 prov_city_adjust <- prov_city_adjust %>% full_join(apportioned_dat_use)
 frac_popn_city2 <- prov_city_adjust
 save(frac_popn_city2,file="./out/frac_popn_city.Rdata")

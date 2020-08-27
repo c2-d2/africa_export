@@ -29,6 +29,11 @@ confirmed_cases_date$n[ which_replace ] <- put_instead
 # backculation: shift by mean reporting delays & incubation period
 all_incidence_province <- shift_2_delays(confirmed_cases_date,incubation_period=-5,delay=-7)
 
+## df_city_pop, data frame with population of each City
+load(file="./out/df_city_pop.Rdata")
+
+# Possible ways to distribute cases across cities
+prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
 
 for(index in 1:nrow(scenario_key)){
   scenario_id <- scenario_key$scenario_id[index]
@@ -72,54 +77,52 @@ for(index in 1:nrow(scenario_key)){
     select( dates,province_raw,n_infected_cal, n_onset_cal) %>%
     rename(n_onset=n_onset_cal)
 
-# plot calibrated incidence & symptom onset curves
-
-# distribute the cases into cities and add denominator
-prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
-## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
-## be the same within each province. Otherwise, is different.
-city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , 
-                                               prov_city_adjust, 
-                                               aportion_all = !(create_scenario %in% c(8,11)),
-                                               aportion_col = apportion_col)
-
-load(file="./out/df_city_pop.Rdata")
-city_n_inf_caladj_den <- city_n_inf_caladj %>% 
-  left_join(df_city_pop,by=c("city"="asciiname")) %>% 
-  mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
-
-# compute travel relevant prevalence
-# for scenarios 1-6, 8:
-prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den, rel_dur = prev_days) # change rel_dur to # days prevalent for scenario
-prov_inc_prev_cali_raw <- comp_travel_rel_prev(city_n_inf_caladj, rel_dur = prev_days) 
-
-# for scenario 7:
-if(create_scenario == 7){
-  prov_inc_prev_cali <- comp_travel_rel_prev_nonwuh_gap(city_n_inf_caladj_den) 
+  # plot calibrated incidence & symptom onset curves
+  
+  ## If scenario 8 (aportion cases proportional to city's fractional share of province population), then per-capita incidence should
+  ## be the same within each province. Otherwise, is different.
+  city_n_inf_caladj <- adjust_prov_prev_by_city( prov_inc_calibrated , 
+                                                 prov_city_adjust, 
+                                                 aportion_all = !(create_scenario %in% c(8,11)),
+                                                 aportion_col = apportion_col)
+  
+  
+  city_n_inf_caladj_den <- city_n_inf_caladj %>% 
+    left_join(df_city_pop,by=c("city"="asciiname")) %>% 
+    mutate(n_infected_caladj=n_infected_caladj/population) %>% select(-population)
+  
+  # compute travel relevant prevalence
+  # for scenarios 1-6, 8:
+  prov_inc_prev_cali <- comp_travel_rel_prev(city_n_inf_caladj_den, rel_dur = prev_days) # change rel_dur to # days prevalent for scenario
+  prov_inc_prev_cali_raw <- comp_travel_rel_prev(city_n_inf_caladj, rel_dur = prev_days) 
+  
+  # for scenario 7:
+  if(create_scenario == 7){
+    prov_inc_prev_cali <- comp_travel_rel_prev_nonwuh_gap(city_n_inf_caladj_den) 
+  }
+  
+  ## Sense check
+  ## Plot incidence and prevalence together
+  prov_inc_prev_cali %>% ggplot() + 
+    geom_line(aes(x=date,y=travel_prev)) + 
+    geom_line(data=city_n_inf_caladj_den, aes(x=date,y=n_infected_caladj),col="red") + 
+    facet_wrap(~city,scales="free_y")
+  
+  # rename columns for master table
+  city_prev_mod0 <- prov_inc_prev_cali %>% 
+    rename( origin_city=city,
+            prevalence_o=travel_prev) %>% 
+    mutate(scenario=name_scenario) %>% 
+    select(origin_city,scenario,date,prevalence_o)
+  
+  # fill in missing dates for master table
+  seq(from=ymd("2019-11-01"),to=ymd("2020-03-03"), by=1  ) -> dates_mt # 124 dates
+  expand_grid(origin_city=unique(city_prev_mod0$origin_city),
+              scenario=name_scenario,
+              date=dates_mt) %>% left_join( city_prev_mod0, by=c("origin_city","scenario","date") ) %>% 
+    mutate(prevalence_o=replace_na(prevalence_o,replace = 0)) -> city_prev_mod0
+  
+  # save
+  save( city_prev_mod0, file = save_name )
 }
-
-## Sense check
-## Plot incidence and prevalence together
-prov_inc_prev_cali %>% ggplot() + 
-  geom_line(aes(x=date,y=travel_prev)) + 
-  geom_line(data=city_n_inf_caladj_den, aes(x=date,y=n_infected_caladj),col="red") + 
-  facet_wrap(~city,scales="free_y")
-
-# rename columns for master table
-city_prev_mod0 <- prov_inc_prev_cali %>% 
-  rename( origin_city=city,
-          prevalence_o=travel_prev) %>% 
-  mutate(scenario=name_scenario) %>% 
-  select(origin_city,scenario,date,prevalence_o)
-
-# fill in missing dates for master table
-seq(from=ymd("2019-11-01"),to=ymd("2020-03-03"), by=1  ) -> dates_mt # 124 dates
-expand_grid(origin_city=unique(city_prev_mod0$origin_city),
-            scenario=name_scenario,
-            date=dates_mt) %>% left_join( city_prev_mod0, by=c("origin_city","scenario","date") ) %>% 
-  mutate(prevalence_o=replace_na(prevalence_o,replace = 0)) -> city_prev_mod0
-
-# save
-save( city_prev_mod0, file = save_name )
-
 

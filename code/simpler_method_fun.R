@@ -198,30 +198,39 @@ get_prov_city_adjust <- function(file) {
                 return(df)
 }
 
-adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, aportion_all=TRUE, aportion_col="default"){
+adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, assignment="by_city"){
                 date_v <- prov_inc_calibrated$dates %>% unique()
                 table_key <- prov_city_adjust %>% select(province,city) %>% 
                                 expand_grid(date=date_v)
+                
                 ## Attribute all cases from province to that city, split evenly by constituent cities
-                if(aportion_all){
+                if(assignment=="by_city"){
                   table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
                                   left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
-                                  mutate( n_infected_caladj=n_infected_cal*f_guangdong3_zhejiang2 ) %>% 
+                                  mutate( n_infected_caladj=n_infected_cal*by_city ) %>% 
                                   select( province,city,date,n_infected_caladj ) -> df
                   
-                  ## Otherwise aportion cases proportional to fractional share of province population
+                  ## Aportion cases proportional to fractional share of province population
+                } else if(assignment == "by_pop"){
+                  table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
+                    left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
+                    mutate( n_infected_caladj=n_infected_cal*by_pop ) %>% 
+                    select( province,city,date,n_infected_caladj ) -> df
+                  
+                  ## Aportion cases proportional to fractional share of province's cases
+                } else if(assignment == "by_cases"){
+                  table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
+                    left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
+                    mutate( n_infected_caladj=n_infected_cal*by_cases ) %>% 
+                    select( province,city,date,n_infected_caladj ) -> df
+                  
+                  ## Default is all to cities
                 } else {
-                  if(aportion_col == "frac_cases_reported"){
-                    table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
-                      left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
-                      mutate( n_infected_caladj=n_infected_cal*frac_cases_reported ) %>% 
-                      select( province,city,date,n_infected_caladj ) -> df
-                  } else {
-                    table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
-                      left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
-                      mutate( n_infected_caladj=n_infected_cal*f_pop_city_prov ) %>% 
-                      select( province,city,date,n_infected_caladj ) -> df
-                  }
+                  table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
+                    left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
+                    mutate( n_infected_caladj=n_infected_cal*by_city ) %>% 
+                    select( province,city,date,n_infected_caladj ) -> df
+                  
                 }
                 return(df)
 }
