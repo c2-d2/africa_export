@@ -4,11 +4,16 @@ library(patchwork)
 library(RColorBrewer)
 library(rio)
 
+## Working directory should be the africa_export repo
+
 source("./code/simpler_method_fun.R")
 scenario_key <- readxl::read_excel("./data/scenario_key.xlsx")
 
 incu_period <- 5
 conf_delay <- 7
+save_outputs <- TRUE
+
+overall_save_name <- paste0("./out/all_prev_mods.Rdata")
 
 ############################
 ## read in confirmed case data
@@ -25,6 +30,9 @@ dates_and_date=tibble(dates=seq(as.Date('2020-03-02')-122,as.Date('2020-03-02'),
   mutate(date=(1:n()-1))
 confirmed_cases_date <- left_join( confirmed_cases_final,dates_and_date, by="date" )
 
+## Remove rows outside of our focal period
+confirmed_cases_date <- confirmed_cases_date %>% filter(!is.na(dates))
+
 # remove outliers in Wuhan
 which(confirmed_cases_date$province_raw=="Hubei" & confirmed_cases_date$n>4000 ) -> which_replace
 confirmed_cases_date$n[ c((which_replace[1]-1),(which_replace[2]+1)) ] -> put_instead
@@ -39,16 +47,25 @@ load(file="./out/df_city_pop.Rdata")
 # Possible ways to distribute cases across cities
 prov_city_adjust <- get_prov_city_adjust(file="./out/frac_popn_city.Rdata" )
 
+all_outputs <- NULL
+
 for(index in 1:nrow(scenario_key)){
   scenario_id <- scenario_key$scenario_id[index]
-  save_name <- paste0("./out/city_prev_mod",str_pad(scenario_id,2,pad="0"))
+  save_name <- paste0("./out/city_prev_mod",str_pad(scenario_id,2,pad="0"),".Rdata")
+  
+  name_scenario <- paste0("Scenario ", scenario_id)
+  sensitivity_group <- scenario_key$sensitivity[index]
+  scenario_description <- scenario_key$name[index]
   
   ## Note that if the entry is "varied", these will turn to NA
   prev_days <- as.numeric(scenario_key$days_prevalent[index])
   asc_nonhubei_v_hubei <- as.numeric(scenario_key$ARR[index])
   
   ## How are province cases assigned to cities?
-  assignment <- scenario_key$assignment
+  assignment <- scenario_key$assignment[index]
+  print("")
+  print(paste0("Generating scenario ID: ",scenario_id, "; ARR: ", asc_nonhubei_v_hubei, "; days prevalent: ", prev_days,
+            "; assignment: ", assignment))
   
   ## If using time-varying ascertainment rates, use the estimated onset data from Tsang et al. directly
   if(is.na(asc_nonhubei_v_hubei)){
@@ -61,7 +78,7 @@ for(index in 1:nrow(scenario_key)){
     all_incidence_province <- shift_2_delays(all_incidence_province,incubation_period=-incu_period,delay=0)
   }
   
-  # plot the results
+  # plot the back-shifted curves
   p <- plot_conf_onset(all_incidence_province,confirmed_cases_date)
   
   # compute cumulative incidence and add population size
@@ -106,7 +123,7 @@ for(index in 1:nrow(scenario_key)){
   
   ## Sense check
   ## Plot incidence and prevalence together
-  prov_inc_prev_cali %>% ggplot() + 
+  p_assigned_and_prevalent <- prov_inc_prev_cali %>% ggplot() + 
     geom_line(aes(x=date,y=travel_prev)) + 
     geom_line(data=city_n_inf_caladj_den, aes(x=date,y=n_infected_caladj),col="red") + 
     facet_wrap(~city,scales="free_y")
@@ -115,17 +132,27 @@ for(index in 1:nrow(scenario_key)){
   city_prev_mod0 <- prov_inc_prev_cali %>% 
     rename( origin_city=city,
             prevalence_o=travel_prev) %>% 
-    mutate(scenario=name_scenario) %>% 
-    select(origin_city,scenario,date,prevalence_o)
+    mutate(scenario=name_scenario,
+           sensitivity=sensitivity_group,
+           description=scenario_description) %>% 
+    select(origin_city,scenario,sensitivity,description,date,prevalence_o)
   
   # fill in missing dates for master table
   seq(from=ymd("2019-11-01"),to=ymd("2020-03-03"), by=1  ) -> dates_mt # 124 dates
   expand_grid(origin_city=unique(city_prev_mod0$origin_city),
               scenario=name_scenario,
-              date=dates_mt) %>% left_join( city_prev_mod0, by=c("origin_city","scenario","date") ) %>% 
+              sensitivity=sensitivity_group,
+              description=scenario_description,
+              date=dates_mt) %>% left_join( city_prev_mod0, by=c("origin_city","scenario","sensitivity","description","date") ) %>% 
     mutate(prevalence_o=replace_na(prevalence_o,replace = 0)) -> city_prev_mod0
   
   # save
-  save(city_prev_mod0, file = save_name )
+  if(save_outputs){
+    save(city_prev_mod0, file = save_name )
+  }
+  
+  all_outputs[[index]] <- city_prev_mod0
 }
 
+all_outputs <- do.call("bind_rows", all_outputs)
+save(all_outputs, file=overall_save_name)

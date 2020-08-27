@@ -106,7 +106,7 @@ comp_cum_incidence <- function(all_incidence_province, filen) {
                 all_incidence_province %>% 
                                 filter(!is.na(n_infected)) %>% 
                                 group_by( province_raw ) %>% 
-                                summarise(  cum_inc=sum(n_infected) ) -> df
+                                summarise(  cum_inc=sum(n_infected),.groups="keep") -> df
                 popn_size_provinces<-read.csv(filen,stringsAsFactors=FALSE) %>% as_tibble()
                 left_join( df,popn_size_provinces, by=c("province_raw"="province") ) -> df
                 df %>% mutate(cum_inc_percap=cum_inc/popn_size_province  ) ->df
@@ -205,6 +205,7 @@ adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, ass
                 
                 ## Attribute all cases from province to that city, split evenly by constituent cities
                 if(assignment=="by_city"){
+                  print("Assigning all province cases to cities")
                   table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
                                   left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
                                   mutate( n_infected_caladj=n_infected_cal*by_city ) %>% 
@@ -212,6 +213,7 @@ adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, ass
                   
                   ## Aportion cases proportional to fractional share of province population
                 } else if(assignment == "by_pop"){
+                  print("Assigning province cases to cities equal to share of population")
                   table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
                     left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
                     mutate( n_infected_caladj=n_infected_cal*by_pop ) %>% 
@@ -219,6 +221,7 @@ adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, ass
                   
                   ## Aportion cases proportional to fractional share of province's cases
                 } else if(assignment == "by_cases"){
+                  print("Assigning province cases to cities equal to reported share of cases")
                   table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
                     left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
                     mutate( n_infected_caladj=n_infected_cal*by_cases ) %>% 
@@ -226,6 +229,7 @@ adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, ass
                   
                   ## Default is all to cities
                 } else {
+                  print("Invalid assignment option")
                   table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
                     left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
                     mutate( n_infected_caladj=n_infected_cal*by_city ) %>% 
