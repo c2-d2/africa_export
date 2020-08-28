@@ -482,5 +482,5 @@ pf %>% ggplot( aes(x=fct_inorder(destination_country),y=(sum),col=continentExp) 
   scale_color_manual(values=c("#F6222E","#5A5156","#FE00FA","#3283FE","#1CFFCE","#FEAF16") ) +
   labs(x="",y="",col="Continent") +
   export_theme
-ggsave("./figures/diff_continents_cases_more.pdf",width=18,height=6, units="cm")
+ggsave("./figures/diff_continents_cases_more.pdf",width=22,height=7, units="cm")
                                             
