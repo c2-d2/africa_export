@@ -3,7 +3,6 @@ library(dvmisc)
 library(tidyverse)
 library(rio)
 ## Generate master table
-#setwd("~/Desktop/nCoV exports")
 ## Need all destinations
 destination_countries <- c("Spain", "United States", "Algeria", "Nigeria", "United Kingdom", 
                            "Ethiopia", "Australia", "Netherlands", "Ghana", "New Zealand", 
@@ -63,7 +62,6 @@ table_key <- as_tibble(expand_grid(date=dates,
 ############################
 ## Read in all prevalences
 ############################
-setwd("~/Desktop/nCoV exports/ExportsFinal/data")
 # add Scenarios 1-7
 load( file = "city_prev_mod01.Rdata" )
 prev_all=city_prev_mod0
@@ -92,7 +90,7 @@ bind_rows(prev_all,city_prev_mod0) -> prev_all
 ############################
 ## Get all flight data
 ############################
-flights <- import('https://raw.githubusercontent.com/c2-d2/africa_export/master/data/flights_adjusted_200506.csv?token=AHOEEDAX7C222EXWNCO7UB27KFS7G')
+flights <- import('./data/flights_adjusted_200506.csv')
 
 ## process flight data -- validation step
 colnames(flights)[2]<-"iata"
@@ -149,8 +147,7 @@ flights_all_cities2$origin_city<- ifelse(flights_all_cities2$origin_city == "Xi 
 ############################
 ## has detected cases
 ############################
-setwd("~/Desktop/nCoV exports/ExportsFinal/data")
-load(file="hasdetected.Rdata")
+load(file="./data/hasdetected.Rdata")
 african_countries %>% length() # 26
 dates %>% length() # 124
 df_hasdetected %>% filter( destination_country%in%african_countries ) -> df_hasdetected
@@ -159,7 +156,6 @@ df_hasdetected %>% filter( destination_country%in%african_countries ) -> df_hasd
 ## Combine all
 ############################
 ## Different names
-setwd("~/Desktop/nCoV exports/ExportsFinal/data")
 
 setdiff(unique(flights_all_cities2$origin_city),unique(prev_all$origin_city))
 comb1 <- full_join(prev_all, table_key)
@@ -188,4 +184,4 @@ df_alphas <- generate_alphas( all_dat, file_obs_cnt="who_imports.csv" )
 
 all_dat %>% left_join( df_alphas, by="scenario" ) -> all_dat
 
-write.csv(all_dat,"master_table_0827.csv",row.names=F)
+write.csv(all_dat,"./data/master_table_0827.csv",row.names=F)
