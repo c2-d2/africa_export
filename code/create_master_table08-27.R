@@ -63,34 +63,34 @@ table_key <- as_tibble(expand_grid(date=dates,
 ## Read in all prevalences
 ############################
 # add Scenarios 1-7
-load( file = "city_prev_mod01.Rdata" )
+load( file = "./out/city_prev_mod01.Rdata" )
 prev_all=city_prev_mod0
-load( file = "city_prev_mod02.Rdata" )
+load( file = "./out/city_prev_mod02.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod03.Rdata" )
+load( file = "./out/city_prev_mod03.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod04.Rdata" )
+load( file = "./out/city_prev_mod04.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod05.Rdata" )
+load( file = "./out/city_prev_mod05.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod06.Rdata" )
+load( file = "./out/city_prev_mod06.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod07.Rdata" )
+load( file = "./out/city_prev_mod07.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod08.Rdata" )
+load( file = "./out/city_prev_mod08.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod09.Rdata" )
+load( file = "./out/city_prev_mod09.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod10.Rdata" )
+load( file = "./out/city_prev_mod10.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
-load( file = "city_prev_mod11.Rdata" )
+load( file = "./out/city_prev_mod11.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
 
 
 ############################
 ## Get all flight data
 ############################
-flights <- import('./data/flights_adjusted_200506.csv')
+flights <- read.csv('./data/flights_adjusted_200506.csv')
 
 ## process flight data -- validation step
 colnames(flights)[2]<-"iata"
