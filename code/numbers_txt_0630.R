@@ -3,24 +3,16 @@ library(lubridate)
 library(dplyr)
 library (rio)
 
-# scenario key from James
-scenario_key <- c("Scenario 1"="Scenario 3", 
-                  "Scenario 2"="Scenario 1", 
-                  "Scenario 3"="Scenario 4", 
-                  "Scenario 4"="Scenario 5", 
-                  "Scenario 5"="Scenario 6", 
-                  "Scenario 6"="Scenario 7", 
-                  "Scenario 7"="Scenario 8", 
-                  "Scenario 8"="Scenario 9", 
-                  "Scenario 9"="Scenario 10", 
-                  "Scenario 10" = "Scenario 2*")
+scenarios=c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6",
+                     "Scenario 7","Scenario 8","Scenario 9","Scenario 10","Scenario 11")
+
 
 ############################
 ## Load the master table
 ############################
-main_scenario <- "Scenario 2"
+main_scenario <- "Scenario 1"
 
-mt <- read.csv("./data/master_table_0630.csv")   #all_dat
+mt <- read.csv("./data/master_table_0827.csv")   #all_dat
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 mt %>% glimpse()
 
@@ -82,10 +74,10 @@ individual_predictions=mt %>%
   select(-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
 
 individual_predictions_mean=individual_predictions[,c("destination_country","scenario","mean_pred")]
-individual_predictions_mean$scenario<-scenario_key[individual_predictions_mean$scenario]
 individual_predictions_reshaped=spread(individual_predictions_mean,key=scenario,value=mean_pred)
+individual_predictions_reshaped_ordered=individual_predictions_reshaped[,c("destination_country",scenarios)]
 
-write.csv(individual_predictions_reshaped,'tableS1.csv',row.names=F)
+write.csv(individual_predictions_reshaped_ordered,'./out/tableS1.csv',row.names=F)
 
 ############################
 ## global Ratio Wuhan/non-Wuhan

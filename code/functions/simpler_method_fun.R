@@ -106,7 +106,7 @@ comp_cum_incidence <- function(all_incidence_province, filen) {
                 all_incidence_province %>% 
                                 filter(!is.na(n_infected)) %>% 
                                 group_by( province_raw ) %>% 
-                                summarise(  cum_inc=sum(n_infected) ) -> df
+                                summarise(  cum_inc=sum(n_infected),.groups="keep") -> df
                 popn_size_provinces<-read.csv(filen,stringsAsFactors=FALSE) %>% as_tibble()
                 left_join( df,popn_size_provinces, by=c("province_raw"="province") ) -> df
                 df %>% mutate(cum_inc_percap=cum_inc/popn_size_province  ) ->df
@@ -198,24 +198,43 @@ get_prov_city_adjust <- function(file) {
                 return(df)
 }
 
-adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, aportion_all=TRUE){
+adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, assignment="by_city"){
                 date_v <- prov_inc_calibrated$dates %>% unique()
                 table_key <- prov_city_adjust %>% select(province,city) %>% 
                                 expand_grid(date=date_v)
                 
                 ## Attribute all cases from province to that city, split evenly by constituent cities
-                if(aportion_all){
+                if(assignment=="by_city"){
+                  print("Assigning all province cases to cities")
                   table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
                                   left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
-                                  mutate( n_infected_caladj=n_infected_cal*f_guangdong3_zhejiang2 ) %>% 
+                                  mutate( n_infected_caladj=n_infected_cal*by_city ) %>% 
                                   select( province,city,date,n_infected_caladj ) -> df
                   
-                  ## Otherwise aportion cases proportional to fractional share of province population
-                } else {
+                  ## Aportion cases proportional to fractional share of province population
+                } else if(assignment == "by_pop"){
+                  print("Assigning province cases to cities equal to share of population")
                   table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
                     left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
-                    mutate( n_infected_caladj=n_infected_cal*f_pop_city_prov ) %>% 
+                    mutate( n_infected_caladj=n_infected_cal*by_pop ) %>% 
                     select( province,city,date,n_infected_caladj ) -> df
+                  
+                  ## Aportion cases proportional to fractional share of province's cases
+                } else if(assignment == "by_cases"){
+                  print("Assigning province cases to cities equal to reported share of cases")
+                  table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
+                    left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
+                    mutate( n_infected_caladj=n_infected_cal*by_cases ) %>% 
+                    select( province,city,date,n_infected_caladj ) -> df
+                  
+                  ## Default is all to cities
+                } else {
+                  print("Invalid assignment option")
+                  table_key %>% left_join( prov_city_adjust, by=c("province","city") ) %>% 
+                    left_join( prov_inc_calibrated, by=c("province"="province_raw","date"="dates")  ) %>% 
+                    mutate( n_infected_caladj=n_infected_cal*by_city ) %>% 
+                    select( province,city,date,n_infected_caladj ) -> df
+                  
                 }
                 return(df)
 }
@@ -223,7 +242,7 @@ adjust_prov_prev_by_city <- function(prov_inc_calibrated , prov_city_adjust, apo
 ############
 generate_alphas <- function( all_dat,file_obs_cnt ) {
                 # get the observed counts
-                cases_high_cap_loc <-read.csv(file_obs_cnt,stringsAsFactors=TRUE) 
+                cases_high_cap_loc <-read.csv(file_obs_cnt,stringsAsFactors=FALSE) 
                 cases_high_cap_loc$cases_scaled <- ifelse(cases_high_cap_loc$Country!='Singapore',
                                                           round(cases_high_cap_loc$Cases_lm*2.5),
                                                           cases_high_cap_loc$Cases_lm) 

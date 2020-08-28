@@ -3,7 +3,6 @@ library(dvmisc)
 library(tidyverse)
 library(rio)
 ## Generate master table
-#setwd("~/Desktop/nCoV exports")
 ## Need all destinations
 destination_countries <- c("Spain", "United States", "Algeria", "Nigeria", "United Kingdom", 
                            "Ethiopia", "Australia", "Netherlands", "Ghana", "New Zealand", 
@@ -49,7 +48,7 @@ origin_cities <- c("Hefei", "Beijing", "Chongqing", "Fuzhou", "Guangzhou", "Dong
 
 ## All scenarios 1-5 , Scenario 6 = Model 0
 scenarios <- c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6",
-               "Scenario 7","Scenario 8","Scenario 10")
+               "Scenario 7","Scenario 8","Scenario 9","Scenario 10","Scenario 11")
 
 ## All dates 2019-12-08 to 2020-02-29
 dates <- seq(as.Date("2019-11-01"),as.Date("2020-03-03"),by="1 day")
@@ -80,13 +79,18 @@ load( file = "./out/city_prev_mod07.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
 load( file = "./out/city_prev_mod08.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod09.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
 load( file = "./out/city_prev_mod10.Rdata" )
 bind_rows(prev_all,city_prev_mod0) -> prev_all
+load( file = "./out/city_prev_mod11.Rdata" )
+bind_rows(prev_all,city_prev_mod0) -> prev_all
+
 
 ############################
 ## Get all flight data
 ############################
-flights <- import('https://raw.githubusercontent.com/c2-d2/africa_export/master/data/flights_adjusted_200506.csv?token=AHOEEDCAVE5AX4R4UZUM2PS7EGB6O')
+flights <- read.csv('./data/flights_adjusted_200506.csv')
 
 ## process flight data -- validation step
 colnames(flights)[2]<-"iata"
@@ -152,6 +156,7 @@ df_hasdetected %>% filter( destination_country%in%african_countries ) -> df_hasd
 ## Combine all
 ############################
 ## Different names
+
 setdiff(unique(flights_all_cities2$origin_city),unique(prev_all$origin_city))
 comb1 <- full_join(prev_all, table_key)
 comb2 <- full_join(comb1, flights_all_cities2)
@@ -175,8 +180,8 @@ all_dat <- comb4 %>%
   filter( date%in%dates_seq)
 
 # generate alphas by fitting each scenario, using date sequence for focal period
-df_alphas <- generate_alphas( all_dat, file_obs_cnt="./data/who_imports.csv" )
+df_alphas <- generate_alphas( all_dat, file_obs_cnt="who_imports.csv" )
 
 all_dat %>% left_join( df_alphas, by="scenario" ) -> all_dat
 
-write.csv(all_dat,"./data/master_table_0630.csv",row.names=F)
+write.csv(all_dat,"./data/master_table_0827.csv",row.names=F)
