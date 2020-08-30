@@ -33,7 +33,7 @@ total_infections_nh=confirmed_deaths_nh$cumulative_deaths_total/IFR_nh
 
 # Compute the ascertainment rate ratio using total_infections as defined above
 ## define proportion symptomatic - to yield number of cases who are symptomatic
-prop_symp= 0.26 
+prop_symp= 0.26 # Emery et al. estimate
 
 ARR=(confirmed_cases_nh$cumulative_cases_total/(total_infections_nh*prop_symp))/(confirmed_cases_h$cumulative_cases_Hubei/(total_infections_h*prop_symp))
 
