@@ -11,11 +11,13 @@ scenarios=c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","S
 ############################
 ## Load the master table
 ############################
-main_scenario <- "Scenario 1"
+main_scenario <- "Scenario 2"
 
 mt <- read.csv("./data/master_table_0831.csv", stringsAsFactors = FALSE)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 mt %>% glimpse()
+mt <- as_tibble(mt)
+mt$date <- as.Date(mt$date, origin="2019-11-01")
 
 ############################
 ## alpha
@@ -61,7 +63,6 @@ mt %>%
             sum_upper=max(sum))
 
 ### for individual countries
-
 individual_predictions=mt %>% 
   filter(is_africa_d==1) %>% 
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
@@ -112,6 +113,16 @@ mt %>%
   select(-sum) %>% print(n=Inf) %>%
   filter(scenario == "Scenario 2") 
 
+
+## Role of different source cities
+mt %>% filter(is_africa_d==1) %>%
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>%
+  group_by(origin_city, scenario) %>%
+  summarize(sum=sum(imp_number)) %>%
+  ungroup() %>%
+  arrange( scenario, desc(sum) ) %>% group_by(scenario) %>%
+  mutate(rank=1:n()) %>% 
+  filter(rank %in% 1:10) %>% View
 
 ############################
 ## global Ratio Wuhan/non-Wuhan
@@ -418,3 +429,4 @@ prevalence_dat %>%
   ungroup() %>%
   summarise(min_prev = min(prevalence_percentage),
             max_prev = max(prevalence_percentage))
+

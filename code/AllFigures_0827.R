@@ -221,27 +221,7 @@ range_x <- ggplot_build(p)$layout$panel_scales_x[[1]]$range$range
 rnage_y <- ggplot_build(p)$layout$panel_scales_y[[1]]$range$range
 ggplot_build(p)$layout$coord$limits
 
-ggsave("./figures/some_lines_og.pdf",width=8*0.85,height=1.8*0.85)
-
-pf2_scen1=pf2%>%filter(scenario=='Scenario 1')
-mscale <- 12
-(p <- pf %>% filter( year=="2020" | week=="52"  ) %>% 
-    ggplot( aes(x=date,y=exp_risk_weekly ) ) +
-    #geom_vline(xintercept=ymd('2020-01-01'),linetype='dotted')+
-    geom_line(show.legend = F, col=NA) +
-    geom_segment( data=pf2_scen1, 
-                  aes(y=s_n/mscale-0.3,yend=s_n/mscale-0.3, x=int_start, xend=int_end )) +
-    export_theme +
-    theme( axis.title.x = element_blank(),
-           axis.title.y = element_blank(),
-           axis.text.y = element_blank(),
-           axis.ticks.y = element_blank(),
-           axis.text.x = element_text(size=10,angle = 45, hjust = 1,family="sans")))
-range_x <- ggplot_build(p)$layout$panel_scales_x[[1]]$range$range
-rnage_y <- ggplot_build(p)$layout$panel_scales_y[[1]]$range$range
-ggplot_build(p)$layout$coord$limits
-
-ggsave("./figures/some_lines.pdf",width=8*0.85,height=2*0.85)
+ggsave("./figures/some_lines.pdf",width=8*0.85,height=1.8*0.85)
 
 ######## Stacked bar plot of imported cases by African destination countries, by origin city
 
@@ -336,10 +316,11 @@ pf_probt %>%
 pf_probt %>% group_by(date) %>% 
   mutate( n=n() ) %>% 
   mutate( prob_W_lower=min(prop_wuhan),
-          prob_W_upper=max(prop_wuhan))  -> pf_probt_rib #%>% filter(n==9)
+          prob_W_upper=max(prop_wuhan)) %>%
+  filter(n==11) -> pf_probt_rib
 #
 pf_probt_rib %>% ggplot( aes(x=date)  )+
-  geom_ribbon( aes(ymin=prob_W_lower,ymax=prob_W_upper) , fill="gray",alpha=0.5 ) +
+  #geom_ribbon( aes(ymin=prob_W_lower,ymax=prob_W_upper) , fill="gray",alpha=0.5 ) +
   #geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
   export_theme+
   theme( axis.title.x = element_blank(),
@@ -355,16 +336,140 @@ ggplot(pf_probt_rib)+
   theme( axis.title.x = element_blank(),
          axis.title.y = element_blank(),
          axis.ticks.y = element_blank())+
-  geom_line(aes(x=date,y=prop_wuhan,col=scenario)) #+
-#ggtitle("Contribution of Wuhan to all imports over time (All Destinations)")+
+  geom_line(aes(x=date,y=prop_wuhan,col=scenario)) 
 
-# individual line plot
-#pf_probt %>% filter(date>=ymd("2020-01-01")) %>% ggplot( aes(x=date,col=scenario)  )+
-#geom_line(aes(y=prop_wuhan),show.legend=F)+export_theme+
-#theme( axis.title.x = element_blank(),
-#   axis.title.y = element_blank(),
-#  axis.ticks.y = element_blank())
-# ggsave("frac_time_plot_each_scen_glob.pdf",width=4*0.85,height=2)
+# African destinations
+ratio_plot_1_africa=mt %>% 
+  # filter
+  filter(is_africa_d==1) %>% 
+  filter(date>"2019-11-01") %>% 
+  mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
+  # 
+  group_by(date,is_wuhan,scenario) %>% 
+  summarise( force_imp_day=sum(force_imp) ) %>% 
+  mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
+  # by scenario and week
+  group_by(is_wuhan,scenario,year,week) %>% 
+  arrange(date) %>% 
+  mutate(n=n()) %>% 
+  filter( n==7 ) %>% 
+  mutate( force_imp_week=sum(force_imp_day) ) %>% 
+  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) 
+
+colnames(ratio_plot_1_africa)=c("date", "scenario", "non_W" , "W" ) 
+
+ratio_plot_1_africa%>%
+  mutate( tot_imp=(W+non_W),
+          min_tot_imp=min(tot_imp[tot_imp!=0]),
+          prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
+  dplyr::select(-W,-non_W) -> pf_probt_africa
+
+# from where to start
+pf_probt_africa %>% 
+  group_by( scenario ) %>% 
+  mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
+  filter(prob_1>0.01) %>% ungroup() -> pf_probt_africa
+
+pf_probt_africa %>% group_by(date) %>% 
+  mutate( n=n() ) %>% 
+  mutate( prob_W_lower=min(prop_wuhan),
+          prob_W_upper=max(prop_wuhan)) %>%
+  filter(n==11) -> pf_probt_rib
+
+ggplot(pf_probt_rib)+
+  geom_ribbon(aes(x=date,ymin=prob_W_lower,ymax=prob_W_upper) , fill="gray",alpha=0.5 ) +
+  #geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
+  export_theme+
+  theme( axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         axis.ticks.y = element_blank())+
+  geom_line(aes(x=date,y=prop_wuhan,col=scenario)) #+
+
+pf_probt_africa %>% filter(date>=ymd("2020-01-01")) %>% ggplot( aes(x=date,col=scenario)  )+
+  geom_line(aes(y=prop_wuhan),show.legend=F)+export_theme+
+  theme( axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         axis.ticks.y = element_blank())
+ggsave("frac_time_plot_each_scen_afr.pdf",width=4*0.85,height=2)
+
+#### 
+fill_cols <- as.vector(polychrome(10)[c(1,3:10)])
+
+mt %>% as_tibble() %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  filter( scenario=="Scenario 2" ) %>% 
+  # by scenario
+  group_by(destination_country) %>% 
+  summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
+  right_join( df_country_cont_ecdc, by="destination_country" ) %>% 
+  filter(destination_country%in%global_countries) %>% 
+  mutate( continentExp=ifelse(destination_country%in%c("United States","Canada"),"North America",continentExp))  %>% 
+  mutate( continentExp=ifelse(destination_country%in%c("Chile","Argentina","Brazil"),"South America",continentExp))  %>% 
+  mutate(continentExp=factor(continentExp,levels = c("Asia",
+                                                     "Europe",
+                                                     "Africa",
+                                                     "North America",
+                                                     "South America",
+                                                     "Oceania")) ) %>% 
+  arrange(continentExp,desc(sum)) %>% 
+  mutate(n=1:n()) -> pf
+
+pf %>% ggplot( aes(x=fct_inorder(destination_country),y=(sum),col=continentExp)  ) +
+  geom_point() +
+  geom_segment(aes(xend = fct_inorder(destination_country),
+                   y = min(pf$sum), yend = sum, col=continentExp)) +
+  scale_y_log10() +
+  scale_color_manual(values=c("#F6222E","#5A5156","#FE00FA","#3283FE","#1CFFCE","#FEAF16") ) +
+  labs(x="",y="",col="Continent") +
+  export_theme
+ggsave("./figures/diff_continents_cases.pdf",width=9,height=6, units="cm")
+
+# repeat with more countries
+all_used <- c(highsurv_countries,african_countries,global_countries) %>% unique()
+mt %>% as_tibble() %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  filter( scenario=="Scenario 2" ) %>% 
+  # by scenario
+  group_by(destination_country) %>% 
+  summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
+  right_join( df_country_cont_ecdc, by="destination_country" ) %>% 
+  mutate( continentExp=ifelse(destination_country%in%c("United States","Canada"),"North America",continentExp))  %>% 
+  mutate( continentExp=ifelse(destination_country%in%c("Chile",
+                                                       "Argentina",
+                                                       "Brazil",
+                                                       # new relative to above code
+                                                       "Colombia",
+                                                       "Peru",
+                                                       "Venezuela",
+                                                       "Ecuador",
+                                                       "Bolivia",
+                                                       "Paraguay",
+                                                       "Uruguay"),"South America",continentExp)) %>%  
+  mutate(continentExp=factor(continentExp,levels = c("Asia",
+                                                     "Europe",
+                                                     "Africa",
+                                                     "North America",
+                                                     "South America",
+                                                     "Oceania")) ) %>% 
+  filter(!is.na(continentExp)) %>% 
+  filter(!is.na(sum)) %>% 
+  filter(destination_country%in%all_used) %>% 
+  arrange(desc(sum)) %>% 
+  mutate(n=1:n()) -> pf
+
+
+pf %>% arrange(continentExp) %>% print(n=Inf) # 43
+pf %>% count(continentExp,wt = n())
+pf %>% ggplot( aes(x=fct_inorder(destination_country),y=(sum),col=continentExp)  ) +
+  geom_point() +
+  geom_segment(aes(xend = fct_inorder(destination_country),
+                   y = 0.03649287, yend = sum, col=continentExp)) +
+  scale_y_log10() +
+  scale_color_manual(values=c("#F6222E","#5A5156","#FE00FA","#3283FE","#1CFFCE","#FEAF16") ) +
+  labs(x="",y="",col="Continent") +
+  export_theme
+ggsave("./figures/diff_continents_cases_more.pdf",width=22,height=7, units="cm")
 
 
 
