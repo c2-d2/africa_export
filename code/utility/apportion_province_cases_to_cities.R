@@ -7,9 +7,9 @@
 
 library(tidyverse)
 setwd("~/Documents/GitHub/africa_export/")
-source("./code/simpler_method_fun.R")
+source("./code/functions/simpler_method_fun.R")
 
-dat <- read_csv("data/table_getAreaStat_en_2020-03-19.csv") #%>% select(-comment)
+dat <- read_csv("data/table_getAreaStat_en_2020-03-13.csv") #%>% select(-comment)
 dat <- dat %>% select(-comment)
 dat <- dat %>% pivot_longer(c(confirmedCount,suspectedCount,curedCount,deadCount))
 
@@ -62,9 +62,9 @@ save(frac_popn_city2,file="./out/frac_popn_city.Rdata")
 
 ## Test apportioning code
 load(file="./data/prov_inc_calibrated.RData")
-apportion_default <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,aportion_all=TRUE) %>% mutate(ver="default")
-apportion_by_pop <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,aportion_all=FALSE,aportion_col="default") %>% mutate(ver="by_pop")
-apportion_by_cases <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,aportion_all=FALSE,aportion_col="frac_cases_reported") %>% mutate(ver="by_cases")
+apportion_default <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,assignment="by_city") %>% mutate(ver="default")
+apportion_by_pop <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,assignment="by_pop") %>% mutate(ver="by_pop")
+apportion_by_cases <- adjust_prov_prev_by_city(prov_inc_calibrated,prov_city_adjust,assignment="by_cases") %>% mutate(ver="by_cases")
 
 apportioned_dat_combined <- bind_rows(apportion_default, apportion_by_pop, apportion_by_cases)
 
