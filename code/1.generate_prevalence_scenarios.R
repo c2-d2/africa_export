@@ -5,7 +5,6 @@ library(RColorBrewer)
 library(rio)
 
 ## Working directory should be the africa_export repo
-
 source("./code/functions/simpler_method_fun.R")
 scenario_key <- readxl::read_excel("./data/scenario_key.xlsx")
 
@@ -60,6 +59,7 @@ for(index in 1:nrow(scenario_key)){
   
   ## How are province cases assigned to cities?
   assignment <- scenario_key$assignment[index]
+  
   print("")
   print(paste0("Generating scenario ID: ",scenario_id, "; ARR: ", asc_nonhubei_v_hubei, "; days prevalent: ", prev_days,
             "; assignment: ", assignment))
@@ -95,7 +95,7 @@ for(index in 1:nrow(scenario_key)){
   ## amounts to inflating Hubei case counts
   prov_inc_calibrated <- all_incidence_province %>% 
     mutate(is_hubei=as.numeric(province_raw=="Hubei") ) %>% 
-    left_join( calibration_value, by="is_hubei" ) %>% 
+    dplyr::left_join( calibration_value, by="is_hubei" ) %>% 
     mutate( n_infected_cal=n_infected/calv_inverse ,
             n_onset_cal = n_onset/calv_inverse) %>% 
     select( dates,province_raw,n_infected_cal, n_onset_cal) %>%

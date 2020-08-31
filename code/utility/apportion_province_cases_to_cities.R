@@ -3,8 +3,6 @@
 ##   in that province reported in that city
 ## - For "cities" we use that actually correspond to provinces (see https://en.wikipedia.org/wiki/Direct-administered_municipalities_of_China)
 ##   we just use the total number of that "province" ie. the Beijing cities account for 100% of cases in Beijing
-
-
 library(tidyverse)
 setwd("~/Documents/GitHub/africa_export/")
 source("./code/functions/simpler_method_fun.R")
