@@ -2,6 +2,7 @@ library(tidyverse)
 library(lubridate)
 library(dplyr)
 library (rio)
+library(janitor)
 
 scenarios=c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","Scenario 6",
                      "Scenario 7","Scenario 8","Scenario 9","Scenario 10","Scenario 11")
@@ -12,7 +13,7 @@ scenarios=c("Scenario 1","Scenario 2", "Scenario 3","Scenario 4","Scenario 5","S
 ############################
 main_scenario <- "Scenario 1"
 
-mt <- read.csv("./data/master_table_0827.csv")   #all_dat
+mt <- read.csv("./data/master_table_0831.csv", stringsAsFactors = FALSE)
 mt %>% mutate( fvolume_od = ifelse( is.na(fvolume_od), 0 , fvolume_od ) ) ->mt
 mt %>% glimpse()
 
@@ -71,13 +72,46 @@ individual_predictions=mt %>%
                                             lower=range(sum)[1],
                                             upper=range(sum)[2]) %>% 
   arrange( desc(mean_pred) ) %>% 
-  select(-sum) %>% print(n=Inf) # Egypt, SA, Kenya, Ethiopia
+  select(-sum) %>% print(n=Inf)
 
 individual_predictions_mean=individual_predictions[,c("destination_country","scenario","mean_pred")]
 individual_predictions_reshaped=spread(individual_predictions_mean,key=scenario,value=mean_pred)
 individual_predictions_reshaped_ordered=individual_predictions_reshaped[,c("destination_country",scenarios)]
 
-write.csv(individual_predictions_reshaped_ordered,'./out/tableS1.csv',row.names=F)
+individual_predictions_table <- individual_predictions_reshaped_ordered %>%
+  mutate_if(is.numeric, round, 2) %>%
+  adorn_totals("row") 
+
+write.csv(individual_predictions_table,'./out/tableS2.csv',row.names=F)
+
+# for highest/lowest countries with Scenario 1
+mt %>% 
+  filter(is_africa_d==1) %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  # by scenario
+  group_by(destination_country,scenario) %>% 
+  summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
+  group_by(destination_country) %>% mutate( mean_pred= (sum),
+                                            lower=range(sum)[1],
+                                            upper=range(sum)[2]) %>% 
+  arrange( desc(mean_pred) ) %>% 
+  select(-sum) %>% print(n=Inf) %>%
+  filter(scenario == "Scenario 1") 
+
+# sensitivity analysis Scenario 2
+mt %>% 
+  filter(is_africa_d==1) %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  # by scenario
+  group_by(destination_country,scenario) %>% 
+  summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
+  group_by(destination_country) %>% mutate( mean_pred= (sum),
+                                            lower=range(sum)[1],
+                                            upper=range(sum)[2]) %>% 
+  arrange( desc(mean_pred) ) %>% 
+  select(-sum) %>% print(n=Inf) %>%
+  filter(scenario == "Scenario 2") 
+
 
 ############################
 ## global Ratio Wuhan/non-Wuhan
@@ -131,6 +165,34 @@ mt %>%
              frac_nW_lower=range(frac_nW)[1],
              frac_nW_upper=range(frac_nW)[2],
   )  
+
+############################
+## cities with largest contributions to African countries
+############################
+cities <- mt %>% 
+  filter(is_africa_d==1) %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  # by scenario
+  group_by(origin_city,scenario) %>% 
+  summarise( sum=sum(imp_number) ) %>% 
+  group_by(scenario) %>% 
+  slice_max(order_by = sum, n=5) 
+  
+table(cities$origin_city)
+
+# scenario 1, scenario 8, scenario 9 (sensitivity analysis section)
+mt %>% 
+  filter(is_africa_d==1) %>% 
+  mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
+  # by scenario
+  group_by(origin_city,scenario) %>% 
+  summarise( sum=sum(imp_number) ) %>% 
+  group_by(scenario) %>%
+  slice_max(order_by = sum, n=5)  %>%
+  arrange(scenario, desc(sum)) %>%
+  filter(scenario == "Scenario 1"  | 
+           scenario == "Scenario 8" |
+           scenario == "Scenario 9")
 
 ############################
 ## Weekly proportion -global
@@ -303,6 +365,23 @@ prevalence_dat %>%
   group_by(scenario) %>%
   summarise(min_date=min(date),
             max_date=max(date)) 
+
+############################
+## Peak time scenario 2
+############################
+prevalence_dat %>%
+  filter(scenario == "Scenario 2") %>%
+  group_by(origin_city) %>%
+  filter(prevalence_o == max(prevalence_o))
+
+############################
+## Max/min prevalence cities
+############################
+prevalence_dat %>%
+  group_by(origin_city, scenario) %>%
+  filter(origin_city != "Wuhan" & scenario == "Scenario 1" 
+         & prevalence_o == max(prevalence_o)) %>%
+  arrange(desc(prevalence_o)) 
 
 ############################
 ## Peak prevalence in Jiaxing
