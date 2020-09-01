@@ -151,6 +151,21 @@ mt %>%
              frac_nW_lower=min(frac_nW),
              frac_nW_upper=max(frac_nW) ) # R: 
 
+
+mt %>% 
+  filter(is_global_d==1) %>% # removed 69%
+  mutate( force_imp=prevalence_o*fvolume_od ) %>% # 0% NA
+  # by scenario
+  group_by(is_wuhan,scenario) %>% 
+  summarise( sum_force_imp=sum(force_imp) ) %>% ungroup() %>% 
+  #
+  pivot_wider(names_from = is_wuhan, values_from = sum_force_imp) %>% 
+  set_names( "scenario" , "non_W" , "W"  ) %>% 
+  mutate( R=non_W/W,
+          frac_W=W/(W+non_W),
+          frac_nW=non_W/(W+non_W)) %>% 
+  select(-non_W,-W) -> df_R
+
 ############################
 ## Africa Ratio Wuhan/non-Wuhan
 ############################
@@ -345,15 +360,21 @@ range(date_range$int_start)
 ############################
 ## understimation
 ############################
-# wuhan detected / all wuhan
+min(df_R$R)
+max(df_R$R)
+df_R$R[1]
+# ratio: wuhan detected exports / all wuhan exports
 1/2.8
+
 # all china / all wuhan
 
 
 # 1 wuhan detected / 2.8 wuhan real / 2.8*1.96 call of china real
-1- 1/(2.8+2.8*0.6) # fraction missed
-1- 1/(2.8+2.8*0.2) # fraction missed - lower
-1- 1/(2.8+2.8*5.6) # fraction missed - upper
+1- 1/(2.8+2.8*0)
+
+1- 1/(2.8+2.8*df_R$R[1]) # fraction missed
+1- 1/(2.8+2.8*min(df_R$R)) # fraction missed - lower
+1- 1/(2.8+2.8*max(df_R$R)) # fraction missed - upper
 
 #1- 1/(0.55+0.55*0.555) # fraction missed
 1- 1/(2.8+2.8*0.555) # fraction missed

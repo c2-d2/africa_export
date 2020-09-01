@@ -40,8 +40,7 @@ export_theme <- theme_tufte() +
     strip.background=element_rect(fill="#f0f0f0"))
 
 # read in data
-mt=read.csv('./data/master_table_0827.csv')
-mt$date<-as.Date(mt$date)
+mt <- read_csv(file='./data/master_table_0831.csv')
 ######## Map of imported cases in African destination countries
 
 # Map code based on: https://geocompr.github.io/geocompkg/articles/solutions08.html
@@ -429,9 +428,9 @@ ggsave("./figures/diff_continents_cases.pdf",width=9,height=6, units="cm")
 all_used <- c(highsurv_countries,african_countries,global_countries) %>% unique()
 mt %>% as_tibble() %>% 
   mutate( imp_number=prevalence_o*fvolume_od*alpha ) %>% 
-  filter( scenario=="Scenario 2" ) %>% 
+  #filter( scenario=="Scenario 2" ) %>% 
   # by scenario
-  group_by(destination_country) %>% 
+  group_by(scenario,destination_country,description) %>% 
   summarise( sum=sum(imp_number) ) %>% ungroup() %>% 
   right_join( df_country_cont_ecdc, by="destination_country" ) %>% 
   mutate( continentExp=ifelse(destination_country%in%c("United States","Canada"),"North America",continentExp))  %>% 
@@ -454,22 +453,30 @@ mt %>% as_tibble() %>%
                                                      "Oceania")) ) %>% 
   filter(!is.na(continentExp)) %>% 
   filter(!is.na(sum)) %>% 
-  filter(destination_country%in%all_used) %>% 
+  filter(destination_country%in%all_used) -> pf
+pf %>% filter( description=="Main scenario"  ) %>% 
   arrange(desc(sum)) %>% 
-  mutate(n=1:n()) -> pf
+  mutate( n=1:n() ) %>% rename(sum_s1 = sum) %>% select(-scenario,-description) -> pf_1
+pf %>% filter( description!="Main scenario"  ) %>% 
+  group_by( destination_country ) %>% 
+  summarise( lower=range(sum)[1],
+             upper=range(sum)[2] ) %>% 
+  left_join(pf_1,by="destination_country") %>% 
+  arrange(n)-> pf_2
+smallest_v <- min(pf_2$lower)
 
+pf_2 %>% arrange(continentExp) %>% print(n=Inf) # 43
+pf_2 %>% count(continentExp,wt = n())
 
-pf %>% arrange(continentExp) %>% print(n=Inf) # 43
-pf %>% count(continentExp,wt = n())
-pf %>% ggplot( aes(x=fct_inorder(destination_country),y=(sum),col=continentExp)  ) +
-  geom_point() +
+pf_2 %>% ggplot( aes(x=fct_inorder(destination_country))  ) +
+  geom_point( aes(y=sum_s1,col=continentExp) ) +
   geom_segment(aes(xend = fct_inorder(destination_country),
-                   y = 0.03649287, yend = sum, col=continentExp)) +
-  scale_y_log10() +
+                   y = lower, yend = upper, col=continentExp)) +
+  scale_y_log10(labels=comma) +
   scale_color_manual(values=c("#F6222E","#5A5156","#FE00FA","#3283FE","#1CFFCE","#FEAF16") ) +
   labs(x="",y="",col="Continent") +
   export_theme
-ggsave("./figures/diff_continents_cases_more.pdf",width=22,height=7, units="cm")
+ggsave("./figures/diff_continents_cases_more.pdf",width=24,height=7, units="cm")
 
 
 

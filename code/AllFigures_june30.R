@@ -40,7 +40,7 @@ export_theme <- theme_tufte() +
     strip.background=element_rect(fill="#f0f0f0"))
 
 # read in data
-mt_subset=read.csv('./data/master_table_0630.csv')
+mt_subset=read.csv('./data/master_table_0831.csv')
 
 ######## Map of imported cases in African destination countries
 
