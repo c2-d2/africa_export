@@ -407,13 +407,13 @@ prevalence_dat %>%
   filter(prevalence_o == max(prevalence_o))
 
 ############################
-## Max/min prevalence cities
+## Max/min average prevalence cities
 ############################
 prevalence_dat %>%
   group_by(origin_city, scenario) %>%
-  filter(origin_city != "Wuhan" & scenario == "Scenario 1" 
-         & prevalence_o == max(prevalence_o)) %>%
-  arrange(desc(prevalence_o)) 
+  summarise(prevalence_ave = mean(prevalence_o)) %>%
+  filter(origin_city != "Wuhan" & scenario == "Scenario 1") %>%
+  arrange(desc(prevalence_ave)) 
 
 ############################
 ## Peak prevalence in Jiaxing
