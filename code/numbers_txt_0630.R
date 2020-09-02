@@ -370,14 +370,11 @@ df_R$R[1]
 
 
 # 1 wuhan detected / 2.8 wuhan real / 2.8*1.96 call of china real
-1- 1/(2.8+2.8*0)
+1- 1/(2.8+2.8*0) # 64% 
 
 1- 1/(2.8+2.8*df_R$R[1]) # fraction missed
 1- 1/(2.8+2.8*min(df_R$R)) # fraction missed - lower
 1- 1/(2.8+2.8*max(df_R$R)) # fraction missed - upper
-
-#1- 1/(0.55+0.55*0.555) # fraction missed
-1- 1/(2.8+2.8*0.555) # fraction missed
 
 # 88% (73% - 92%) of all cases imported globally may have been undetected
 
