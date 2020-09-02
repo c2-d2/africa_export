@@ -337,15 +337,15 @@ ggplot(pf_probt_rib)+
          axis.ticks.y = element_blank())+
   geom_line(aes(x=date,y=prop_wuhan,col=scenario)) 
 
-# African destinations
-ratio_plot_1_africa=mt %>% 
+# proportion over time ----------------------------------------------------
+fill_cols <- as.vector(polychrome(10)[c(1,3:10)])
+mt %>% 
   # filter
   filter(is_africa_d==1) %>% 
   filter(date>"2019-11-01") %>% 
   mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
   # 
-  group_by(date,is_wuhan,scenario) %>% 
-  summarise( force_imp_day=sum(force_imp) ) %>% 
+  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
   mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
   # by scenario and week
   group_by(is_wuhan,scenario,year,week) %>% 
@@ -354,43 +354,55 @@ ratio_plot_1_africa=mt %>%
   filter( n==7 ) %>% 
   mutate( force_imp_week=sum(force_imp_day) ) %>% 
   slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
-  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) 
-
-colnames(ratio_plot_1_africa)=c("date", "scenario", "non_W" , "W" ) 
-
-ratio_plot_1_africa%>%
+  #
+  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
+  set_names( "date", "scenario2", "non_W" , "W"  ) %>% 
   mutate( tot_imp=(W+non_W),
           min_tot_imp=min(tot_imp[tot_imp!=0]),
           prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
-  dplyr::select(-W,-non_W) -> pf_probt_africa
+  dplyr::select(-W,-non_W) -> pf_probt
+(p <- pf_probt %>% filter(date>=ymd("2020-01-01")) %>% 
+    filter(!scenario2%in%c("Scenario 10","Scenario 11") ) %>% 
+    ggplot(  )+
+    geom_line(aes(y=prop_wuhan,x=date,col=(scenario2)),show.legend=F) +
+    scale_y_continuous(breaks=c(0,0.5,1)) +
+    scale_color_manual(values=fill_cols) +
+    labs(x="",y="") +
+    export_theme  ) 
+ggsave("./figures/frac_time_plot_each_scen_afr.pdf",width=4*0.85*0.9*0.92,height=2*0.9)
+# proportion over time global--------------------------------------
+mt %>% 
+  # filter
+  filter(is_global_d==1) %>% 
+  filter(date>"2019-11-01") %>% 
+  mutate( force_imp=prevalence_o*fvolume_od*alpha ) %>% 
+  # 
+  group_by(date,is_wuhan,scenario) %>% summarise( force_imp_day=sum(force_imp) ) %>% 
+  mutate( year=year(date),week=week(date) ) %>% ungroup() %>% 
+  # by scenario and week
+  group_by(is_wuhan,scenario,year,week) %>% 
+  arrange(date) %>% 
+  mutate(n=n()) %>% 
+  filter( n==7 ) %>% 
+  mutate( force_imp_week=sum(force_imp_day) ) %>% 
+  slice(  1  ) %>% ungroup() %>% dplyr::select(-year,-week,-force_imp_day,-n) %>% 
+  #
+  pivot_wider(names_from = is_wuhan, values_from = force_imp_week) %>% 
+  set_names( "date", "scenario2", "non_W" , "W"  ) %>% 
+  mutate( tot_imp=(W+non_W),
+          min_tot_imp=min(tot_imp[tot_imp!=0]),
+          prop_wuhan=W/(tot_imp + min_tot_imp ) ) %>% 
+  dplyr::select(-W,-non_W) -> pf_probt
+(p <- pf_probt %>% filter(date>=ymd("2020-01-01")) %>% 
+    filter(!scenario2%in%c("Scenario 10","Scenario 11") ) %>% 
+    ggplot(  )+
+    geom_line(aes(y=prop_wuhan,x=date,col=(scenario2)),show.legend=F) +
+    scale_y_continuous(breaks=c(0,0.5,1)) +
+    scale_color_manual(values=fill_cols) +
+    labs(x="",y="") +
+    export_theme  ) 
+ggsave("./figures/frac_time_plot_each_scen_global.pdf",width=4*0.85*0.9*0.92,height=2*0.9)
 
-# from where to start
-pf_probt_africa %>% 
-  group_by( scenario ) %>% 
-  mutate( prob_1 = ppois(q=1, lower.tail=F, lambda =tot_imp ) ) %>% 
-  filter(prob_1>0.01) %>% ungroup() -> pf_probt_africa
-
-pf_probt_africa %>% group_by(date) %>% 
-  mutate( n=n() ) %>% 
-  mutate( prob_W_lower=min(prop_wuhan),
-          prob_W_upper=max(prop_wuhan)) %>%
-  filter(n==11) -> pf_probt_rib
-
-ggplot(pf_probt_rib)+
-  geom_ribbon(aes(x=date,ymin=prob_W_lower,ymax=prob_W_upper) , fill="gray",alpha=0.5 ) +
-  #geom_ribbon( aes(ymin=1-prob_W_upper,ymax=1-prob_W_lower), fill="#DDD9DC", alpha=0.7 ) +
-  export_theme+
-  theme( axis.title.x = element_blank(),
-         axis.title.y = element_blank(),
-         axis.ticks.y = element_blank())+
-  geom_line(aes(x=date,y=prop_wuhan,col=scenario)) #+
-
-pf_probt_africa %>% filter(date>=ymd("2020-01-01")) %>% ggplot( aes(x=date,col=scenario)  )+
-  geom_line(aes(y=prop_wuhan),show.legend=F)+export_theme+
-  theme( axis.title.x = element_blank(),
-         axis.title.y = element_blank(),
-         axis.ticks.y = element_blank())
-ggsave("frac_time_plot_each_scen_afr.pdf",width=4*0.85,height=2)
 
 #### 
 fill_cols <- as.vector(polychrome(10)[c(1,3:10)])
