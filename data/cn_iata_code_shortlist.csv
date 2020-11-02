@@ -1,0 +1,23 @@
+city,airport_name,iata_codes
+Beijing,Beijing Capital International Airport,PEK
+Beijing,Beijing Daxing International Airport,PKX
+Changsha,Changsha Huanghua International Airport,CSX
+Chengdu,Chengdu Shuangliu International Airport,CTU
+Chongqing,Chongqing Jiangbei International Airport,CKG
+Dongguan,Shenzhen Bao'an International Airport,SZX
+Fuzhou,Fuzhou Changle International Airport,FOC
+Guangzhou,Guangzhou Baiyun International Airport,CAN
+Hangzhou,Hangzhou Xiaoshan International Airport,HGH
+Hefei,Hefei Xinqiao International Airport,HFE
+Jiaxing,Hangzhou Xiaoshan International Airport,HGH
+Nanchang,Nanchang Changbei International Airport,KHN
+Nanjing,Nanjing Lukou International Airport,NKG
+Shanghai,Shanghai Pudong International Airport,PVG
+Shanghai,Shanghai Hongqiao International Airport,SHA
+Wuhan,Wuhan Airport,WUH
+Xi'an,Xi'an Xianyang International Airport,XIY
+Zhengzhou,Zhengzhou Xinzheng International Airport,CGO
+Tianjin,Tianjin Binhai International Airport,TSN
+Shenzhen,Shenzhen Bao'an International Airport,SZX
+Beijing,Beijing Daxing International Airport,NAY
+Beijing,,NAY/PKX
