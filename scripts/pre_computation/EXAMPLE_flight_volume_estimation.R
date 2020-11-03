@@ -7,24 +7,20 @@ Packages <- c("reshape2", "ggplot2", "ggpubr", "tidyr", "dplyr", "lubridate", "s
 lapply(Packages, library, character.only = TRUE)
 
 #' 
-#' #===============================================
-#' # FLIGHT VOLUME
-#' #===============================================
-#' 
 #' # SET UP DATA #
 #' 
 #' ## load data - Bluedot - and process
 ## ------------------------------------------------------------------------
-bluedot <- read.csv("./Flight Volume Estimation/Inputs/PAX_China_to_World_Mar2_2020.csv")
+bluedot <- read.csv("./Inputs/china_city_queries_all.csv")
 
-# use year and month columns to create year-month
+## add yearMonth
 bluedot$yearMonth <- as.Date(with(bluedot, paste(year, month, "01", sep="-")), "%Y-%m-%d")
 
 # create column for time period
-bluedot$period[bluedot$yearMonth >= "2017-12-01" & bluedot$yearMonth <= "2018-02-01"] <- 2018
 bluedot$period[bluedot$yearMonth >= "2018-12-01" & bluedot$yearMonth <= "2019-02-01"] <- 2019
+bluedot$period[bluedot$yearMonth >= "2019-12-01" & bluedot$yearMonth <= "2020-02-01"] <- 2020
 
-## joint column for NAY/PKX
+## joint column for NAY/PKX since one replaced the other
 bluedot$origAirportCode <- as.character(bluedot$origAirportCode)
 bluedot$origAirportCode_orig <- bluedot$origAirportCode
 
@@ -32,12 +28,42 @@ bluedot$origAirportCode <- ifelse((bluedot$origAirportCode_orig == "PKX" | blued
                                   "NAY/PKX", 
                                   bluedot$origAirportCode_orig)
 
-## remove Thailand from destinations
-bluedot <- bluedot %>% filter(destCtryName != "Thailand")
 
+## append continent column
+continent <- read.csv("./Inputs/countries_continent_match.csv")
+bluedot$arrival_continent <- continent$Continent[match(bluedot$destCtryName, continent$Country)]
+
+# fix non-matches
+continent$Country <- as.character(continent$Country)
+continent$Country[continent$Country == "United States of America"] <- "United States"
+continent$Country[continent$Country == "United Kingdom of Great Britain and Northern Ireland"] <- "United Kingdom"
+continent$Country[continent$Country == "Russian Federation"] <- "Russia"
+continent$Country[continent$Country == "Côte d’Ivoire"] <- "Cote D'Ivoire"
+continent$Country[continent$Country == "Republic of Korea"] <- "Korea (South)"
+continent$Country[continent$Country == "United Republic of Tanzania"] <- "Tanzania"
+continent$Country[continent$Country == "Democratic Republic of the Congo"] <- "Congo (Kinshasa)"
+continent$Country[continent$Country == "China, Hong Kong Special Administrative Region"] <- "Hong Kong (SAR)"
+continent$Country[continent$Country == "China, Macao Special Administrative Region"] <- "Macao (SAR)"
+
+# missing Taiwan
+bluedot$arrival_continent <- continent$Continent[match(bluedot$destCtryName, continent$Country)]
+# manually fix
+bluedot$arrival_continent[bluedot$destCtryName=="Taiwan"] <- "Asia"
 
 #' 
-#' ## load and merge data - Flightstats - and save on drive for all
+#' ## load airport data to correct Cirium data arrival columns
+## ------------------------------------------------------------------------
+airports <- read.csv("./cirium/all_aiports.csv")
+
+## manually fix Copenhagen CPH (Europe) and HNI (CN)
+airports$countryName <- as.character(airports$countryName)
+airports$countryName[airports$fs == "CPH"] <- "Denmark"
+airports$countryName[airports$fs == "HMI"] <- "China"
+
+airports <- airports %>% select(fs, city, countryName)
+
+#' 
+#' ## load and merge data - Cirium
 ## ------------------------------------------------------------------------
 
 load_flight_data <- function(wd){
@@ -56,25 +82,44 @@ load_flight_data <- function(wd){
                 return(flightstats)
 }
 
-flightstats_2019 <- load_flight_data("./cov2019_flightdata/cirium/cn_2018-2019/")
-flightstats_2020 <- load_flight_data("./cov2019_flightdata/cirium/cn_2019-2020/")
+flightstats_2019 <- load_flight_data("./cirium/cn_2018-2019/")
+flightstats_2020 <- load_flight_data("./cirium/cn_2019-2020/")
 
-# rbind
-flightstats <- rbind(flightstats_2019, flightstats_2020)
+flightstats <- bind_rows(flightstats_2019, flightstats_2020)
 
 # remove unnecessary columns
 flightstats <- flightstats[,!grepl(pattern="operationalTimes",colnames(flightstats))]
 flightstats <- flightstats[,!grepl(pattern="airportResources",colnames(flightstats))]
 flightstats <- flightstats[,!grepl(pattern="flightDurations",colnames(flightstats))]
+flightstats <- flightstats[,!grepl(pattern="Carrier",colnames(flightstats))]
+flightstats <- flightstats[,!grepl(pattern="delays",colnames(flightstats))]
+flightstats <- flightstats[,!grepl(pattern="codeshares",colnames(flightstats))]
+flightstats <- flightstats[,!grepl(pattern="flightEquipment",colnames(flightstats))]
 
-iata_city <- read.csv("./Flight Volume Estimation/Inputs/cn_iata_code_shortlist.csv")
-colnames(iata_city) <- c("origin_city_analysis", "origin_airport_name", "iata_codes")
-
-flightstats <- left_join(flightstats, iata_city, by=c("departureAirportFsCode"="iata_codes"))
+flightstats <- flightstats %>% select(-c(irregularOperations, schedule.serviceClasses, schedule.restrictions, schedule.uplines, schedule.downlines, 
+                                         departureDate.dateUtc, departureDate.dateLocal, arrivalDate.dateUtc, arrivalDate.dateLocal))
 
 ## joint column for NAY/PKX airport
 flightstats$departureAirportFsCode_orig <- flightstats$departureAirportFsCode
-flightstats$departureAirportFsCode <- ifelse(flightstats$departureAirportFsCode_orig == "PKX" | flightstats$departureAirportFsCode_orig == "NAY", "NAY/PKX", flightstats$departureAirportFsCode_orig)
+flightstats$departureAirportFsCode <- ifelse(flightstats$departureAirportFsCode_orig == "PKX" | flightstats$departureAirportFsCode_orig == "NAY", 
+                                             "NAY/PKX", 
+                                             flightstats$departureAirportFsCode_orig)
+
+
+## CORRECT ARRIVAL COUNTRY NAME - overwrite column
+flightstats$arrCountryName <- airports$countryName[match(flightstats$arrivalAirportFsCode, airports$fs)]
+
+# manually fix missing ones
+check_missing_countries <- flightstats %>% filter(is.na(arrCountryName))
+flightstats$arrCountryName <- as.character(flightstats$arrCountryName)
+flightstats$arrCountryName[flightstats$arrivalAirportFsCode == "AMM"] <- "Jordan"
+flightstats$arrCountryName[flightstats$arrivalAirportFsCode == "LEA"] <- "Australia"
+flightstats$arrCountryName[flightstats$arrivalAirportFsCode == "SUU"] <- "United States"
+flightstats$arrCountryName[flightstats$arrivalAirportFsCode == "RIV"] <- "United States"
+
+## remove wrong arrival columns
+flightstats <- flightstats %>% select(-c(arrLatitue, arrLongitude, arrAirportName,	arrCity, arrCountryCode, arrRegionName))
+
 
 
 #' 
@@ -256,8 +301,6 @@ predict_prop <- data.frame(spline_fit$y)
 predict_prop$date <- dates
 predict_prop$month <- month(predict_prop$date)
 colnames(predict_prop) <- c("y", "date", "month")
-
-## convert negative values starting 2/14 to 0
 predict_prop$y <- ifelse(predict_prop$y <0, 0,  predict_prop$y)
 
 ## estimate wuhan proportions using spline predictions
