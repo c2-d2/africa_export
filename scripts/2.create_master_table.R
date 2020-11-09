@@ -42,45 +42,9 @@ bind_rows(prev_all,city_prev_mod0) -> prev_all
 
 
 ############################
-## Get all flight data
+## Get flight data
 ############################
-flights <- read.csv('./data/flights_adjusted_200506.csv')
-
-## process flight data -- validation step
-colnames(flights)[2]<-"iata"
-flights$flight_date<-as.Date(flights$flight_date)
-#flights[,c("flight_date","origCityName","destCtryName","dailyvol")]
-
-flights_all_cities_duplicated<-flights%>%
-  subset(iata=='SZX'|iata=='HGH')%>%
-  mutate(dailyvol=dailyvol/2)
-
-flights_all_cities_duplicated_copy<-flights_all_cities_duplicated
-flights_all_cities_duplicated_copy$origCityName<-str_replace_all(flights_all_cities_duplicated_copy$origCityName,'Hangzhou','Jiaxing')
-flights_all_cities_duplicated_copy$origCityName<-str_replace_all(flights_all_cities_duplicated_copy$origCityName,'Shenzhen','Dongguan')
-
-iata_not_duplicated<-c('CAN','CGO','CKG','CSX','CTU','FOC','HFE','KHN','NAY/PKX',
-                       'NKG','PEK','PVG','SHA',"TSN",'XIY','WUH')
-flights_all_cities_not_duplicated<-flights%>%
-  subset(iata%in%iata_not_duplicated)
-
-flights_all_cities_final<-data.frame(rbind(flights_all_cities_not_duplicated,
-                                           flights_all_cities_duplicated,
-                                           flights_all_cities_duplicated_copy))
-
-flights_date_all_cities<-cbind.data.frame(flights_all_cities_final$flight_date,flights_all_cities_final$origCityName,
-                                          flights_all_cities_final$destCtryName, flights_all_cities_final$dailyvol)
-colnames(flights_date_all_cities)<-c("date","origin_city","destination_country","daily_volume")
-
-#write.csv(flights_date_all_cities,"all_flight_pairs_0630.csv",row.names=F)
-
-
-flights_all_cities2<-flights_date_all_cities %>%
-  group_by(date, origin_city, destination_country) %>%
-  summarise(daily_volume=sum(daily_volume))
-
-flights_all_cities2$origin_city<- ifelse(flights_all_cities2$origin_city == "Xi An","Xi'an",
-                                         as.character(flights_all_cities2$origin_city))
+flights_all_cities2 <- read.csv('./data/flights_all_cities2.csv')
 
 ############################
 ## has detected cases

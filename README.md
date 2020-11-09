@@ -6,13 +6,13 @@
 ------------
 The project requries the following R packages:
 ```r
-c("bbmle", "Bolstad2", "broom", "caret", "cartogram", 
-              "data.table", "deSolve", "dplyr", "dvmisc", "fitdistrplus", "formattable", 
+c("Bolstad2", "broom", "caret", "cartogram", 
+              "data.table", "dplyr", "dvmisc", "formattable", 
               "gam", "ggmap", "ggplot2", "ggpubr", "ggthemes", "grid", "gridExtra", 
               "janitor", "kableExtra", "knitr", "leaflet", "lubridate", "maptools", 
-              "pals", "patchwork", "plotrix", "pracma", "psych", "purrr", "RColorBrewer", 
+              "pals", "patchwork", "purrr", "RColorBrewer", 
               "readr", "reshape2", "rgdal", "rio", "scales", "spData", "stats", 
-              "stringi", "stringr", "tidyr", "tidyverse", "tmap", "tsiR", "zoo")
+              "stringi", "stringr", "tidyr", "tidyverse", "tmap", "zoo")
 ```
 
 ## 2. Pre-requisite data
@@ -42,7 +42,7 @@ This repo is split into folders for `data`, `code`, `scripts`, `figures` and `ou
 1. Source the file `scripts/headers.R` before running any other scripts. **NOTE** you should change the `main_wd` object to the full file path to where this repo is stored. This script contains all libraries and global settings for subsequent scripts.
 
 ### Precomputation - optionally run this first.
-EXAMPLE: the script `EXAMPLE_flight_volume_estimation.R` provides the code we used to generate flight volume data. However, the original source files are proprietary and cannot be shared, though all of the necessary data are available in `data/flights_adjusted_200506.csv`. This code is included for transparency only and cannot be run.
+EXAMPLE: the script `EXAMPLE_flight_volume_estimation.R` provides the code we used to generate flight volume data. However, the original source files are proprietary and cannot be shared, though all of the necessary data are available in `data/flights_all_cities2.csv`. This code is included for transparency only and cannot be run.
 
 1.`ECDC_case_data.R`: produces the files `data/hasdetected.Rdata` and `data/df_country_cont_ecdc.Rdata`.
 
@@ -79,7 +79,7 @@ EXAMPLE: the script `EXAMPLE_flight_volume_estimation.R` provides the code we us
 * **df_country_cont_ecdc.Rdata** - contains a key for destination countries and continents 
 * **frac_popn_city.Rdata** - contains the population fractions of chinese cities relative to their respective provinces 
 * **tsang_predictions_apportioned.csv** - contains the COVID-19 incidence estimates from Tsang et al. (Lancet Public Health 2020)
-* **flights_adjusted_200506.csv** - contains flight volume between Chinese origin cities and international destinations by calendar day
+* **flights_all_cities2.csv** - contains flight volume between Chinese origin cities and international destinations by calendar day
 * **2019_flight_line.csv** - contains total flight volume between Chinese origin cities and international destinations by calendar day in 2019
 * **hasdetected.Rdata** - contains an indicator for when an African location has detected a COVID-19 case
 * **master_table_2910.csv** - << MUST BE GENERATED>> contains the prevalence indicators under all scenarios and flight volume estimates in a large dataframe that will be used for all number calculations and figures of the manuscript
